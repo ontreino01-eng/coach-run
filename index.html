@@ -29,7 +29,7 @@
   --ff:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
 }
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:14px;overflow:hidden}
-#app{height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
 
 /* scrollbar */
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
@@ -41,12 +41,13 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 .hdr-right{display:flex;gap:8px;align-items:center}
 
 /* ── SCREENS ── */
-.screen{display:none;flex:1;overflow-y:auto;padding:0 0 80px}
+.screen{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(90px + env(safe-area-inset-bottom))}
 .screen.active{display:block;animation:fadeUp .2s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── BOTTOM NAV ── */
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(9,9,14,.95);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:#000;border:none;font-size:22px;box-shadow:0 4px 16px rgba(200,241,53,.35);z-index:60;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 0;transition:all .15s}
 .bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
 .bnav-lbl{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ff);transition:all .15s}
@@ -225,7 +226,7 @@ textarea{resize:vertical;min-height:70px}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center}
 .modal.open{display:flex;animation:fadeIn .15s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal-box{background:var(--s1);border:1px solid var(--b1);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:slideUp .2s ease}
+.modal-box{background:var(--s1);border:1px solid var(--b1);border-radius:20px 20px 0 0;padding:24px 20px calc(36px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:85vh;max-height:85dvh;overflow-y:auto;animation:slideUp .2s ease}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal-handle{width:36px;height:4px;background:var(--b2);border-radius:4px;margin:0 auto 18px}
 
@@ -637,6 +638,9 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
+<!-- CHAT FAB -->
+<button class="chat-fab" onclick="openChat()" id="chat-fab">💬</button>
+
 <!-- BOTTOM NAV -->
 <nav class="bnav">
   <button class="bnav-btn active" onclick="goToScreen('home',this)" id="bnav-home"><span class="bnav-icon">🏠</span><span class="bnav-lbl">Início</span><div class="bnav-dot"></div></button>
@@ -646,6 +650,24 @@ textarea{resize:vertical;min-height:70px}
   <button class="bnav-btn" onclick="goToScreen('perfil',this)" id="bnav-perfil"><span class="bnav-icon">👤</span><span class="bnav-lbl">Perfil</span><div class="bnav-dot"></div></button>
 </nav>
 
+</div>
+
+<!-- CHAT DE DÚVIDAS -->
+<div id="screen-chat" style="position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;max-width:480px;margin:0 auto">
+  <div class="hdr">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="closeChat()" style="background:none;border:none;color:var(--txt);font-size:20px;cursor:pointer;padding:4px">←</button>
+      <div>
+        <div class="logo" style="font-size:16px">💬 Tire sua dúvida</div>
+        <div class="hdr-sub" style="font-size:11px">Baseado nos artigos científicos + Verkhoshansky</div>
+      </div>
+    </div>
+  </div>
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px"></div>
+  <div style="flex-shrink:0;padding:10px 12px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--b1);display:flex;gap:8px;background:var(--s1)">
+    <input type="text" id="chat-input" placeholder="Pergunte sobre seu treino..." onkeydown="if(event.key==='Enter')sendChatMsg()" style="flex:1;padding:12px 14px;border-radius:20px;border:1px solid var(--b1);background:var(--s2);color:var(--txt);font-size:14px"/>
+    <button onclick="sendChatMsg()" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:var(--acc);color:#000;border:none;font-size:18px;cursor:pointer">➤</button>
+  </div>
 </div>
 
 <!-- MODAL: Detalhe semana/treino -->
@@ -814,6 +836,64 @@ async function gateLogin() {
 async function gateLogout() {
   if (sb) await sb.auth.signOut();
   location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// CHAT DE DÚVIDAS
+// ══════════════════════════════════════════════════════
+let chatHistory = [];
+
+function openChat() {
+  document.getElementById('screen-chat').style.display = 'flex';
+  if (!chatHistory.length) {
+    addChatBubble('assistant', 'Oi! Pode perguntar sobre técnica de exercício, sobre como o fortalecimento se encaixa no seu treino, ou dúvidas sobre o app. Não substituo seu treinador nem um profissional de saúde — pra dor ou lesão, sempre procure avaliação presencial.');
+  }
+  setTimeout(() => document.getElementById('chat-input')?.focus(), 200);
+}
+
+function closeChat() { document.getElementById('screen-chat').style.display = 'none'; }
+
+function addChatBubble(role, text) {
+  const el = document.getElementById('chat-messages');
+  const bubble = document.createElement('div');
+  bubble.style.cssText = `max-width:82%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;white-space:pre-wrap;font-family:var(--fb);` +
+    (role === 'user'
+      ? 'align-self:flex-end;background:var(--acc);color:#000;border-bottom-right-radius:4px'
+      : 'align-self:flex-start;background:var(--s2);color:var(--txt);border-bottom-left-radius:4px');
+  bubble.textContent = text;
+  el.appendChild(bubble);
+  el.scrollTop = el.scrollHeight;
+  return bubble;
+}
+
+async function sendChatMsg() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addChatBubble('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+  const thinking = addChatBubble('assistant', '···');
+
+  try {
+    if (!sb) throw new Error('backend não configurado');
+    const context = state.assessed ? {
+      sport: modLabel(state.profile['av-modalidade']),
+      nivel: state.profile.nivel,
+      focus: state.plan?.focus?.name,
+    } : null;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/chat-duvidas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ message: msg, history: chatHistory.slice(0, -1), context }),
+    });
+    const data = await res.json();
+    thinking.textContent = data.reply || 'Não consegui responder agora — tenta de novo em instantes.';
+    chatHistory.push({ role: 'assistant', content: data.reply || '' });
+  } catch (e) {
+    thinking.textContent = 'Chat ainda indisponível — o backend de IA deste app não foi configurado ainda (ver DEPLOY_GUIDE.md), ou você está sem internet.';
+    chatHistory.pop();
+  }
 }
 
 // ══════════════════════════════════════════════════════
