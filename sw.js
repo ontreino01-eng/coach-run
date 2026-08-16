@@ -3,7 +3,7 @@
 // (o treino do dia continua acessível sem internet; ações que
 // precisam do backend — login, IA, sync — pedem conexão).
 const CACHE = 'coachendurance-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.json'];
+const APP_SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
