@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>CoachEndurance — Fortalecimento para Atletas de Endurance</title>
+
+<!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#09090E"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="CoachEndurance"/>
+<link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+<link rel="icon" href="/icons/icon-192.png"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<!-- Cliente Supabase (auth + banco). Preencha SUPABASE_URL/ANON_KEY no <script> abaixo. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090E;--s1:#0E0F18;--s2:#13141F;--card:#181925;
+  --b1:#22253A;--b2:#2C3050;
+  --acc:#C8F135;--acc2:#5B8EFF;--warn:#FF6B35;--red:#FF3B5C;
+  --txt:#EEF0FF;--muted:#7B82A8;--sub:#40456B;
+  --ff:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:14px;overflow:hidden}
+#app{height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+
+/* scrollbar */
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
+
+/* ── HEADER ── */
+.hdr{background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:10}
+.logo{font-family:var(--ff);font-weight:800;font-size:17px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-sub{font-size:10px;color:var(--muted);font-family:var(--fm);letter-spacing:.06em}
+.hdr-right{display:flex;gap:8px;align-items:center}
+
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow-y:auto;padding:0 0 80px}
+.screen.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(9,9,14,.95);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 0;transition:all .15s}
+.bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
+.bnav-lbl{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ff);transition:all .15s}
+.bnav-btn.active .bnav-icon{filter:none}
+.bnav-btn.active .bnav-lbl{color:var(--acc)}
+.bnav-dot{width:4px;height:4px;border-radius:50%;background:var(--acc);display:none}
+.bnav-btn.active .bnav-dot{display:block}
+
+/* ── COMMON ── */
+.pad{padding:20px 18px}
+.section-title{font-family:var(--ff);font-weight:700;font-size:18px;margin-bottom:4px}
+.section-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+
+.card{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:16px;margin-bottom:12px;transition:border-color .15s}
+.card:hover{border-color:var(--b2)}
+.card-title{font-family:var(--ff);font-weight:700;font-size:14px;margin-bottom:6px}
+.card-sub{font-size:12px;color:var(--muted);line-height:1.5}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--ff);font-weight:700;font-size:13px;border:none;border-radius:10px;cursor:pointer;padding:11px 20px;transition:all .15s;user-select:none}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-acc{background:var(--acc);color:#000}
+.btn-acc:hover:not(:disabled){box-shadow:0 6px 20px rgba(200,241,53,.3);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--b1)}
+.btn-ghost:hover{border-color:var(--b2);color:var(--txt)}
+.btn-warn{background:rgba(255,107,53,.12);color:var(--warn);border:1px solid rgba(255,107,53,.25)}
+.btn-full{width:100%}
+.btn-sm{padding:7px 14px;font-size:12px}
+
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--ff);flex-shrink:0}
+.tag-green{background:rgba(200,241,53,.1);color:var(--acc);border:1px solid rgba(200,241,53,.2)}
+.tag-blue{background:rgba(91,142,255,.1);color:var(--acc2);border:1px solid rgba(91,142,255,.2)}
+.tag-orange{background:rgba(255,107,53,.1);color:var(--warn);border:1px solid rgba(255,107,53,.2)}
+.tag-red{background:rgba(255,59,92,.1);color:var(--red);border:1px solid rgba(255,59,92,.2)}
+.tag-muted{background:var(--b1);color:var(--muted)}
+
+.input-group{margin-bottom:14px}
+.input-label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-family:var(--ff)}
+input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:10px 13px;color:var(--txt);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+input::placeholder,textarea::placeholder{color:var(--sub)}
+select option{background:var(--s1)}
+textarea{resize:vertical;min-height:70px}
+
+.progress-bar{height:5px;background:var(--b1);border-radius:5px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:5px;transition:width .4s ease}
+
+.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
+
+/* ── HOME SCREEN ── */
+.hero{background:linear-gradient(160deg,rgba(200,241,53,.06),rgba(91,142,255,.04));border-bottom:1px solid var(--b1);padding:28px 18px 24px}
+.hero-eyebrow{font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;font-family:var(--fm)}
+.hero-title{font-family:var(--ff);font-weight:800;font-size:26px;line-height:1.15;margin-bottom:8px}
+.hero-title span{background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.hero-stat{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:12px 10px;text-align:center}
+.hero-stat-val{font-family:var(--ff);font-weight:800;font-size:20px;color:var(--acc);line-height:1}
+.hero-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:4px;font-family:var(--ff)}
+
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.quick-card{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:14px;cursor:pointer;transition:all .15s;text-align:left}
+.quick-card:hover{border-color:var(--b2);transform:scale(1.01)}
+.quick-card-icon{font-size:24px;margin-bottom:8px;display:block}
+.quick-card-title{font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:3px}
+.quick-card-sub{font-size:11px;color:var(--muted)}
+
+/* ── AVALIAÇÃO SCREEN ── */
+.av-step{display:none}
+.av-step.active{display:block;animation:fadeUp .2s ease}
+.step-head{background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 18px}
+.step-num{font-size:10px;font-weight:700;color:var(--acc);font-family:var(--fm);margin-bottom:2px}
+.step-title{font-family:var(--ff);font-weight:700;font-size:16px}
+.step-dots{display:flex;gap:5px;margin-top:10px}
+.step-dot{height:3px;flex:1;background:var(--b1);border-radius:3px;transition:background .3s}
+.step-dot.done{background:var(--acc)}
+.step-dot.active{background:var(--acc2)}
+
+.scale-btns{display:flex;gap:6px;flex-wrap:wrap}
+.scale-btn{flex:1;min-width:36px;padding:9px 6px;border-radius:9px;border:1px solid var(--b1);background:var(--s2);color:var(--muted);font-family:var(--ff);font-weight:700;font-size:13px;cursor:pointer;text-align:center;transition:all .15s}
+.scale-btn:hover,.scale-btn.sel{border-color:var(--acc);background:rgba(200,241,53,.1);color:var(--acc)}
+
+.radio-group{display:flex;flex-direction:column;gap:8px}
+.radio-card{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b1);border-radius:11px;padding:13px 14px;cursor:pointer;transition:all .15s}
+.radio-card.sel{border-color:var(--acc);background:rgba(200,241,53,.05)}
+.radio-card:hover:not(.sel){border-color:var(--b2)}
+.radio-card-icon{font-size:22px;flex-shrink:0}
+.radio-card-text{flex:1}
+.radio-card-title{font-family:var(--ff);font-weight:600;font-size:13px;margin-bottom:2px}
+.radio-card-sub{font-size:11px;color:var(--muted)}
+.radio-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.radio-card.sel .radio-check{border-color:var(--acc);background:var(--acc)}
+.radio-check-inner{width:8px;height:8px;border-radius:50%;background:#000;display:none}
+.radio-card.sel .radio-check-inner{display:block}
+
+.check-group{display:flex;flex-direction:column;gap:8px}
+.check-item{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:11px 13px;cursor:pointer;transition:all .15s}
+.check-item.sel{border-color:var(--acc2);background:rgba(91,142,255,.06)}
+.check-box{width:18px;height:18px;border-radius:5px;border:2px solid var(--b1);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:11px}
+.check-item.sel .check-box{border-color:var(--acc2);background:var(--acc2);color:#000}
+
+/* ── PLANO SCREEN ── */
+.plan-hero{background:linear-gradient(160deg,rgba(200,241,53,.08),rgba(91,142,255,.05));border-bottom:1px solid var(--b1);padding:20px 18px}
+.phase-tabs{display:flex;gap:6px;overflow-x:auto;padding:16px 18px 0;scrollbar-width:none}
+.phase-tab{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1px solid var(--b1);background:var(--s2);color:var(--muted);font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.phase-tab.active{border-color:var(--acc);background:rgba(200,241,53,.1);color:var(--acc)}
+
+.week-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px}
+.week-card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:13px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.week-card:hover{border-color:var(--b2);transform:scale(1.01)}
+.week-card.current{border-color:var(--acc)}
+.week-card.done{opacity:.6}
+.week-card.done::after{content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:800}
+.week-num{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;font-family:var(--fm)}
+.week-name{font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:6px;line-height:1.2}
+.week-focus{font-size:11px;color:var(--muted)}
+.week-bar{height:3px;background:var(--b1);border-radius:3px;margin-top:10px}
+.week-bar-fill{height:100%;border-radius:3px;background:var(--acc)}
+
+/* ── TREINO DETAIL ── */
+.treino-header{background:var(--s1);border-bottom:1px solid var(--b1);padding:16px 18px}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-size:13px;font-family:var(--fb);cursor:pointer;margin-bottom:12px}
+.back-btn:hover{color:var(--txt)}
+.treino-emoji{font-size:40px;margin-bottom:8px}
+.treino-title{font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:4px}
+.treino-meta{display:flex;gap:8px;flex-wrap:wrap}
+
+.day-tabs{display:flex;gap:0;border-bottom:1px solid var(--b1);padding:0 18px;overflow-x:auto;scrollbar-width:none}
+.day-tab{flex-shrink:0;padding:10px 14px;border:none;border-bottom:2px solid transparent;background:none;color:var(--muted);font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.day-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+
+.ex-block{background:var(--card);border:1px solid var(--b1);border-radius:12px;margin:0 18px 10px;overflow:hidden}
+.ex-block-header{padding:13px 14px;display:flex;align-items:center;gap:10px}
+.ex-block-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ex-block-info{flex:1}
+.ex-block-name{font-family:var(--ff);font-weight:700;font-size:14px;margin-bottom:3px}
+.ex-block-params{font-size:11px;color:var(--muted);font-family:var(--fm)}
+.ex-expand{background:var(--s2);border-top:1px solid var(--b1);padding:12px 14px;display:none}
+.ex-expand.open{display:block}
+.ex-cue{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px}
+.ex-cue-num{width:18px;height:18px;border-radius:5px;background:rgba(200,241,53,.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--acc);flex-shrink:0;font-family:var(--ff)}
+.ex-cue-text{font-size:12px;color:var(--muted);line-height:1.5}
+.ex-science{background:rgba(91,142,255,.06);border:1px solid rgba(91,142,255,.15);border-radius:8px;padding:10px 12px;margin-top:8px}
+.ex-science-label{font-size:9px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;font-family:var(--ff)}
+.ex-science-text{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ── EXERCÍCIOS SCREEN ── */
+.ex-filter{display:flex;gap:6px;overflow-x:auto;padding:14px 18px 0;scrollbar-width:none}
+.ex-list{padding:10px 18px 0;display:flex;flex-direction:column;gap:8px}
+.exl-card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:13px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;transition:all .15s}
+.exl-card:hover{border-color:var(--b2)}
+.exl-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.exl-info{flex:1;min-width:0}
+.exl-name{font-family:var(--ff);font-weight:700;font-size:14px;margin-bottom:4px}
+.exl-tags{display:flex;gap:5px;flex-wrap:wrap}
+.exl-right{text-align:right;flex-shrink:0}
+.exl-params{font-size:10px;color:var(--muted);font-family:var(--fm);white-space:nowrap}
+
+/* ── PERFIL SCREEN ── */
+.profile-hero{height:140px;background:linear-gradient(160deg,rgba(200,241,53,.08),rgba(91,142,255,.05));display:flex;align-items:flex-end;padding:0 18px 18px;border-bottom:1px solid var(--b1);position:relative}
+.profile-avatar{width:60px;height:60px;border-radius:18px;background:rgba(200,241,53,.12);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:26px;margin-right:14px}
+.profile-name{font-family:var(--ff);font-weight:800;font-size:18px}
+.profile-role{font-size:12px;color:var(--muted);margin-top:2px}
+
+.score-ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring-val{position:absolute;font-family:var(--ff);font-weight:800;font-size:22px;color:var(--acc)}
+.score-ring-lbl{font-size:9px;color:var(--muted);font-family:var(--ff);text-align:center;margin-top:4px}
+
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--b1)}
+.result-row:last-child{border-bottom:none}
+.result-label{font-size:13px;color:var(--muted)}
+.result-val{font-family:var(--ff);font-weight:700;font-size:14px}
+
+/* ── MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center}
+.modal.open{display:flex;animation:fadeIn .15s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--s1);border:1px solid var(--b1);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:slideUp .2s ease}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:36px;height:4px;background:var(--b2);border-radius:4px;margin:0 auto 18px}
+
+/* ── TIMER ── */
+.timer-display{font-family:var(--fm);font-size:48px;font-weight:500;color:var(--acc);text-align:center;letter-spacing:.02em}
+.timer-label{text-align:center;font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--txt);z-index:999;pointer-events:none;opacity:0;transition:all .3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── RESULTADO SCREEN ── */
+.result-hero{background:linear-gradient(160deg,rgba(200,241,53,.1),rgba(91,142,255,.06));border-bottom:1px solid var(--b1);padding:28px 18px 24px;text-align:center}
+.result-icon{font-size:60px;margin-bottom:12px}
+.risk-bar-outer{height:10px;background:var(--b1);border-radius:10px;overflow:hidden;margin:8px 0}
+.risk-bar-fill{height:100%;border-radius:10px;transition:width .6s ease}
+</style>
+</head>
+<body>
+
+<!-- GATE DE ACESSO: licença (CPF+código) → cadastro → confirmação de e-mail → login -->
+<div id="gate-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column;overflow-y:auto">
+  <div style="padding:32px 22px 18px"><div class="logo" style="font-size:20px">⚡ CoachEndurance</div></div>
+
+  <div class="gate-step" id="gate-loading" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:10px">
+    <div style="font-size:13px;color:var(--muted)">Carregando…</div>
+  </div>
+
+  <div class="gate-step" id="gate-licenca" style="display:none;flex-direction:column;padding:0 22px">
+    <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Ativar acesso</h1>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o CPF usado na compra e o código que você recebeu por e-mail.</p>
+    <div class="input-group"><label class="input-label">CPF</label><input type="text" id="gate-cpf" placeholder="000.000.000-00" inputmode="numeric"/></div>
+    <div class="input-group"><label class="input-label">Código de acesso</label><input type="text" id="gate-code" placeholder="Ex: F3K9-XQ2P" style="text-transform:uppercase"/></div>
+    <button class="btn btn-acc" style="width:100%;margin-top:8px" id="gate-licenca-btn" onclick="gateValidarLicenca()">Validar código</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('login')">Já tenho conta — Entrar</button>
+    <p style="font-size:11px;color:var(--sub);margin-top:20px;line-height:1.5">Ainda não comprou? O acesso é liberado após o pagamento — o código chega no seu e-mail.</p>
+  </div>
+
+  <div class="gate-step" id="gate-cadastro" style="display:none;flex-direction:column;padding:0 22px">
+    <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Criar sua conta</h1>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Código validado! E-mail da compra: <b id="gate-cadastro-email" style="color:var(--txt)"></b></p>
+    <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="gate-nome" placeholder="Ex: Jonadabe"/></div>
+    <div class="input-group"><label class="input-label">Crie uma senha</label><input type="password" id="gate-senha" placeholder="Mínimo 6 caracteres"/></div>
+    <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateCriarConta()">Criar conta ✓</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('licenca')">← Voltar</button>
+  </div>
+
+  <div class="gate-step" id="gate-confirm" style="display:none;flex-direction:column;padding:0 22px;text-align:center;align-items:center;justify-content:center;flex:1">
+    <div style="font-size:44px;margin-bottom:12px">📩</div>
+    <h1 style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:8px">Confirme seu e-mail</h1>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px">Mandamos um link de confirmação para <b id="gate-confirm-email" style="color:var(--txt)"></b>. Abra o e-mail, clique no link, depois volte aqui e toque em Entrar.</p>
+    <button class="btn btn-acc" style="width:100%" onclick="gateEntrarAposConfirmar()">Já confirmei — Entrar</button>
+  </div>
+
+  <div class="gate-step" id="gate-login" style="display:none;flex-direction:column;padding:0 22px">
+    <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Entrar</h1>
+    <div class="input-group"><label class="input-label">E-mail</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
+    <div class="input-group"><label class="input-label">Senha</label><input type="password" id="gate-login-senha" placeholder="Sua senha"/></div>
+    <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateLogin()">Entrar</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('licenca')">← Ainda não tenho conta</button>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div>
+    <div class="logo">⚡ CoachEndurance</div>
+    <div class="hdr-sub" id="hdr-sub">Fortalecimento para Endurance</div>
+  </div>
+  <div class="hdr-right" id="hdr-right"></div>
+</header>
+
+<!-- SCREENS -->
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="hero">
+    <div class="hero-eyebrow">40 artigos científicos + Verkhoshansky</div>
+    <h1 class="hero-title">Fique mais forte.<br><span>Sem atrapalhar seu treino.</span></h1>
+    <p class="hero-desc">Avaliação funcional + ciclos mensais de <b>fortalecimento</b> para corrida, ciclismo, natação e híbridos. A cada mês, reavaliação + reteste ajustam o próximo ciclo. Este app não prescreve seu treino específico.</p>
+    <div class="hero-stats" id="home-stats">
+      <div class="hero-stat"><div class="hero-stat-val" id="hs-week">—</div><div class="hero-stat-lbl">Semana atual</div></div>
+      <div class="hero-stat"><div class="hero-stat-val" id="hs-phase">—</div><div class="hero-stat-lbl">Fase</div></div>
+      <div class="hero-stat"><div class="hero-stat-val" id="hs-score">—</div><div class="hero-stat-lbl">Score inicial</div></div>
+    </div>
+  </div>
+  <div class="pad">
+    <div id="home-cta-area">
+      <div class="card">
+        <div class="card-title">🎯 Começar avaliação</div>
+        <div class="card-sub">Responda 6 blocos de perguntas + um teste físico para gerar seu 1º ciclo de <b>fortalecimento</b> (4 semanas) — o treino específico da sua modalidade continua sendo o do seu treinador.</div>
+        <button class="btn btn-acc btn-full" style="margin-top:12px" onclick="startAssessment()">Fazer avaliação agora →</button>
+      </div>
+    </div>
+    <div id="home-plan-area" style="display:none">
+      <div class="card" style="border-color:var(--b2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-title">Seu plano está ativo</div>
+          <span class="tag tag-green" id="home-phase-tag">Fase 1</span>
+        </div>
+        <div id="home-week-info" class="card-sub" style="margin-bottom:12px"></div>
+        <div class="progress-bar" style="margin-bottom:14px"><div class="progress-fill" id="home-progress" style="width:0%"></div></div>
+        <button class="btn btn-acc btn-full" onclick="goToScreen('plano')">Ver plano completo →</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+        <button class="btn btn-ghost btn-full" onclick="goToScreen('exercicios')">📚 Exercícios</button>
+        <button class="btn btn-ghost btn-full" onclick="openTimer()">⏱ Timer</button>
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-family:var(--ff)">Base científica</div>
+      <div class="quick-grid">
+        <div class="quick-card" onclick="showScienceModal('economia')">
+          <span class="quick-card-icon">📈</span>
+          <div class="quick-card-title">Economia de corrida</div>
+          <div class="quick-card-sub">+4,6% após 8 sem. de força máxima</div>
+        </div>
+        <div class="quick-card" onclick="showScienceModal('prevencao')">
+          <span class="quick-card-icon">🛡</span>
+          <div class="quick-card-title">Prevenção de lesões</div>
+          <div class="quick-card-sub">Força reduz lesões a &lt;1/3</div>
+        </div>
+        <div class="quick-card" onclick="showScienceModal('concorrente')">
+          <span class="quick-card-icon">⚡</span>
+          <div class="quick-card-title">Treino concorrente</div>
+          <div class="quick-card-sub">Força ANTES do treino específico</div>
+        </div>
+        <div class="quick-card" onclick="showScienceModal('pliometria')">
+          <span class="quick-card-icon">🦘</span>
+          <div class="quick-card-title">Pliometria</div>
+          <div class="quick-card-sub">&lt;250 saltos/sem — dose segura</div>
+        </div>
+        <div class="quick-card" onclick="showScienceModal('verkhoshansky')" style="grid-column:1/-1">
+          <span class="quick-card-icon">🧩</span>
+          <div class="quick-card-title">Blocos de Verkhoshansky</div>
+          <div class="quick-card-sub">Como cada ciclo mensal é estruturado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AVALIAÇÃO -->
+<div id="screen-avaliacao" class="screen">
+  <div class="step-head">
+    <div class="step-num" id="av-step-num">PASSO 1 DE 6</div>
+    <div class="step-title" id="av-step-title">Perfil do atleta</div>
+    <div class="step-dots" id="av-dots">
+      <div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div>
+      <div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+    </div>
+  </div>
+
+  <!-- STEP 1: PERFIL -->
+  <div class="av-step active" id="av-step-1">
+    <div class="pad">
+      <p class="section-sub">Vamos montar seu perfil de atleta de endurance para personalizar seus ciclos mensais de fortalecimento.</p>
+      <div class="input-group"><label class="input-label">Qual sua modalidade principal?</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-modalidade','corrida',this)"><span class="radio-card-icon">🏃</span><div class="radio-card-text"><div class="radio-card-title">Corrida</div><div class="radio-card-sub">Rua, pista ou trail</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-modalidade','ciclismo',this)"><span class="radio-card-icon">🚴</span><div class="radio-card-text"><div class="radio-card-title">Ciclismo</div><div class="radio-card-sub">Estrada, MTB ou indoor</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-modalidade','natacao',this)"><span class="radio-card-icon">🏊</span><div class="radio-card-text"><div class="radio-card-title">Natação</div><div class="radio-card-sub">Piscina ou águas abertas</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-modalidade','hibrido',this)"><span class="radio-card-icon">🔥</span><div class="radio-card-text"><div class="radio-card-title">Híbrido / Triatlo</div><div class="radio-card-sub">Combina duas ou mais modalidades</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="av-nome" placeholder="Ex: Jonadabe"/></div>
+      <div class="input-group"><label class="input-label">Idade</label><input type="number" id="av-idade" placeholder="Ex: 32" min="16" max="80"/></div>
+      <div class="input-group"><label class="input-label">Peso (kg)</label><input type="number" id="av-peso" placeholder="Ex: 75" min="40" max="150"/></div>
+      <div class="input-group"><label class="input-label">Gênero</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-genero','M',this)"><span class="radio-card-icon">👨</span><div class="radio-card-text"><div class="radio-card-title">Masculino</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-genero','F',this)"><span class="radio-card-icon">👩</span><div class="radio-card-text"><div class="radio-card-title">Feminino</div><div class="radio-card-sub">Mulheres respondem melhor ao treino concorrente (Huiberts, 2024)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0"><button class="btn btn-acc btn-full" onclick="nextStep(1)">Continuar →</button></div>
+  </div>
+
+  <!-- STEP 2: EXPERIÊNCIA -->
+  <div class="av-step" id="av-step-2">
+    <div class="pad">
+      <p class="section-sub">Entender sua experiência é fundamental para calibrar a carga inicial.</p>
+      <div class="input-group"><label class="input-label" id="lbl-exp-modalidade">Quanto tempo pratica sua modalidade regularmente?</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-exp-corrida','<6m',this)"><span class="radio-card-icon">🌱</span><div class="radio-card-text"><div class="radio-card-title">Menos de 6 meses</div><div class="radio-card-sub">Iniciante na modalidade</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-exp-corrida','6m-2a',this)"><span class="radio-card-icon">🏃</span><div class="radio-card-text"><div class="radio-card-title">6 meses a 2 anos</div><div class="radio-card-sub">Praticante recreacional</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-exp-corrida','>2a',this)"><span class="radio-card-icon">🥇</span><div class="radio-card-text"><div class="radio-card-title">Mais de 2 anos</div><div class="radio-card-sub">Praticante experiente</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Quantos dias/semana treina a modalidade hoje? (fora deste app)</label><input type="number" id="av-dias-modalidade" placeholder="Ex: 4" min="0" max="14"/></div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Experiência com musculação?</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-exp-muscu','nenhuma',this)"><span class="radio-card-icon">❌</span><div class="radio-card-text"><div class="radio-card-title">Nenhuma ou quase nenhuma</div><div class="radio-card-sub">Nunca fiz academia regularmente</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-exp-muscu','basica',this)"><span class="radio-card-icon">💪</span><div class="radio-card-text"><div class="radio-card-title">Básica (1-2 anos)</div><div class="radio-card-sub">Faço alguns exercícios, mas sem programa estruturado</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-exp-muscu','avancada',this)"><span class="radio-card-icon">🏋️</span><div class="radio-card-text"><div class="radio-card-title">Avançada (+2 anos)</div><div class="radio-card-sub">Treino com cargas e periodização regularmente</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="prevStep(2)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="nextStep(2)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: OBJETIVO -->
+  <div class="av-step" id="av-step-3">
+    <div class="pad">
+      <p class="section-sub">Seu objetivo define a ênfase de cada ciclo mensal.</p>
+      <div class="radio-group">
+        <div class="radio-card" onclick="selectRadio('av-objetivo','corredor',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">Melhorar tempo de prova</div><div class="radio-card-sub">Foco em economia de corrida e força máxima (Støren, 2008)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        <div class="radio-card" onclick="selectRadio('av-objetivo','lesao',this)"><span class="radio-card-icon">🛡</span><div class="radio-card-text"><div class="radio-card-title">Prevenir lesões e treinar sem dor</div><div class="radio-card-sub">Foco em tendões, Nordic Curl e controle neuromuscular</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        <div class="radio-card" onclick="selectRadio('av-objetivo','hibrido',this)"><span class="radio-card-icon">⚡</span><div class="radio-card-text"><div class="radio-card-title">Atleta híbrido (corpo + endurance)</div><div class="radio-card-sub">Hipertrofia + endurance (Bouamra, 2022 — CT superior para composição corporal)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        <div class="radio-card" onclick="selectRadio('av-objetivo','hyrox',this)"><span class="radio-card-icon">🏆</span><div class="radio-card-text"><div class="radio-card-title">Prova híbrida (Hyrox/Spartan)</div><div class="radio-card-sub">HIFT + corrida + força funcional (López, 2025)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="prevStep(3)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="nextStep(3)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: LESÕES -->
+  <div class="av-step" id="av-step-4">
+    <div class="pad">
+      <p class="section-sub">Selecione todas as regiões com histórico de dor ou lesão. Isso prioriza exercícios preventivos específicos.</p>
+      <div class="check-group">
+        <div class="check-item" onclick="toggleCheck('lesao-joelho',this)"><div class="check-box" id="lesao-joelho">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Joelho (patelar, LCA, menisco)</div><div style="font-size:11px;color:var(--muted)">Activa: Nordic Curl + Spanish Squat + VMO</div></div></div>
+        <div class="check-item" onclick="toggleCheck('lesao-tornozelo',this)"><div class="check-box" id="lesao-tornozelo">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Tornozelo / Aquiles</div><div style="font-size:11px;color:var(--muted)">Ativa: Protocolo Alfredson + Tibialis Raises</div></div></div>
+        <div class="check-item" onclick="toggleCheck('lesao-quadril',this)"><div class="check-box" id="lesao-quadril">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Quadril / IT Band</div><div style="font-size:11px;color:var(--muted)">Ativa: Clamshells + Hip Thrust + 90/90 Stretch</div></div></div>
+        <div class="check-item" onclick="toggleCheck('lesao-lombar',this)"><div class="check-box" id="lesao-lombar">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Lombar / Core</div><div style="font-size:11px;color:var(--muted)">Ativa: McGill Big 3 + Dead Bug + Bird-Dog</div></div></div>
+        <div class="check-item" onclick="toggleCheck('lesao-isquio',this)"><div class="check-box" id="lesao-isquio">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Isquiotibiais / Posterior</div><div style="font-size:11px;color:var(--muted)">Ativa: Nordic Curl + Eccentric Leg Press + RDL</div></div></div>
+        <div class="check-item" onclick="toggleCheck('lesao-ombro',this)"><div class="check-box" id="lesao-ombro">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Ombro / Manguito rotador</div><div style="font-size:11px;color:var(--muted)">Ativa: rotação externa com elástico + Face Pull + serrátil</div></div></div>
+        <div class="check-item" onclick="toggleCheck('lesao-nenhum',this)"><div class="check-box" id="lesao-nenhum">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Sem histórico de lesão</div></div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="input-group">
+        <label class="input-label">Sinal de alerta (PAR-Q)</label>
+        <div class="check-group">
+          <div class="check-item" onclick="toggleCheck('parq-risco',this)"><div class="check-box" id="parq-risco">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Já senti dor no peito, tontura/desmaio durante esforço, ou tenho problema cardíaco/ósseo diagnosticado</div><div style="font-size:11px;color:var(--muted)">Marcar libera aviso de liberação médica antes do bloco de força</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="prevStep(4)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="nextStep(4)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: CAPACIDADE -->
+  <div class="av-step" id="av-step-5">
+    <div class="pad">
+      <p class="section-sub">Autoavalie sua capacidade atual. Isso calibra a intensidade inicial do programa.</p>
+      <div id="av-scales"></div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="prevStep(5)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="nextStep(5)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: DISPONIBILIDADE -->
+  <div class="av-step" id="av-step-6">
+    <div class="pad">
+      <p class="section-sub">Quantos dias por semana você pode dedicar ao <b>fortalecimento</b>? O treino específico da sua modalidade continua sendo definido à parte — isso aqui é só o volume de força.</p>
+      <div class="input-group"><label class="input-label">Dias disponíveis para fortalecimento</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-dias','2',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">2 dias/semana</div><div class="radio-card-sub">Dose mínima eficaz — mantém economia e reduz lesão (Rønnestad, 2014)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-dias','3',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">3 dias/semana</div><div class="radio-card-sub">Volume padrão recomendado pelos 40 artigos</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-dias','4',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">4 dias/semana</div><div class="radio-card-sub">Volume alto — só se sobrar recuperação para o treino específico</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Meta / prova-alvo (opcional)</label>
+        <input type="text" id="av-prova" placeholder="Ex: Meia-maratona em outubro, 100km de bike, travessia de 2km..."/>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="prevStep(6)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="finishAssessment()">Fazer teste físico inicial ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- TESTE FÍSICO (inicial e reteste) -->
+<div id="screen-teste" class="screen">
+  <div class="step-head">
+    <div class="step-title" id="teste-title">Teste Físico Inicial</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px" id="teste-sub">Vira sua referência para medir evolução</div>
+  </div>
+  <div class="pad">
+    <p class="section-sub">Faça os testes num dia descansado, sem treino de força ou específico pesado nas 24h anteriores.</p>
+    <div id="teste-inputs"></div>
+  </div>
+  <div class="pad" style="padding-top:0;display:flex;gap:10px">
+    <button class="btn btn-ghost" onclick="cancelTeste()">← Voltar</button>
+    <button class="btn btn-acc" style="flex:1" id="teste-submit-btn" onclick="submitTeste()">Salvar teste e gerar Ciclo 1 ✓</button>
+  </div>
+</div>
+
+<!-- FECHAMENTO DE CICLO: reavaliação + reteste + feedback -->
+<div id="screen-fechociclo" class="screen">
+  <div class="step-head">
+    <div class="step-num" id="cc-step-num">PASSO 1 DE 3</div>
+    <div class="step-title" id="cc-step-title">Reavaliação rápida</div>
+    <div class="step-dots" id="cc-dots">
+      <div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div>
+    </div>
+  </div>
+
+  <!-- CC STEP 1: REAVALIAÇÃO -->
+  <div class="cc-step active" id="cc-step-1">
+    <div class="pad">
+      <p class="section-sub">Como você está agora, comparado ao início do ciclo?</p>
+      <div id="cc-scales"></div>
+      <div class="divider"></div>
+      <div class="input-group">
+        <div class="check-group">
+          <div class="check-item" onclick="toggleCheck('cc-parq-risco',this)"><div class="check-box" id="cc-parq-risco">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Senti dor no peito, tontura/desmaio, ou tive novo diagnóstico cardíaco/ósseo neste ciclo</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0">
+      <button class="btn btn-acc" style="width:100%" onclick="ccNextStep(1)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- CC STEP 2: RETESTE FÍSICO -->
+  <div class="cc-step" id="cc-step-2">
+    <div class="pad">
+      <p class="section-sub">Mesmo protocolo do teste inicial — refaça nas mesmas condições para a comparação valer.</p>
+      <div id="cc-teste-inputs"></div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="ccPrevStep(2)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="submitTeste()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- CC STEP 3: FEEDBACK DO CICLO -->
+  <div class="cc-step" id="cc-step-3">
+    <div class="pad">
+      <p class="section-sub">Como foi o último mês de treino?</p>
+      <div class="input-group"><label class="input-label">Esforço percebido médio nas sessões</label>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">0 = muito fácil · 10 = extremamente exaustivo</div>
+        <div class="scale-btns" id="scale-cc-rpe"></div>
+      </div>
+      <div class="input-group"><label class="input-label">Conseguiu completar a maioria dos treinos como prescrito?</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('cc-aderencia','sim',this)"><div class="radio-card-text"><div class="radio-card-title">Sim, quase tudo</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('cc-aderencia','parcial',this)"><div class="radio-card-text"><div class="radio-card-title">Parcialmente</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('cc-aderencia','nao',this)"><div class="radio-card-text"><div class="radio-card-title">Não, faltei muito</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="input-group"><label class="input-label">Pro próximo ciclo, você quer:</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('cc-volume','aumentar',this)"><div class="radio-card-text"><div class="radio-card-title">Aumentar o volume/carga</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('cc-volume','manter',this)"><div class="radio-card-text"><div class="radio-card-title">Manter como está</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('cc-volume','reduzir',this)"><div class="radio-card-text"><div class="radio-card-title">Reduzir — está pesado</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="check-group">
+        <div class="check-item" onclick="toggleCheck('cc-dornova',this)"><div class="check-box" id="cc-dornova">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Senti alguma dor nova durante o fortalecimento neste ciclo</div></div></div>
+      </div>
+      <div class="input-group" style="margin-top:12px"><label class="input-label">Observações (opcional)</label>
+        <input type="text" id="cc-obs" placeholder="Qualquer coisa que valha registrar"/>
+      </div>
+    </div>
+    <div class="pad" style="padding-top:0;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="ccPrevStep(3)">← Voltar</button>
+      <button class="btn btn-acc" style="flex:1" onclick="submitFeedback()">Gerar próximo ciclo ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLANO -->
+<div id="screen-plano" class="screen">
+  <div class="plan-hero" id="plan-hero-area"></div>
+  <div class="phase-tabs" id="phase-tabs"></div>
+  <div class="week-grid" id="week-grid"></div>
+</div>
+
+<!-- EXERCÍCIOS -->
+<div id="screen-exercicios" class="screen">
+  <div class="pad" style="padding-bottom:10px">
+    <div class="section-title">Biblioteca de Exercícios</div>
+    <div class="section-sub">Exercícios baseados em Boyle, McGill, Alfredson, van Dyk e Verkhoshansky — corrida, ciclismo e natação</div>
+  </div>
+  <div class="ex-filter" id="ex-filter"></div>
+  <div class="ex-list" id="ex-list" style="padding-top:14px"></div>
+</div>
+
+<!-- PERFIL -->
+<div id="screen-perfil" class="screen">
+  <div class="profile-hero" id="profile-hero">
+    <div style="display:flex;align-items:flex-end;gap:14px">
+      <div class="profile-avatar">🏃</div>
+      <div><div class="profile-name" id="profile-name">—</div><div class="profile-role" id="profile-role">Avaliação pendente</div></div>
+    </div>
+  </div>
+  <div class="pad" id="profile-content">
+    <div class="card" style="text-align:center;padding:30px 20px">
+      <div style="font-size:40px;margin-bottom:12px">📊</div>
+      <div class="card-title">Nenhuma avaliação ainda</div>
+      <div class="card-sub" style="margin-bottom:16px">Faça a avaliação para ver seu perfil completo, score de risco e resultados.</div>
+      <button class="btn btn-acc btn-full" onclick="goToScreen('avaliacao');startAssessment()">Fazer avaliação agora</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="bnav-btn active" onclick="goToScreen('home',this)" id="bnav-home"><span class="bnav-icon">🏠</span><span class="bnav-lbl">Início</span><div class="bnav-dot"></div></button>
+  <button class="bnav-btn" onclick="goToScreen('avaliacao',this)" id="bnav-avaliacao"><span class="bnav-icon">📋</span><span class="bnav-lbl">Avaliação</span><div class="bnav-dot"></div></button>
+  <button class="bnav-btn" onclick="goToScreen('plano',this)" id="bnav-plano"><span class="bnav-icon">📅</span><span class="bnav-lbl">Plano</span><div class="bnav-dot"></div></button>
+  <button class="bnav-btn" onclick="goToScreen('exercicios',this)" id="bnav-exercicios"><span class="bnav-icon">💪</span><span class="bnav-lbl">Exercícios</span><div class="bnav-dot"></div></button>
+  <button class="bnav-btn" onclick="goToScreen('perfil',this)" id="bnav-perfil"><span class="bnav-icon">👤</span><span class="bnav-lbl">Perfil</span><div class="bnav-dot"></div></button>
+</nav>
+
+</div>
+
+<!-- MODAL: Detalhe semana/treino -->
+<div class="modal" id="modal-treino">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="modal-treino-content"></div>
+  </div>
+</div>
+
+<!-- MODAL: Timer -->
+<div class="modal" id="modal-timer">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:var(--ff);font-weight:700;font-size:16px;margin-bottom:4px">Timer de Descanso</div>
+      <div style="font-size:12px;color:var(--muted)">Use entre séries</div>
+    </div>
+    <div class="timer-display" id="timer-display">01:30</div>
+    <div class="timer-label" id="timer-label">Pronto</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:20px 0">
+      <button class="btn btn-ghost btn-sm" onclick="setTimer(60)">60s</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTimer(90)">90s</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTimer(120)">2min</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTimer(180)">3min</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTimer(300)">5min</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTimer(600)">10min</button>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="resetTimer()">↺ Reset</button>
+      <button class="btn btn-acc" style="flex:1" id="timer-toggle" onclick="toggleTimer()">▶ Iniciar</button>
+    </div>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-timer')">Fechar</button>
+  </div>
+</div>
+
+<!-- MODAL: Ciência -->
+<div class="modal" id="modal-science">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="modal-science-content"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="closeModal('modal-science')">Fechar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// AUTENTICAÇÃO + LICENÇA (Supabase)
+// ══════════════════════════════════════════════════════
+// TODO antes de publicar: preencha com os dados do SEU projeto Supabase
+// (Dashboard > Project Settings > API). A ANON_KEY é pública por design —
+// pode ficar aqui no código. A chave da Groq NUNCA vai neste arquivo.
+const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
+const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let currentUserId = null;
+let gateData = {};
+
+async function initAuth() {
+  if (!sb) {
+    // Supabase ainda não configurado — libera o app direto (modo desenvolvimento/demo).
+    console.warn('Supabase não configurado — rodando sem gate de licença.');
+    hideGate();
+    renderHome();
+    if (state.assessed) renderProfile();
+    updateHdrSub();
+    return;
+  }
+  showGate('loading');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) { await onAuthenticated(session); }
+    else { showGate('licenca'); }
+  } catch (e) {
+    console.error(e);
+    showGate('licenca');
+  }
+}
+
+function showGate(name) {
+  document.getElementById('gate-overlay').style.display = 'flex';
+  document.querySelectorAll('.gate-step').forEach(s => s.style.display = 'none');
+  const el = document.getElementById('gate-' + name);
+  if (el) el.style.display = 'flex';
+}
+
+function hideGate() { document.getElementById('gate-overlay').style.display = 'none'; }
+
+async function onAuthenticated(session) {
+  currentUserId = session.user.id;
+  try {
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+    if (profile && profile.state && Object.keys(profile.state).length) {
+      state = profile.state;
+      localStorage.setItem('cr_state', JSON.stringify(state));
+    }
+  } catch (e) { console.warn('Não consegui carregar da nuvem, usando dado local.', e); }
+  hideGate();
+  renderHome(); renderExercises();
+  if (state.assessed) renderProfile();
+  updateHdrSub();
+}
+
+async function syncStateToCloud() {
+  if (!sb || !currentUserId) return;
+  try { await sb.from('profiles').update({ state, updated_at: new Date().toISOString() }).eq('id', currentUserId); }
+  catch (e) { console.warn('Sync com a nuvem falhou (sem internet?)', e); }
+}
+
+async function gateValidarLicenca() {
+  const cpf = document.getElementById('gate-cpf').value.replace(/\D/g, '');
+  const code = document.getElementById('gate-code').value.trim().toUpperCase();
+  if (!cpf || !code) { showToast('⚠️ Preencha CPF e código'); return; }
+  const btn = document.getElementById('gate-licenca-btn');
+  btn.textContent = 'Validando...';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/validar-licenca`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cpf, code }),
+    });
+    const data = await res.json();
+    if (!data.valid) { showToast('⚠️ ' + (data.reason || 'Código inválido')); btn.textContent = 'Validar código'; return; }
+    gateData = { cpf, code, email: data.email };
+    document.getElementById('gate-cadastro-email').textContent = data.email;
+    showGate('cadastro');
+  } catch (e) {
+    showToast('⚠️ Erro ao validar — verifique sua internet');
+  } finally { btn.textContent = 'Validar código'; }
+}
+
+async function gateCriarConta() {
+  const nome = document.getElementById('gate-nome').value.trim();
+  const senha = document.getElementById('gate-senha').value;
+  if (!nome || senha.length < 6) { showToast('⚠️ Nome e senha (mín. 6 caracteres)'); return; }
+  const { error } = await sb.auth.signUp({ email: gateData.email, password: senha, options: { data: { nome, cpf: gateData.cpf } } });
+  if (error) { showToast('⚠️ ' + error.message); return; }
+  gateData.nome = nome;
+  document.getElementById('gate-confirm-email').textContent = gateData.email;
+  showGate('confirm');
+}
+
+async function gateEntrarAposConfirmar() {
+  const { data, error } = await sb.auth.signInWithPassword({ email: gateData.email, password: document.getElementById('gate-senha').value });
+  if (error) { showToast('⚠️ Confirme o e-mail antes de entrar'); return; }
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/ativar-licenca`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.session.access_token}` },
+      body: JSON.stringify({ cpf: gateData.cpf, nome: gateData.nome }),
+    });
+  } catch (e) { console.warn('Falha ao ativar licença', e); }
+  await onAuthenticated(data.session);
+}
+
+async function gateLogin() {
+  const email = document.getElementById('gate-login-email').value.trim();
+  const senha = document.getElementById('gate-login-senha').value;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+  if (error) { showToast('⚠️ ' + error.message); return; }
+  await onAuthenticated(data.session);
+}
+
+async function gateLogout() {
+  if (sb) await sb.auth.signOut();
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let state = JSON.parse(localStorage.getItem('cr_state') || 'null') || {
+  assessed: false, cycleNum: 0, currentWeek: 1, completedWeeks: [],
+  profile: {}, scores: {}, lesoes: [], plan: null, parqAlert: false,
+  logs: {}, tests: {}, history: []
+};
+let avData = {};
+let avChecks = {};
+let avScales = {};
+let timerSecs = 90, timerRunning = false, timerInterval = null;
+let currentExFilter = 'all';
+let testMode = 'inicial'; // 'inicial' | 'reteste'
+let viewedCycle = null; // null = ciclo atual; N = revisando histórico do ciclo N
+let closeData = {}; // dados temporários do fechamento de ciclo em andamento
+
+function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); syncStateToCloud(); }
+
+// ══════════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════════
+function goToScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  const navBtn = btn || document.getElementById('bnav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+  if (name === 'home') renderHome();
+  if (name === 'plano' && state.assessed) renderPlan();
+  if (name === 'exercicios') renderExercises();
+  if (name === 'perfil') renderProfile();
+  updateHdrSub();
+}
+
+function updateHdrSub() {
+  const el = document.getElementById('hdr-sub');
+  if (!el) return;
+  el.textContent = state.assessed && state.profile['av-modalidade']
+    ? `${modLabel(state.profile['av-modalidade'])} · Ciclo ${state.cycleNum}`
+    : 'Fortalecimento para Endurance';
+}
+
+// ══════════════════════════════════════════════════════
+// ASSESSMENT
+// ══════════════════════════════════════════════════════
+function startAssessment() {
+  avData = {}; avChecks = {}; avScales = {};
+  goToScreen('avaliacao', document.getElementById('bnav-avaliacao'));
+  showStep(1);
+  buildScales();
+}
+
+function showStep(n) {
+  document.querySelectorAll('.av-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('av-step-' + n).classList.add('active');
+  document.getElementById('av-step-num').textContent = `PASSO ${n} DE 6`;
+  const titles = ['Perfil do atleta','Experiência','Objetivo','Histórico de lesões','Capacidade funcional','Disponibilidade'];
+  document.getElementById('av-step-title').textContent = titles[n-1];
+  document.querySelectorAll('#av-dots .step-dot').forEach((d, i) => {
+    d.className = 'step-dot ' + (i < n-1 ? 'done' : i === n-1 ? 'active' : '');
+  });
+}
+
+function selectRadio(key, val, el) {
+  avData[key] = val;
+  el.closest('.radio-group').querySelectorAll('.radio-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function toggleCheck(id, el) {
+  avChecks[id] = !avChecks[id];
+  el.classList.toggle('sel', avChecks[id]);
+}
+
+function buildScales() {
+  const scales = [
+    {id:'eq-forca', label:'Força geral (agachamento, levantamento)', desc:'1 = nunca fiz pesado · 10 = treino com carga alta regularmente'},
+    {id:'eq-equilibrio', label:'Equilíbrio unipodal (uma perna)', desc:'1 = caio facilmente · 10 = fico 30+ segundos sem problema'},
+    {id:'eq-mobilidade', label:'Mobilidade (agachamento profundo)', desc:'1 = muito rígido · 10 = agacha fundo sem apoio'},
+    {id:'eq-nordic', label:'Controle excêntrico (descida lenta)', desc:'1 = nunca fiz · 10 = faço Nordic Curl completo'},
+    {id:'eq-dor', label:'Dor durante o treino específico (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede o treino'},
+  ];
+  const container = document.getElementById('av-scales');
+  container.innerHTML = scales.map(s => `
+    <div class="input-group">
+      <label class="input-label">${s.label}</label>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${s.desc}</div>
+      <div class="scale-btns" id="scale-${s.id}">
+        ${[...Array(11).keys()].map(i => `<div class="scale-btn" onclick="selectScale('${s.id}',${i},this)">${i}</div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function selectScale(id, val, el) {
+  avScales[id] = val;
+  document.querySelectorAll(`#scale-${id} .scale-btn`).forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function nextStep(current) {
+  if (current === 1) {
+    avData['nome'] = document.getElementById('av-nome').value || 'Atleta';
+    avData['idade'] = document.getElementById('av-idade').value;
+    avData['peso'] = document.getElementById('av-peso').value;
+    if (!avData['av-modalidade']) { showToast('⚠️ Selecione sua modalidade'); return; }
+    if (!avData['av-genero']) { showToast('⚠️ Selecione o gênero'); return; }
+  }
+  if (current === 2) {
+    if (!avData['av-exp-corrida'] || !avData['av-exp-muscu']) { showToast('⚠️ Responda as duas perguntas'); return; }
+    avData['av-dias-modalidade'] = document.getElementById('av-dias-modalidade').value;
+  }
+  if (current === 3 && !avData['av-objetivo']) { showToast('⚠️ Selecione seu objetivo'); return; }
+  if (current === 5) {
+    const needed = ['eq-forca','eq-equilibrio','eq-mobilidade','eq-nordic'];
+    if (needed.some(k => avScales[k] === undefined)) { showToast('⚠️ Avalie todos os itens'); return; }
+  }
+  showStep(current + 1);
+}
+
+function prevStep(current) { showStep(current - 1); }
+
+function finishAssessment() {
+  if (!avData['av-dias']) { showToast('⚠️ Selecione a disponibilidade'); return; }
+  avData['av-prova'] = document.getElementById('av-prova').value || '';
+
+  // Calcular score de risco e nível
+  const forca = avScales['eq-forca'] || 3;
+  const equil = avScales['eq-equilibrio'] || 3;
+  const mobil = avScales['eq-mobilidade'] || 3;
+  const nordic = avScales['eq-nordic'] || 2;
+  const dor   = avScales['eq-dor'] || 0;
+
+  const funcScore = Math.round((forca + equil + mobil + nordic) / 4);
+  const riskScore = Math.round((10 - funcScore) * 0.6 + dor * 0.4);
+
+  const nivel = forca <= 3 ? 'Iniciante' : forca <= 6 ? 'Intermediário' : 'Avançado';
+  const muscu = avData['av-exp-muscu'];
+  const expM = muscu === 'nenhuma' ? 'Iniciante' : muscu === 'basica' ? 'Intermediário' : 'Avançado';
+  const nivelFinal = forca < 4 && muscu === 'nenhuma' ? 'Iniciante' : forca > 6 && muscu === 'avancada' ? 'Avançado' : 'Intermediário';
+
+  state.profile = { ...avData, nivel: nivelFinal, funcScore, riskScore };
+  state.scores = { forca, equil, mobil, nordic, dor };
+  state.parqAlert = !!avChecks['parq-risco'];
+  state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && k !== 'parq-risco');
+  saveState();
+
+  // Antes de gerar o Ciclo 1, o aluno faz o teste físico inicial —
+  // isso vira a referência de comparação para a reavaliação do mês 1.
+  testMode = 'inicial';
+  document.getElementById('teste-title').textContent = 'Teste Físico Inicial';
+  document.getElementById('teste-sub').textContent = 'Vira sua referência para medir evolução no fim do mês';
+  document.getElementById('teste-submit-btn').textContent = 'Salvar teste e gerar Ciclo 1 ✓';
+  renderTesteInputs('teste-inputs', 'teste-', null);
+  goToScreen('teste');
+}
+
+// ══════════════════════════════════════════════════════
+// TESTE FÍSICO (inicial + reteste ao fim de cada ciclo)
+// ══════════════════════════════════════════════════════
+function getTests(sport) {
+  const base = [
+    { id:'salto', label:'Salto Horizontal (Broad Jump)', unit:'cm', desc:'Pés juntos, sem corrida de aproximação — melhor de 2 tentativas.' },
+    { id:'prancha', label:'Prancha Ventral', unit:'segundos', desc:'Tempo máximo mantendo o quadril alinhado, sem deixar cair.' },
+    { id:'agacha', label:'Agachamento Livre', unit:'repetições em 60s', desc:'Amplitude completa, ritmo constante, sem pausar.' },
+    { id:'nordic', label:'Nordic Curl (ou variação assistida)', unit:'repetições controladas', desc:'Descida de 3-5 segundos, sem "cair" no final.' },
+  ];
+  if (sport === 'natacao') base.push({ id:'ombro', label:'Rotação Externa com Elástico até a falha', unit:'repetições/lado', desc:'Use a MESMA resistência de elástico nos dois testes para poder comparar.' });
+  if (sport === 'ciclismo' || sport === 'hibrido') base.push({ id:'wallsit', label:'Wall Sit (cadeira na parede)', unit:'segundos', desc:'Joelho a 90°, encostado na parede, tempo máximo.' });
+  return base;
+}
+
+function renderTesteInputs(containerId, idPrefix, prefill) {
+  const sport = state.profile['av-modalidade'] || 'corrida';
+  const tests = getTests(sport);
+  document.getElementById(containerId).innerHTML = tests.map(t => `
+    <div class="input-group">
+      <label class="input-label">${t.label} <span style="color:var(--muted);font-weight:400">(${t.unit})</span></label>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${t.desc}</div>
+      <input type="number" step="0.1" min="0" id="${idPrefix}${t.id}" placeholder="0"${prefill && prefill[t.id]!=null ? ` value="${prefill[t.id]}"` : ''}/>
+    </div>`).join('');
+}
+
+function submitTeste() {
+  const prefix = testMode === 'inicial' ? 'teste-' : 'cc-teste-';
+  const sport = state.profile['av-modalidade'] || 'corrida';
+  const tests = getTests(sport);
+  const result = {};
+  for (const t of tests) {
+    const el = document.getElementById(prefix + t.id);
+    if (!el || el.value === '') { showToast('⚠️ Preencha todos os testes'); return; }
+    result[t.id] = parseFloat(el.value);
+  }
+  if (testMode === 'inicial') {
+    state.tests[0] = result;
+    state.cycleNum = 1;
+    state.plan = generateCycle(1, state.profile, state.lesoes, 'base');
+    state.currentWeek = 1;
+    state.completedWeeks = [];
+    state.assessed = true;
+    viewedCycle = null;
+    saveState();
+    renderHome(); renderPlan(); renderProfile();
+    goToScreen('plano', document.getElementById('bnav-plano'));
+    showToast('✅ Teste salvo — Ciclo 1 gerado!');
+  } else {
+    closeData.testeFinal = result;
+    goToCloseStep(3);
+  }
+}
+
+function cancelTeste() {
+  if (testMode === 'inicial') { goToScreen('avaliacao', document.getElementById('bnav-avaliacao')); showStep(6); }
+  else { goToScreen('fechociclo'); showCloseStep(1); }
+}
+
+// ══════════════════════════════════════════════════════
+// FECHAMENTO DE CICLO — reavaliação + reteste + feedback
+// ══════════════════════════════════════════════════════
+function startCloseCycle() {
+  closeData = {};
+  ['cc-forca','cc-equilibrio','cc-mobilidade','cc-nordic','cc-dor','cc-rpe'].forEach(k => delete avScales[k]);
+  ['cc-parq-risco','cc-dornova'].forEach(k => delete avChecks[k]);
+  ['cc-aderencia','cc-volume'].forEach(k => delete avData[k]);
+  goToScreen('fechociclo');
+  showCloseStep(1);
+  buildCloseScales();
+}
+
+function showCloseStep(n) {
+  document.querySelectorAll('.cc-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('cc-step-' + n).classList.add('active');
+  const titles = ['Reavaliação rápida', 'Reteste físico', 'Feedback do ciclo'];
+  document.getElementById('cc-step-title').textContent = titles[n-1];
+  document.getElementById('cc-step-num').textContent = `PASSO ${n} DE 3`;
+  document.querySelectorAll('#cc-dots .step-dot').forEach((d,i) => d.className = 'step-dot ' + (i < n-1 ? 'done' : i === n-1 ? 'active' : ''));
+  if (n === 2) { testMode = 'reteste'; renderTesteInputs('cc-teste-inputs', 'cc-teste-', null); }
+  if (n === 3 && !document.querySelector('#scale-cc-rpe .scale-btn')) {
+    document.getElementById('scale-cc-rpe').innerHTML = [...Array(11).keys()].map(i => `<div class="scale-btn" onclick="selectScale('cc-rpe',${i},this)">${i}</div>`).join('');
+  }
+}
+
+function goToCloseStep(n) { showCloseStep(n); }
+
+function buildCloseScales() {
+  const scales = [
+    {id:'cc-forca', label:'Força geral (agachamento, levantamento)', desc:'1 = piorou muito · 10 = muito mais forte que no início'},
+    {id:'cc-equilibrio', label:'Equilíbrio unipodal (uma perna)', desc:'1 = caio facilmente · 10 = fico 30+ segundos sem problema'},
+    {id:'cc-mobilidade', label:'Mobilidade (agachamento profundo)', desc:'1 = muito rígido · 10 = agacha fundo sem apoio'},
+    {id:'cc-nordic', label:'Controle excêntrico (descida lenta)', desc:'1 = nunca fiz · 10 = faço Nordic Curl completo'},
+    {id:'cc-dor', label:'Dor atual durante o treino específico (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede o treino'},
+  ];
+  document.getElementById('cc-scales').innerHTML = scales.map(s => `
+    <div class="input-group">
+      <label class="input-label">${s.label}</label>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${s.desc}</div>
+      <div class="scale-btns" id="scale-${s.id}">
+        ${[...Array(11).keys()].map(i => `<div class="scale-btn" onclick="selectScale('${s.id}',${i},this)">${i}</div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function ccNextStep(current) {
+  if (current === 1) {
+    const needed = ['cc-forca','cc-equilibrio','cc-mobilidade','cc-nordic','cc-dor'];
+    if (needed.some(k => avScales[k] === undefined)) { showToast('⚠️ Avalie todos os itens'); return; }
+    closeData.reassess = { forca: avScales['cc-forca'], equil: avScales['cc-equilibrio'], mobil: avScales['cc-mobilidade'], nordic: avScales['cc-nordic'], dor: avScales['cc-dor'] };
+    closeData.parqAlert = !!avChecks['cc-parq-risco'];
+  }
+  showCloseStep(current + 1);
+}
+
+function ccPrevStep(current) { showCloseStep(current - 1); }
+
+function submitFeedback() {
+  const rpe = avScales['cc-rpe'];
+  const aderencia = avData['cc-aderencia'];
+  const volumeWish = avData['cc-volume'];
+  const dorNova = !!avChecks['cc-dornova'];
+  if (rpe === undefined || !aderencia || !volumeWish) { showToast('⚠️ Responda tudo antes de continuar'); return; }
+  closeData.feedback = { rpe, aderencia, volumeWish, dorNova, obs: document.getElementById('cc-obs').value || '' };
+  closeTheCycle();
+}
+
+async function closeTheCycle() {
+  const c = state.cycleNum;
+  const testBefore = state.tests[c - 1] || state.tests[0];
+  const testAfter = closeData.testeFinal;
+  state.tests[c] = testAfter;
+
+  // Comparação do teste: % de variação por teste + mediana geral
+  // (mediana em vez de média — evita que 1 teste com base baixa, ex.: Nordic Curl
+  // saindo de 2 reps, distorça sozinho a leitura geral de evolução)
+  const deltas = {};
+  const pcts = [];
+  Object.keys(testAfter).forEach(k => {
+    const before = testBefore[k] || 0;
+    const after = testAfter[k];
+    const pct = before > 0 ? ((after - before) / before) * 100 : 0;
+    deltas[k] = { before, after, pct: Math.round(pct * 10) / 10 };
+    pcts.push(pct);
+  });
+  const sorted = [...pcts].sort((a,b) => a-b);
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length ? (sorted.length % 2 ? sorted[mid] : (sorted[mid-1]+sorted[mid])/2) : 0;
+  const overallPct = Math.round(median * 10) / 10;
+
+  // Aderência aos exercícios prescritos no ciclo que está fechando
+  const logsSummary = summarizeLogs(c);
+  const prevFocus = state.plan.focus.key;
+
+  // Tenta a decisão via IA (Groq, através do proxy protegido). Se falhar
+  // (offline, backend não configurado, erro da API), cai na regra local.
+  let nextFocusKey, aiReasoning = null, aiAlerta = false;
+  const btn = document.querySelector('#cc-step-3 .btn-acc');
+  if (btn) btn.textContent = 'Consultando IA...';
+  try {
+    if (!sb) throw new Error('Backend não configurado');
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({
+        prevFocus, sport: state.profile['av-modalidade'], nivel: state.profile.nivel,
+        testDeltas: deltas, overallPct, reassess: closeData.reassess, feedback: closeData.feedback, logsSummary,
+      }),
+    });
+    const decision = await res.json();
+    if (!decision.nextFocus) throw new Error('Resposta da IA inválida');
+    nextFocusKey = decision.nextFocus;
+    aiReasoning = decision.reasoning || null;
+    aiAlerta = !!decision.alertaSaude;
+  } catch (e) {
+    console.warn('IA indisponível, usando regra local:', e);
+    nextFocusKey = decideNextFocus(prevFocus, { overallPct }, closeData.feedback, logsSummary);
+  }
+  if (btn) btn.textContent = 'Gerar próximo ciclo ✓';
+
+  // Arquiva o ciclo que está fechando (plano + testes + reavaliação + feedback + logs)
+  state.history.push({
+    cycleNum: c, plan: state.plan, testBefore, testAfter, deltas, overallPct,
+    reassess: closeData.reassess, feedback: closeData.feedback, logsSummary, aiReasoning,
+    closedAt: new Date().toISOString(),
+  });
+
+  // Atualiza perfil com a reavaliação (novo "estado atual" do aluno)
+  state.scores = closeData.reassess;
+  state.parqAlert = closeData.parqAlert || state.parqAlert || aiAlerta;
+  const rf = closeData.reassess;
+  state.profile.funcScore = Math.round((rf.forca + rf.equil + rf.mobil + rf.nordic) / 4);
+  state.profile.riskScore = Math.round((10 - state.profile.funcScore) * 0.6 + rf.dor * 0.4);
+  const muscuExp = state.profile['av-exp-muscu'];
+  state.profile.nivel = rf.forca < 4 && muscuExp === 'nenhuma' ? 'Iniciante' : rf.forca > 6 && muscuExp === 'avancada' ? 'Avançado' : 'Intermediário';
+
+  // Gera o próximo ciclo
+  const nextCycleNum = c + 1;
+  state.cycleNum = nextCycleNum;
+  state.plan = generateCycle(nextCycleNum, state.profile, state.lesoes, nextFocusKey);
+  state.currentWeek = 1;
+  state.completedWeeks = [];
+  viewedCycle = null;
+  saveState();
+
+  renderHome(); renderPlan(); renderProfile();
+  goToScreen('plano', document.getElementById('bnav-plano'));
+  showToast(aiReasoning ? `✅ Ciclo ${nextCycleNum} gerado pela IA: ${aiReasoning}` : `✅ Ciclo ${c} fechado — Ciclo ${nextCycleNum} gerado (${FOCUS_DEFS[nextFocusKey].name})`);
+}
+
+// Placeholder de decisão — quando a IA real for integrada, ela substitui esta
+// função, recebendo os mesmos dados (deltas de teste, reavaliação, feedback,
+// aderência aos treinos) via o prompt PROMPT_IA_FORTALECIMENTO_ENDURANCE_v2.md.
+function decideNextFocus(prevFocusKey, testResult, feedback, logsSummary) {
+  const order = ['base', 'forca', 'potencia', 'manutencao'];
+  let idx = order.indexOf(prevFocusKey);
+  const pioraTest = testResult.overallPct < -3;
+  const dorNova = feedback.dorNova || (closeData.reassess && closeData.reassess.dor >= 6);
+  const querReduzir = feedback.volumeWish === 'reduzir';
+  const querAumentar = feedback.volumeWish === 'aumentar';
+  const aderenciaBaixa = feedback.aderencia === 'nao';
+  const dificuldadeAlta = logsSummary.avgDificuldade >= 8.5;
+
+  if (pioraTest || dorNova || querReduzir || aderenciaBaixa || dificuldadeAlta) {
+    return prevFocusKey === 'base' ? 'base' : order[Math.max(idx - 1, 0)];
+  }
+  if (prevFocusKey === 'manutencao') return querAumentar ? 'forca' : 'manutencao';
+  if (querAumentar || testResult.overallPct > 5) return order[Math.min(idx + 1, order.length - 1)];
+  return order[Math.min(idx + 1, order.length - 1)];
+}
+
+function summarizeLogs(cycleNum) {
+  const cycleLogs = state.logs[cycleNum] || {};
+  let totalEx = 0, loggedEx = 0, sumDificuldade = 0, nDificuldade = 0, naoCompletou = 0;
+  Object.values(cycleLogs).forEach(week => Object.values(week).forEach(session => Object.values(session).forEach(ex => {
+    totalEx++;
+    if (ex.dificuldade !== '' && ex.dificuldade != null) { sumDificuldade += parseFloat(ex.dificuldade); nDificuldade++; loggedEx++; }
+    if (ex.obs && /n[aã]o|s[oó]|apenas|menos/i.test(ex.obs)) naoCompletou++;
+  })));
+  return {
+    totalEx, loggedEx,
+    avgDificuldade: nDificuldade > 0 ? Math.round((sumDificuldade / nDificuldade) * 10) / 10 : null,
+    naoCompletou,
+  };
+}
+
+
+const FOCUS_DEFS = {
+  base: { key:'base', num:1, name:'Bloco Base', focus:'Ativação neural + mobilidade + isometria', color:'var(--acc2)', icon:'🌱',
+    desc:'Construir base de força sem fadiga excessiva. Exercícios com peso corporal e isometria.', intensity:'Leve–Moderada', load:'60–70% RM' },
+  forca: { key:'forca', num:2, name:'Bloco Força', focus:'Carga alta + excêntrica + pliometria base', color:'var(--acc)', icon:'💪',
+    desc:'Heavy Strength Training — o estímulo que melhora a economia de corrida em 4,6% (Støren, 2008).', intensity:'Alta', load:'80–85% RM' },
+  potencia: { key:'potencia', num:3, name:'Bloco Potência', focus:'Velocidade de execução + pliometria avançada', color:'var(--warn)', icon:'⚡',
+    desc:'Potenciação pós-ativação (PAP): força pesada seguida de pliometria. Rigidez tendinosa máxima.', intensity:'Muito alta', load:'85–90% RM + plio' },
+  manutencao: { key:'manutencao', num:4, name:'Bloco Manutenção', focus:'Dose mínima + sustentação', color:'var(--muted)', icon:'🎯',
+    desc:'1-2 sessões/semana pesadas mantêm a força por meses (Spiering, 2021).', intensity:'Moderada', load:'85% RM (volume reduzido)' },
+};
+
+function generateCycle(cycleNum, data, lesoes, focusKey) {
+  const obj = data['av-objetivo'] || 'corredor';
+  const dias = parseInt(data['av-dias'] || '3');
+  const nivel = data.nivel || 'Intermediário';
+  const genero = data['av-genero'];
+  const sport = data['av-modalidade'] || 'corrida';
+  const temJoelho = lesoes.includes('lesao-joelho');
+  const temAquiles = lesoes.includes('lesao-tornozelo');
+  const temIsquio = lesoes.includes('lesao-isquio');
+  const temLombar = lesoes.includes('lesao-lombar');
+  const temOmbro = lesoes.includes('lesao-ombro');
+  const prova = data['av-prova'] || '';
+  const focus = FOCUS_DEFS[focusKey] || FOCUS_DEFS.base;
+
+  const weeks = [];
+  for (let w = 1; w <= 4; w++) {
+    const isDeload = w === 4;
+    weeks.push({
+      num: w, cycleNum, focusKey: focus.key, focusName: focus.name, focusColor: focus.color,
+      name: isDeload ? 'Semana 4 — Deload + Reteste' : `Semana ${w}`,
+      focus: isDeload ? 'Volume reduzido 40% — preparar para o reteste físico' : focus.focus,
+      isDeload,
+      sessions: buildWeekSessions(w, focus, dias, obj, nivel, sport, { temJoelho, temAquiles, temIsquio, temLombar, temOmbro, prova, genero }),
+    });
+  }
+  return { cycleNum, focus, weeks };
+}
+
+// Este app SÓ prescreve fortalecimento. As sessões abaixo nunca incluem
+// pace, watts ou séries de nado — o treino específico é do seu treinador.
+function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
+  const { temJoelho, temAquiles, temIsquio, temLombar, temOmbro } = flags;
+  const isDeload = week % 4 === 0 && week < 15;
+  const deloadMod = isDeload ? ' (volume -40%)' : '';
+  const encaixe = 'Encaixe: faça esta sessão de força ANTES do treino específico do dia, ou com ≥6h de intervalo (Coffey & Hawley, 2017; Zhang, 2026).';
+
+  const anti = ['McGill Modified Curl-up — 3×10 seg.10s','Bird-Dog — 3×8/lado seg.8s','Side Plank — 3×30s/lado'];
+  const core = [...anti, 'Pallof Press — 3×10/lado'];
+  const shoulder = buildShoulder(isDeload, temOmbro);
+  const impact = sport !== 'natacao'; // natação não usa pliometria de impacto
+
+  const sessions2 = [
+    { day: 'Sessão A', type: 'força', emoji:'🏋️', name: 'Full Body — Força Máxima' + deloadMod,
+      exercises: [...buildLower(phase, nivel, { temJoelho, temAquiles, temIsquio }, isDeload, sport), encaixe] },
+    { day: 'Sessão B', type: 'força', emoji:'💪', name: 'Full Body — Unilateral + Core' + (sport==='natacao'?' + Ombro':''),
+      exercises: [...buildUnilateral(phase, nivel, isDeload, sport), ...core, ...(sport==='natacao'?shoulder:[]), encaixe] },
+  ];
+
+  const sessions3 = [
+    { day: 'Sessão A', type: 'força', emoji:'🏋️', name: 'Força — Lower Body' + deloadMod,
+      exercises: [...buildLower(phase, nivel, { temJoelho, temAquiles, temIsquio }, isDeload, sport), encaixe] },
+    { day: 'Sessão B', type: 'força', emoji:'💪', name: 'Força — Unilateral' + (impact?' + Pliometria':' + Estabilidade'),
+      exercises: [...buildUnilateral(phase, nivel, isDeload, sport), ...(impact ? buildPlio(phase, isDeload, sport) : shoulder), encaixe] },
+    { day: 'Sessão C', type: 'força', emoji:'🏋️', name: 'Força — Upper Body + Core',
+      exercises: [...buildUpper(isDeload), ...core, ...(sport==='natacao'?shoulder:[]), encaixe] },
+  ];
+
+  const sessions4 = [
+    { day: 'Sessão A', type: 'força', emoji:'🏋️', name: 'Força — Lower Body Heavy' + deloadMod,
+      exercises: [...buildLower(phase, nivel, { temJoelho, temAquiles, temIsquio }, isDeload, sport), encaixe] },
+    { day: 'Sessão B', type: 'força', emoji:'💪', name: 'Força — Unilateral' + (impact?' + Pliometria':' + Estabilidade'),
+      exercises: [...buildUnilateral(phase, nivel, isDeload, sport), ...(impact ? buildPlio(phase, isDeload, sport) : shoulder), encaixe] },
+    { day: 'Sessão C', type: 'força', emoji:'🏋️', name: 'Força — Upper Body + Core',
+      exercises: [...buildUpper(isDeload), ...core, encaixe] },
+    { day: 'Sessão D', type: 'força', emoji:'🛡', name: 'Kit Anti-Lesão + Mobilidade',
+      exercises: [...buildKitAntiLesao(sport), ...(sport==='natacao'?shoulder:[]), encaixe] },
+  ];
+
+  return dias <= 2 ? sessions2 : dias === 3 ? sessions3 : sessions4;
+}
+
+function buildLower(phase, nivel, flags, isDeload, sport) {
+  const { temJoelho, temAquiles, temIsquio } = flags;
+  const s = isDeload ? '2' : phase.num <= 1 ? '3' : '4';
+  const load = phase.num === 1 ? '60-70% RM' : phase.num === 2 ? '80-85% RM' : '85-90% RM';
+  const ex = [];
+  ex.push(`Back Squat / Trap Bar Deadlift — ${s}×${phase.num<=1?'8-10':'4-6'} (${load})`);
+  if (temAquiles) ex.push('Protocolo Alfredson — 3×15 (perna reta + dobrada em degrau)');
+  if (temJoelho) ex.push('Spanish Squat Isométrico — 3×45s (60° flexão, analgesia cortical)');
+  ex.push('Hip Thrust — 3×10-12 (pico iso 1-2s)');
+  if (temIsquio) ex.push('Nordic Hamstring Curl — 2×5-8 exc. lento 3-5s (assistido → livre)');
+  if (sport === 'ciclismo') ex.push('Leg Press Unilateral — 3×8-10/lado (gesto pedal é cíclico e unilateral)');
+  ex.push('Calf Raise Excêntrico — 3×12/lado (4s descida)');
+  ex.push('Kit Anti-Lesão: Tibialis Raises 3×15 · Peroneal 3×15 · Clamshells 3×15');
+  return ex;
+}
+
+function buildUnilateral(phase, nivel, isDeload, sport) {
+  const s = isDeload ? '2' : '3';
+  const load = phase.num <= 1 ? 'peso corporal' : phase.num === 2 ? 'halteres leves' : 'progressão carga';
+  const ex = [
+    `Bulgarian Split Squat — ${s}×8/lado (${load}, torso 30-45°)`,
+    `Single Leg RDL — ${s}×8-10/lado (equilíbrio + controle tornozelo)`,
+    'Step-Up — 3×10/lado (banco 30cm, empurrar com perna da frente)',
+    'Deadbug — 3×10 (lombar colada ao chão)',
+  ];
+  if (sport === 'natacao') ex.push('Pallof Press com rotação de tronco — 3×10/lado (transferência do "catch")');
+  if (sport === 'ciclismo') ex.push('Prancha com anti-flexão lombar prolongada — 3×45-60s (postura aerodinâmica sustentada)');
+  return ex;
+}
+
+function buildPlio(phase, isDeload, sport) {
+  if (phase.num < 2 || isDeload) return [];
+  const capNote = sport === 'ciclismo' ? 'Dose reduzida no ciclismo — sem fase de impacto/aterrissagem, prioridade é força máxima (Rønnestad & Mujika, 2014).' : '<250 saltos/semana total (Moran, 2023)';
+  if (phase.num === 2) return sport === 'ciclismo'
+    ? ['Pogo Jumps — 2×15 (dose reduzida — foco é RFD, não SSC)']
+    : ['Pogo Jumps — 3×15-20 (mínimo contato solo — rigidez tendão)'];
+  const base = sport === 'ciclismo'
+    ? ['Pogo Jumps — 2×15', 'Box Jumps — 2×5 (altura máx, foco em potência concêntrica)']
+    : ['Pogo Jumps — 3×20', 'Box Jumps — 3×5 (altura máx, aterr. silenciosa)', 'Broad Jumps — 3×5 (potência horizontal — padrão da passada)'];
+  return [...base, capNote];
+}
+
+function buildUpper(isDeload) {
+  const s = isDeload ? '2' : '3';
+  return [
+    `Pull-ups / Remada — ${s}×8-10`,
+    `Shoulder Press — ${s}×10`,
+    'Y-T-W em prono — 3×10 cada (estabilizadores escapulares)',
+    'Face Pull com elástico — 3×15',
+  ];
+}
+
+function buildShoulder(isDeload, temOmbro) {
+  const s = isDeload ? '2' : '3';
+  return [
+    `Rotação Externa com elástico — ${s}×15/lado (manguito rotador — "Nordic Curl da natação")`,
+    'Face Pull com elástico — 3×15 (controle escapular)',
+    'Serrátil Anterior (Wall Slide) — 3×12',
+    temOmbro ? 'Reduza amplitude e carga em caso de dor >3/10 — priorize controle sobre volume' : 'Y-T-W em prono — 3×10 cada',
+  ];
+}
+
+function buildKitAntiLesao(sport) {
+  const ex = [
+    'Tibialis Raises — 3×15',
+    'Peroneal Raises — 3×15',
+    'Clamshells com Banda — 3×15/lado',
+    'Deep Squat Hold — 3-5min (mobilidade de quadril)',
+  ];
+  if (sport === 'natacao') ex.push('90/90 Hip Switch — 3×10 (rotação de tronco para o nado)');
+  if (sport === 'ciclismo') ex.push('Couch Stretch — 2-3min/lado (flexor de quadril encurtado pela postura na bike)');
+  return ex;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER HOME
+// ══════════════════════════════════════════════════════
+function renderHome() {
+  if (state.assessed && state.plan) {
+    document.getElementById('home-cta-area').style.display = 'none';
+    document.getElementById('home-plan-area').style.display = 'block';
+    const cw = state.currentWeek;
+    const w = state.plan.weeks[cw - 1];
+    const focus = state.plan.focus;
+    document.getElementById('hs-week').textContent = `C${state.cycleNum}·S${cw}`;
+    document.getElementById('hs-phase').textContent = focus.icon;
+    document.getElementById('hs-score').textContent = state.profile.funcScore + '/10';
+    document.getElementById('home-phase-tag').textContent = `Ciclo ${state.cycleNum} · ${focus.name}`;
+    document.getElementById('home-week-info').textContent = state.completedWeeks.length === 4
+      ? 'Ciclo completo — feche e reavalie para gerar o próximo mês'
+      : `Semana ${cw} de 4 — ${w.focus}`;
+    document.getElementById('home-progress').style.width = `${(state.completedWeeks.length / 4) * 100}%`;
+  } else {
+    document.getElementById('hs-week').textContent = '—';
+    document.getElementById('hs-phase').textContent = '—';
+    document.getElementById('hs-score').textContent = '—';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER PLAN
+// ══════════════════════════════════════════════════════
+function renderPlan() {
+  if (!state.plan) return;
+  const hero = document.getElementById('plan-hero-area');
+  const p = state.profile;
+  const vp = getViewedPlan();
+  const focus = vp.focus;
+  hero.innerHTML = `
+    <div style="font-size:10px;font-weight:700;color:var(--acc);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Ciclo ${vp.cycleNum} · ${p.nivel || 'Iniciante'}</div>
+    <div style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:6px">${focus.icon} ${focus.name}</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">${focus.desc}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag tag-green">${modLabel(p['av-modalidade'])}</span>
+      <span class="tag tag-blue">${focus.load}</span>
+      <span class="tag tag-muted">${p['av-dias']}× força/sem</span>
+      ${vp.cycleNum !== state.cycleNum ? '<span class="tag tag-orange">Ciclo encerrado</span>' : ''}
+    </div>
+    ${state.parqAlert && vp.cycleNum === state.cycleNum ? '<div style="margin-top:10px;font-size:11px;color:var(--red)">⚠️ PAR-Q sinalizado — procure liberação médica antes de iniciar.</div>' : ''}`;
+
+  renderCycleTabs();
+  renderWeekGrid();
+}
+
+function getViewedPlan() {
+  if (viewedCycle === null || viewedCycle === state.cycleNum) return state.plan;
+  const h = state.history.find(x => x.cycleNum === viewedCycle);
+  return h ? h.plan : state.plan;
+}
+
+function renderCycleTabs() {
+  const tabs = document.getElementById('phase-tabs');
+  const nums = [...state.history.map(h => h.cycleNum), state.cycleNum];
+  tabs.innerHTML = nums.map(n => `
+    <button class="phase-tab ${(viewedCycle===null && n===state.cycleNum)||viewedCycle===n ? 'active' : ''}" onclick="viewCycle(${n})">
+      ${n === state.cycleNum ? '🟢' : '✓'} Ciclo ${n}
+    </button>`).join('');
+}
+
+function viewCycle(n) {
+  viewedCycle = n === state.cycleNum ? null : n;
+  renderPlan();
+}
+
+function renderWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  const vp = getViewedPlan();
+  const isCurrentCycle = vp.cycleNum === state.cycleNum;
+  grid.innerHTML = `
+    ${vp.weeks.map(w => {
+      const done = isCurrentCycle ? state.completedWeeks.includes(w.num) : true;
+      const cur = isCurrentCycle && state.currentWeek === w.num;
+      return `<div class="week-card ${done?'done':''} ${cur?'current':''}" onclick="openWeek(${vp.cycleNum},${w.num})">
+        <div class="week-num" style="color:${w.focusColor}">SEMANA ${w.num}</div>
+        <div class="week-name">${w.isDeload ? '🔄 Deload' : w.focusName}</div>
+        <div class="week-focus">${w.focus.slice(0,50)}${w.focus.length>50?'…':''}</div>
+        <div class="week-bar"><div class="week-bar-fill" style="background:${w.focusColor};width:${done?100:cur?40:0}%"></div></div>
+      </div>`;
+    }).join('')}
+    ${isCurrentCycle && state.completedWeeks.length === 4 ? `
+    <div style="grid-column:1/-1;margin-top:6px">
+      <button class="btn btn-acc" style="width:100%" onclick="startCloseCycle()">📋 Fechar Ciclo ${vp.cycleNum} e reavaliar</button>
+    </div>` : ''}`;
+}
+
+function openWeek(cycleNum, weekNum) {
+  const vp = cycleNum === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === cycleNum) || {}).plan;
+  const w = vp.weeks[weekNum - 1];
+  const focus = vp.focus;
+  const isCurrentCycle = cycleNum === state.cycleNum;
+  const content = document.getElementById('modal-treino-content');
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="font-size:36px">${focus.icon}</div>
+      <div>
+        <div style="font-family:var(--ff);font-weight:800;font-size:18px">Ciclo ${cycleNum} · Semana ${weekNum}</div>
+        <div style="font-size:12px;color:var(--muted)">${w.focusName} · ${w.focus}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <span class="tag tag-green">${focus.intensity}</span>
+      <span class="tag tag-blue">${focus.load}</span>
+      ${w.isDeload ? '<span class="tag tag-orange">Deload</span>' : ''}
+    </div>`;
+
+  html += `<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;margin-bottom:14px">
+    ${w.sessions.map((s,i) => `<button style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--b1);background:${i===0?'rgba(200,241,53,.1)':'var(--s2)'};color:${i===0?'var(--acc)':'var(--muted)'};font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap" onclick="showModalDay(${cycleNum},${weekNum},${i},this)">${s.emoji} ${s.day}</button>`).join('')}
+  </div>`;
+
+  html += `<div id="modal-day-content">${renderDayContent(cycleNum, weekNum, 0, w.sessions[0], isCurrentCycle)}</div>`;
+
+  html += `<div style="display:flex;gap:10px;margin-top:16px">
+    ${isCurrentCycle && state.currentWeek === weekNum && !state.completedWeeks.includes(weekNum) ?
+      `<button class="btn btn-acc" style="flex:1" onclick="markWeekDone(${weekNum})">✓ Concluir semana</button>` :
+      isCurrentCycle && state.completedWeeks.includes(weekNum) ? `<button class="btn btn-ghost" style="flex:1;cursor:default">✓ Concluída</button>` : ''}
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-treino')">Fechar</button>
+  </div>`;
+
+  content.innerHTML = html;
+  openModal('modal-treino');
+}
+
+function showModalDay(cycleNum, weekNum, idx, btn) {
+  btn.parentElement.querySelectorAll('button').forEach((b,i) => {
+    b.style.background = i === idx ? 'rgba(200,241,53,.1)' : 'var(--s2)';
+    b.style.color = i === idx ? 'var(--acc)' : 'var(--muted)';
+  });
+  const vp = cycleNum === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === cycleNum) || {}).plan;
+  const w = vp.weeks[weekNum - 1];
+  const isCurrentCycle = cycleNum === state.cycleNum;
+  document.getElementById('modal-day-content').innerHTML = renderDayContent(cycleNum, weekNum, idx, w.sessions[idx], isCurrentCycle);
+}
+
+function isLoggableEx(ex) { return !(ex.startsWith('Kit')||ex.startsWith('<')||ex.startsWith('Encaixe')||ex.startsWith('Dose')); }
+function matchExercise(line) { return EXERCISES.find(e => line.startsWith(e.name)); }
+
+function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
+  return `
+    <div style="font-family:var(--ff);font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      ${session.emoji} ${session.name}
+    </div>
+    ${session.exercises.map((ex,i) => {
+      const loggable = isLoggableEx(ex);
+      const log = getLog(cycleNum, weekNum, sessionIdx, i);
+      const match = loggable ? matchExercise(ex) : null;
+      return `
+      <div style="padding:9px 0;border-bottom:1px solid var(--b1)">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="width:22px;height:22px;border-radius:6px;background:rgba(200,241,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--acc);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
+          <div style="font-size:13px;color:${loggable?'var(--txt)':'var(--muted)'};line-height:1.5;flex:1;${ex.startsWith('Encaixe')?'font-style:italic':''}">${ex}</div>
+          ${match ? `<button onclick="openExModal('${match.id}')" style="flex-shrink:0;width:26px;height:26px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--acc);font-size:11px;cursor:pointer">▶</button>` : ''}
+        </div>
+        ${loggable ? `
+        <div style="display:flex;gap:6px;margin-top:6px;margin-left:32px;flex-wrap:wrap;align-items:center">
+          <input type="number" step="0.5" placeholder="Carga (kg)" value="${log.carga||''}" ${editable?'':'disabled'}
+            style="width:88px;padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
+            onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'carga',this.value)"/>
+          <select ${editable?'':'disabled'} style="padding:6px 6px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
+            onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'dificuldade',this.value)">
+            <option value="">Dificuldade</option>
+            ${[...Array(11).keys()].map(n=>`<option value="${n}" ${String(log.dificuldade)===String(n)?'selected':''}>${n}/10</option>`).join('')}
+          </select>
+          <input type="text" placeholder="Conseguiu fazer? ex: sim / fiz só 6" value="${log.obs||''}" ${editable?'':'disabled'}
+            style="flex:1;min-width:140px;padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
+            onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'obs',this.value)"/>
+        </div>` : ''}
+      </div>`;
+    }).join('')}`;
+}
+
+function getLog(c, w, s, e) {
+  return (((state.logs[c]||{})[w]||{})[s]||{})[e] || { carga:'', dificuldade:'', obs:'' };
+}
+
+function updateLog(c, w, s, e, field, val) {
+  state.logs[c] = state.logs[c] || {};
+  state.logs[c][w] = state.logs[c][w] || {};
+  state.logs[c][w][s] = state.logs[c][w][s] || {};
+  state.logs[c][w][s][e] = state.logs[c][w][s][e] || { carga:'', dificuldade:'', obs:'' };
+  state.logs[c][w][s][e][field] = val;
+  saveState();
+}
+
+function markWeekDone(weekNum) {
+  if (!state.completedWeeks.includes(weekNum)) state.completedWeeks.push(weekNum);
+  if (state.currentWeek === weekNum && weekNum < 4) state.currentWeek = weekNum + 1;
+  saveState();
+  closeModal('modal-treino');
+  renderPlan();
+  renderHome();
+  if (state.completedWeeks.length === 4) {
+    showToast('🎉 Ciclo completo! Hora de reavaliar e fechar o mês.');
+  } else {
+    showToast(`✅ Semana ${weekNum} concluída!`);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// EXERCISES LIBRARY
+// ══════════════════════════════════════════════════════
+const EXERCISES = [
+  // TENDÕES
+  {id:'t1',name:'Nordic Hamstring Curl',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'2-3×/sem · 2×5-8 exc. 3-5s',level:'Intermédio',equipment:'Solo',video:'',
+   science:'Reduz risco de lesão de isquiotibial em 51% (van Dyk, 2019). Obrigatório para qualquer corredor.',
+   cues:['Foco na descida lenta — 4-6 segundos','Use elástico no início (assisted NHE)','Não faça perto de provas — DOMS intenso','Progrida: assistido → bodyweight → loaded']},
+  {id:'t2',name:'Alfredson Heel Drop (Aquiles)',cat:'tendão',icon:'🦶',bg:'rgba(91,142,255,.12)',params:'3×15 · 2×/dia · 12 semanas',level:'Iniciante',equipment:'Degrau',video:'',
+   science:'Remodela colágeno do tendão de Aquiles. Padrão ouro para tendinopatia (Alfredson, 1998).',
+   cues:['Perna reta (gastrocnêmio) + perna dobrada (sóleo) — dois exercícios distintos','Dor leve é esperada e faz parte da remodelação','Calcanhar abaixo do nível do degrau','Persista por 12 semanas mesmo com dor leve']},
+  {id:'t3',name:'Spanish Squat Isométrico',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'5×45-90s · descanso 2min',level:'Iniciante',equipment:'Elástico/parede',video:'',
+   science:'Analgesia cortical imediata na tendinopatia patelar. Carrega o tendão isometricamente.',
+   cues:['Ângulo de 60-70° de flexão de joelho','Joelhos avançam via elástico','Dor > 5/10 = reduzir ângulo de flexão','Versão avançada: single-leg wall sit']},
+  {id:'t4',name:'Isometria de Patela (Wall Sit)',cat:'tendão',icon:'🧱',bg:'rgba(91,142,255,.12)',params:'4×30s · descanso 45s',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Força isométrica melhora economia sem cisalhamento sobre o joelho.',
+   cues:['Costas planas na parede durante todo o exercício','Joelhos a 70° — nunca ultrapasse 90°','Progressão: bilateral → unilateral','Quadríceps em máxima tensão']},
+  // MÚSCULOS
+  {id:'m1',name:'Bulgarian Split Squat',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×6-10 · carga progressiva',level:'Intermediário',equipment:'Halteres',video:'',
+   science:'Melhor exercício unilateral para corredores — simula fase de apoio da passada (uma perna no chão).',
+   cues:['Torso 30-45° inclinado para frente — foca no glúteo','Pé traseiro no banco — não force amplitude','Carga progressiva semana a semana','Nunca deixe joelho cair para dentro']},
+  {id:'m2',name:'Back Squat / Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'4×4-6 · 80-90% RM',level:'Intermediário',equipment:'Barra',video:'',
+   science:'+33,2% força e +4,6% economia de corrida em 8 semanas (Støren, 2008). Carga alta = adaptação neural.',
+   cues:['Back Squat: barra alta (high bar) simula postura de corrida','Trap Bar: menos compressão lombar — ideal para iniciantes','Empurre o chão com os pés, não "puxe" a barra','Descanso longo: 2-3min entre séries para qualidade máxima']},
+  {id:'m3',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(200,241,53,.1)',params:'3-4×8-12 · pico iso 1-2s',level:'Iniciante',equipment:'Banco',video:'',
+   science:'Melhor exercício para força pura de glúteo — o principal extensor do quadril na corrida.',
+   cues:['Ombros no banco — não no chão','Quadril sobe até linha ombro-joelho','SQUEEZE glúteo no topo — pause 1-2 segundos','Não hiperestenda a lombar — movimento vem do quadril']},
+  {id:'m4',name:'Romanian Deadlift (RDL)',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×8-10 · 70-80% RM',level:'Intermediário',equipment:'Barra/halteres',video:'',
+   science:'Fortalece cadeia posterior completa — isquiotibiais, glúteo e eretor. Padrão de extensão de quadril da corrida.',
+   cues:['Joelhos levemente dobrados — movimento vem do quadril','Barra desliza perto da perna (canela)','Para quando sentir tensão nos isquiotibiais — não force','Coluna NEUTRA durante todo o movimento']},
+  {id:'m5',name:'Eccentric Leg Press',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'1×8-10 · 5-6s excêntrico',level:'Intermediário',equipment:'Leg Press',video:'',
+   science:'Fase excêntrica é onde a maioria das lesões musculares ocorre na corrida. Treina esse padrão com segurança.',
+   cues:['Sobe bilateral — desce unilateral em 5-6 segundos','Carga 60-70% do concêntrico','DOMS intenso nas primeiras semanas — normal','Cadência: 5s descida · 1s pausa · 2s subida']},
+  // CORE
+  {id:'c1',name:'McGill Big 3: Modified Curl-up',cat:'core',icon:'🔗',bg:'rgba(255,107,53,.1)',params:'3×10 · segurar 10s cada',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Protege a lombar e cria rigidez abdominal para corrida. Base do protocolo Stuart McGill.',
+   cues:['Mãos embaixo da lombar para manter curvatura natural','NÃO faça abdominal normal (flexão de coluna) — ineficaz para corrida','Cotovelos podem tocar o chão (menos alavanca)','Adicionar peso no peito — progressão avançada']},
+  {id:'c2',name:'McGill Big 3: Bird-Dog',cat:'core',icon:'🦅',bg:'rgba(255,107,53,.1)',params:'3×8-10 · segurar 8-10s',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Melhora coordenação cruzada (braço direito/perna esquerda) — padrão essencial da passada de corrida.',
+   cues:['Braço e perna opostos — totalmente estendidos, paralelos ao chão','NUNCA arque a lombar ou gire o quadril','Qualidade > quantidade — prefira menos com controle total','Progressão: adicionar peso na mão ou tornozelo']},
+  {id:'c3',name:'McGill Big 3: Side Plank',cat:'core',icon:'🧱',bg:'rgba(255,107,53,.1)',params:'3×30-45s · cada lado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Previne valgo dinâmico de joelho durante a corrida. Foco no glúteo médio e quadrado lombar.',
+   cues:['Quadril alinhado — nem para frente nem para trás','Foco no glúteo médio — não deixe o quadril cair','Progressão: joelho dobrado → plano → Star Plank','Side Plank com rotação: versão avançada']},
+  {id:'c4',name:'Pallof Press (Anti-Rotação)',cat:'core',icon:'⚡',bg:'rgba(255,107,53,.1)',params:'3×10/lado · segurar 3-5s',level:'Intermediário',equipment:'Elástico',video:'',
+   science:'Melhor exercício de core anti-rotação. Previne rotação excessiva do tronco durante a corrida.',
+   cues:['Elástico na altura do peito, perpendicular ao corpo','Empurra para frente — ZERO rotação de tronco','Se o tronco girar, reduza a carga','Progressão: Pallof Press com agachamento']},
+  {id:'c5',name:'Deadbug',cat:'core',icon:'🪲',bg:'rgba(255,107,53,.1)',params:'3×10 · lombar colada',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Anti-extensão lombar — ensina manter lombar estável enquanto move as extremidades (padrão da passada).',
+   cues:['Lombar COLADA ao chão durante todo o movimento','Se descolar, reduza amplitude do movimento','Respire — não prenda o ar','Progressão: adicionar elástico ou carga']},
+  // OMBRO (natação)
+  {id:'o1',name:'Rotação Externa com Elástico',cat:'ombro',icon:'🏊',bg:'rgba(91,142,255,.1)',params:'2-3×15/lado',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Fortalece manguito rotador — o equivalente ao Nordic Curl na natação para prevenção de lesão de ombro.',
+   cues:['Cotovelo colado ao corpo, 90° de flexão','Movimento lento e controlado, sem impulso','Não deixe o ombro subir em direção à orelha','Progrida a resistência do elástico gradualmente']},
+  {id:'o2',name:'Face Pull com Elástico',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×15',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Melhora controle escapular e postura — reduz risco de impacto subacromial no nado.',
+   cues:['Puxe até a altura do rosto, cotovelos altos','Aperte as escápulas no final do movimento','Controle a volta — não solte de forma brusca']},
+  {id:'o3',name:'Serrátil Anterior (Wall Slide)',cat:'ombro',icon:'🧱',bg:'rgba(91,142,255,.1)',params:'3×12',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Ativa o serrátil anterior — estabiliza a escápula durante a fase de propulsão (catch) do nado.',
+   cues:['Antebraços e mãos sempre em contato com a parede','Empurre a parede no topo do movimento (protração)','Evite compensar elevando os ombros']},
+  // PLIOMETRIA
+  {id:'p1',name:'Pogo Jumps',cat:'pliometria',icon:'🦘',bg:'rgba(200,241,53,.08)',params:'3×15-20 · mín. contato solo',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Melhora elasticidade do tendão de Aquiles (SSC). Fundamental para economia de corrida. Inicie aqui.',
+   cues:['Menor contato com o solo possível — salto de corda','Tornozelo rígido — não deixe o calcanhar tocar o chão','Começa com volume baixo (100 saltos/semana)','Progressão: Pogo Jumps unilateral']},
+  {id:'p2',name:'Box Jumps',cat:'pliometria',icon:'📦',bg:'rgba(200,241,53,.08)',params:'3×5 · altura máx',level:'Intermediário',equipment:'Box/step',video:'',
+   science:'Potência horizontal e concêntrica — melhora impulsão da passada.',
+   cues:['Foco na ALTURA máxima, não na caixa mais alta','Aterrissagem silenciosa — joelhos flexionados absorvem','NUNCA trave os joelhos na aterrissagem','Conta como 1 salto por repetição — controle o volume']},
+  {id:'p3',name:'Broad Jumps',cat:'pliometria',icon:'⬅️',bg:'rgba(200,241,53,.08)',params:'3×5 · distância máx',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Potência horizontal — o mesmo padrão de força usado em cada passada na corrida.',
+   cues:['Empurra o chão para FRENTE — não para cima','Aterrissa com absorção de impacto (joelhos dobrados)','Mede a distância semana a semana — métrica de progresso','Progressão: Broad Jumps com mochila']},
+  {id:'p4',name:'Drop Jumps',cat:'pliometria',icon:'⬇️',bg:'rgba(200,241,53,.08)',params:'3×5 · tempo contato <0.2s',level:'Avançado',equipment:'Box 30-50cm',video:'',
+   science:'SSC máximo — treina rigidez de tornozelo e tempo de reação ao solo. Maior estímulo pliométrico.',
+   cues:['Avançado: só prescrever com base de força e plio estabelecida','Cai da caixa e pula IMEDIATAMENTE — tempo contato mínimo','Nunca aterrissar com joelhos em valgo','Risco de lesão se mal executado']},
+  // MOBILIDADE
+  {id:'mob1',name:'Deep Squat Hold',cat:'mobilidade',icon:'🧘',bg:'rgba(255,235,59,.08)',params:'3-5min/dia · pode dividir',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Libera cápsula do quadril e alonga panturrilha. Base do FMS de Gray Cook. Melhora dorsiflexão.',
+   cues:['Tornozelo travado? Use anilha sob o calcanhar para compensar','Cotovelos empurram joelhos para fora','Não force — respeite a amplitude atual','Progressão: remova o apoio sob o calcanhar gradualmente']},
+  {id:'mob2',name:'90/90 Hip Switch',cat:'mobilidade',icon:'🔄',bg:'rgba(255,235,59,.08)',params:'3×10 alternâncias',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Libera rotação interna e externa do quadril — previne dor no IT Band e lombar.',
+   cues:['Movimento lento e controlado — foco no controle, não na velocidade','Se o quadril estalar com dor, para e não força','Mãos apoiadas no chão para facilitar o equilíbrio','Progressão: adicionar halter no joelho']},
+  {id:'mob3',name:"World's Greatest Stretch",cat:'mobilidade',icon:'🌍',bg:'rgba(255,235,59,.08)',params:'5 reps lentas/lado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Mobilidade completa: tórax, quadril e isquiotibiais em um único movimento. Ideal aquecimento pré-treino.',
+   cues:['1 passada = 1 repetição da posição inicial ao lunge','Cotovelo busca o chão (abertura de quadril)','Rotação de tronco — olha para o teto','Não force lombar se doer — reduza amplitude']},
+  {id:'mob4',name:'Couch Stretch',cat:'mobilidade',icon:'🛋️',bg:'rgba(255,235,59,.08)',params:'2-3min/lado',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Libera quadríceps e flexor do quadril (iliopsoas) — encurtados em corredores. Melhora extensão de quadril na passada.',
+   cues:['Joelho no chão — use almofada para amortecer','Pé apoiado na parede atrás','Quadril empurra para frente — sente a frente do quadril','Pode causar desconforto intenso — não confunda com dor articular']},
+  {id:'mob5',name:'Hamstring Flossing Dinâmico',cat:'mobilidade',icon:'🦵',bg:'rgba(255,235,59,.08)',params:'2×10/perna',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Mobilidade dinâmica dos isquiotibiais — diferente do alongamento estático (que não previne lesões na corrida).',
+   cues:['Perna reta — eleva até sentir tensão suave (5-6/10)','Retorna antes de forçar — é dinâmico, não estático','Não deve superar 5-6/10 de tensão','Progressão: adicionar elástico ou peso no tornozelo']},
+  // KIT ANTI-LESÃO
+  {id:'kit1',name:'Tibialis Raises',cat:'kit',icon:'🦴',bg:'rgba(91,142,255,.08)',params:'3×15 · cada lado',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Previne canelite (shin splints) e fortalece tibial anterior. Obrigatório em toda sessão.',
+   cues:['Apoie a perna na parede ou banco','Puxa o pé para cima — só o movimento de dorsiflexão','Pode causar câimbra na canela nas primeiras semanas — hidrate bem','Faça antes de correr como ativação']},
+  {id:'kit2',name:'Peroneal Raises (Eversão)',cat:'kit',icon:'🦶',bg:'rgba(91,142,255,.08)',params:'3×15 · com elástico',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Previne entorses de tornozelo. Fortalece estabilizadores laterais — crítico para corrida em terreno irregular.',
+   cues:['Elástico no dorso do pé','Pé em inversão forçada (ponta para dentro)','Eleva para eversão — pé vai para fora','Muito seguro — raramente causa problemas']},
+  {id:'kit3',name:'Calf Raise Excêntrico (degrau)',cat:'kit',icon:'💪',bg:'rgba(91,142,255,.08)',params:'3×12/lado · 4s descida',level:'Iniciante',equipment:'Degrau',video:'',
+   science:'Fortalece tendão de Aquiles de forma excêntrica. Previne tendinite e melhora rigidez tendinosa para economia de corrida.',
+   cues:['Sobe bilateral — desce unilateral em 4 segundos','Calcanhar desce abaixo do nível do degrau (amplitude completa)','DOMS intenso nas primeiras semanas — normal e esperado','Foco no lado mais fraco para corrigir assimetria']},
+  {id:'kit4',name:'Clamshells com Banda',cat:'kit',icon:'🦀',bg:'rgba(91,142,255,.08)',params:'3×15/lado · banda na coxa',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Ativa glúteo médio — principal estabilizador do joelho na corrida. Previne valgo dinâmico.',
+   cues:['Banda ACIMA dos joelhos — na coxa','Abre o joelho de cima — quadril NÃO rola para trás','Quadril 100% estável durante o exercício','Progressão: standing hip abduction com banda em pé']},
+  {id:'kit5',name:'Single Leg RDL',cat:'kit',icon:'⚖️',bg:'rgba(91,142,255,.08)',params:'3×8-10/perna',level:'Intermediário',equipment:'Solo/haltere',video:'',
+   science:'Combina força de glúteo com equilíbrio dinâmico e controle de tornozelo. Simula fase de apoio da corrida.',
+   cues:['Coluna neutra — não arredonda','Quadril da perna de apoio paralelo ao chão — não inclina','Olha para baixo no início para não cair','Progressão: descalço (mais propriocepção) → com halteres']},
+  // TENDÃO (mais)
+  {id:'t5',name:'Copenhagen Plank (Adutor)',cat:'tendão',icon:'🔗',bg:'rgba(91,142,255,.12)',params:'3×20-30s/lado',level:'Intermediário',equipment:'Banco',video:'',
+   science:'Reduz lesão de adutor/virilha (Hölmich). Essencial em ciclismo (posição de sela) e mudanças de direção.',
+   cues:['Perna de cima apoiada no banco, perna de baixo livre','Quadril alinhado, sem rotação de tronco','Versão fácil: joelho de baixo apoiado no chão','Progressão: perna de baixo estendida e sem apoio']},
+  // MÚSCULO (mais)
+  {id:'m6',name:'Leg Press Unilateral',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'3×8-10/lado',level:'Intermediário',equipment:'Leg Press',video:'',
+   science:'Pedalada é um gesto cíclico unilateral — força unilateral de perna transfere diretamente para potência no pedal (Rønnestad & Mujika, 2014).',
+   cues:['Pé todo apoiado na plataforma — não só a ponta','Amplitude completa, sem travar o joelho no topo','Controle a descida — não solte o peso','Foco em empurrar com o calcanhar']},
+  {id:'m7',name:'Remada Curvada / Pull-up',cat:'músculo',icon:'💪',bg:'rgba(200,241,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/anilha',video:'',
+   science:'Equilibra a musculatura de tração (costas) com o volume de empurrar do treino de perna — postura e saúde de ombro no longo prazo.',
+   cues:['Escápulas retraem antes do braço puxar','Cotovelos próximos ao corpo na remada','Pull-up: amplitude completa, sem balançar o corpo','Progressão: remada com anilha → barra → pull-up assistido → livre']},
+  {id:'m8',name:'Desenvolvimento de Ombro (Shoulder Press)',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3×10',level:'Intermediário',equipment:'Halteres',video:'',
+   science:'Força de ombro e estabilidade de tronco em pé — suporte para a postura de braçada da natação e postura ereta da corrida/bike.',
+   cues:['Core ativado — sem hiperextensão lombar','Cotovelos levemente à frente do corpo, não travados atrás','Desce até 90° de flexão de cotovelo','Não trave os cotovelos com força no topo']},
+  {id:'m9',name:'Walking Lunge',cat:'músculo',icon:'🚶',bg:'rgba(200,241,53,.1)',params:'3×10/perna',level:'Intermediário',equipment:'Halteres',video:'',
+   science:'Força unilateral dinâmica com componente de equilíbrio e propriocepção — mais próximo do padrão real de deslocamento que o agachamento bilateral.',
+   cues:['Passada longa o suficiente para 90° nos dois joelhos','Torso ereto, sem inclinar para frente','Joelho de trás quase toca o chão, sem bater','Empurra com o pé da frente para o próximo passo']},
+  {id:'m10',name:'Good Morning',cat:'músculo',icon:'🙇',bg:'rgba(200,241,53,.1)',params:'3×8-10 · carga leve-moderada',level:'Avançado',equipment:'Barra',video:'',
+   science:'Fortalece a cadeia posterior (eretores + isquiotibiais) com maior exigência de estabilidade lombar que o RDL — ótima progressão avançada.',
+   cues:['Comece com carga muito leve — exercício técnico','Joelhos levemente flexionados, fixos durante o movimento','Quadril "abre" para trás, tronco quase paralelo ao chão','Pare se sentir qualquer desconforto lombar']},
+  // CORE (mais)
+  {id:'c6',name:'Suitcase Carry (Carry Unilateral)',cat:'core',icon:'🧳',bg:'rgba(255,107,53,.1)',params:'3×20-30m/lado',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
+   science:'Anti-flexão lateral de tronco sob carga assimétrica — transfere diretamente para estabilidade de tronco na corrida e no nado.',
+   cues:['Ombros nivelados — não incline para o lado do peso','Passos curtos e controlados','Core ativado o tempo todo, não só nos ombros','Troque de lado e repita a mesma distância']},
+  {id:'c7',name:'Hollow Body Hold',cat:'core',icon:'🌙',bg:'rgba(255,107,53,.1)',params:'3×20-30s',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Postura de core rígido usado em ginástica e natação — cria a "linha reta" de tronco essencial pro nado eficiente.',
+   cues:['Lombar colada ao chão o tempo todo','Pernas e ombros elevados do chão em leve "banana"','Se a lombar descolar, eleve menos as pernas','Respire normalmente — não prenda o ar']},
+  // OMBRO (mais — natação)
+  {id:'o4',name:'Y-T-W em Prono',cat:'ombro',icon:'🦋',bg:'rgba(91,142,255,.1)',params:'3×10 cada posição',level:'Iniciante',equipment:'Halteres leves/solo',video:'',
+   science:'Ativa trapézio inferior e estabilizadores escapulares nos três ângulos de tração do nado — reduz risco de impacto subacromial.',
+   cues:['Deitado de bruços, testa apoiada','Movimento vem da escápula, não só do braço','Cargas bem leves — é um exercício de controle, não de força bruta','Y, depois T, depois W — sem pausa entre as letras']},
+  {id:'o5',name:'Scapular Pull-up',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×8-12',level:'Intermediário',equipment:'Barra',video:'',
+   science:'Isola o controle escapular antes do movimento de cotovelo — base para uma braçada eficiente e sem dor.',
+   cues:['Pendurado na barra, braços retos','Só as escápulas se movem — cotovelos ficam travados','Sobe e desce só com a "encolhida" dos ombros','Se não tem força ainda, faça com os pés apoiados no chão']},
+  // PLIOMETRIA (mais)
+  {id:'p5',name:'Single Leg Pogo Hops',cat:'pliometria',icon:'🦘',bg:'rgba(200,241,53,.08)',params:'3×10/lado · mín. contato',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Progressão natural do Pogo Jump bilateral — trabalha rigidez de tornozelo unilateralmente, o padrão real da corrida.',
+   cues:['Só evolua pra cá depois de dominar o Pogo Jump bilateral','Tornozelo rígido, contato mínimo com o solo','Comece com volume bem baixo (10-15 por perna)','Pare se sentir instabilidade no tornozelo']},
+  {id:'p6',name:'Lateral Bounds (Saltos Laterais)',cat:'pliometria',icon:'↔️',bg:'rgba(200,241,53,.08)',params:'3×6/lado',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Potência no plano frontal — pouco treinado por corredores/ciclistas (movimento é só sagital), mas relevante pra estabilidade de tornozelo/joelho em terreno irregular.',
+   cues:['Empurra para o lado, aterrissa absorvendo com o joelho flexionado','Segura a aterrissagem 1 segundo antes do próximo salto','Distância progride semana a semana','Pare se o joelho de aterrissagem cair para dentro (valgo)']},
+  // MOBILIDADE (mais)
+  {id:'mob6',name:'Dorsiflexão de Tornozelo (Knee-to-Wall)',cat:'mobilidade',icon:'🧱',bg:'rgba(255,235,59,.08)',params:'3×10/lado',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Mobilidade de tornozelo limitada muda o padrão de passada e sobrecarrega joelho/quadril — mede e melhora a dorsiflexão diretamente.',
+   cues:['Pé afastado da parede, tenta tocar o joelho na parede sem levantar o calcanhar','Anote a distância máxima — métrica de progresso','Sentiu esticar na panturrilha = certo','Repita até 3 tentativas por lado, indo o mais longe possível']},
+  {id:'mob7',name:'Rotação Torácica (Open Book)',cat:'mobilidade',icon:'📖',bg:'rgba(255,235,59,.08)',params:'2×10/lado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Mobilidade de rotação de tronco — essencial pra respiração bilateral na natação e postura no ciclismo.',
+   cues:['Deitado de lado, joelhos flexionados a 90°','Braço de cima "abre o livro" até tocar o chão do outro lado','Olhos acompanham a mão durante o giro','Quadril fica parado — só o tronco gira']},
+  // KIT ANTI-LESÃO (mais)
+  {id:'kit6',name:'Abdução de Quadril em Pé (Banda)',cat:'kit',icon:'🦵',bg:'rgba(91,142,255,.08)',params:'3×15/lado',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Progressão do Clamshell — treina glúteo médio em pé, mais próximo da exigência real durante o apoio unipodal da corrida/pedalada.',
+   cues:['Banda nos tornozelos, tronco ereto','Eleva a perna reto para o lado, sem inclinar o tronco','Controle a volta — não deixe a banda "puxar" a perna de volta','Pé de apoio bem plantado no chão']},
+  {id:'kit7',name:'Wall Sit (Ciclismo)',cat:'kit',icon:'🪑',bg:'rgba(91,142,255,.08)',params:'3×30-45s',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Isometria de quadríceps no ângulo aproximado do pedal — usado também como teste físico do app para ciclistas.',
+   cues:['Joelhos a 90°, costas totalmente apoiadas na parede','Peso nos calcanhares, não na ponta do pé','Se tremer muito, é normal — sinal de fadiga isométrica','Mesmo protocolo do teste físico — dá pra comparar evolução']},
+];
+
+function renderExercises() {
+  const cats = ['all','tendão','músculo','core','ombro','pliometria','mobilidade','kit'];
+  const catLabels = {'all':'Todos','tendão':'Tendões','músculo':'Músculos','core':'Core','ombro':'Ombro (nado)','pliometria':'Pliometria','mobilidade':'Mobilidade','kit':'Kit Anti-Lesão'};
+  const filter = document.getElementById('ex-filter');
+  filter.innerHTML = cats.map(c => `
+    <button class="tag ${c===currentExFilter?'tag-green':'tag-muted'}" style="cursor:pointer;padding:7px 14px;border-radius:20px;font-size:12px" onclick="filterEx('${c}')">
+      ${catLabels[c]}
+    </button>`).join('');
+
+  const list = document.getElementById('ex-list');
+  const filtered = currentExFilter === 'all' ? EXERCISES : EXERCISES.filter(e => e.cat === currentExFilter);
+  list.innerHTML = filtered.map(ex => `
+    <div class="exl-card" onclick="openExModal('${ex.id}')">
+      <div class="exl-icon" style="background:${ex.bg}">${ex.icon}</div>
+      <div class="exl-info">
+        <div class="exl-name">${ex.name}</div>
+        <div class="exl-tags">
+          <span class="tag tag-muted" style="font-size:10px">${ex.cat}</span>
+          <span class="tag tag-muted" style="font-size:10px">${ex.level}</span>
+          <span class="tag tag-muted" style="font-size:10px">${ex.equipment}</span>
+        </div>
+      </div>
+      <div class="exl-right">
+        <div class="exl-params">${ex.params.split('·')[0]}</div>
+        <div style="font-size:9px;color:var(--sub);margin-top:2px">›</div>
+      </div>
+    </div>`).join('');
+}
+
+function filterEx(cat) {
+  currentExFilter = cat;
+  renderExercises();
+}
+
+function openExModal(id) {
+  const ex = EXERCISES.find(e => e.id === id);
+  if (!ex) return;
+  const content = document.getElementById('modal-treino-content');
+  content.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+      <div style="width:52px;height:52px;border-radius:14px;background:${ex.bg};display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">${ex.icon}</div>
+      <div>
+        <div style="font-family:var(--ff);font-weight:800;font-size:18px;margin-bottom:4px">${ex.name}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-muted">${ex.cat}</span>
+          <span class="tag tag-muted">${ex.level}</span>
+          <span class="tag tag-muted">${ex.equipment}</span>
+        </div>
+      </div>
+    </div>
+    ${ex.video ? `
+    <div style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#000">
+      <iframe src="https://www.youtube-nocookie.com/embed/${ex.video}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>` : `
+    <div style="background:var(--s2);border:1px dashed var(--b1);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px">
+      <div style="font-size:24px;margin-bottom:6px">🎬</div>
+      <div style="font-size:12px;color:var(--muted)">Vídeo ainda não cadastrado pra este exercício</div>
+    </div>`}
+    <div style="background:var(--s2);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <span style="font-family:var(--fm);font-size:13px;color:var(--acc);font-weight:500">${ex.params}</span>
+    </div>
+    <div class="ex-science" style="margin-bottom:14px">
+      <div class="ex-science-label">Base científica</div>
+      <div class="ex-science-text">${ex.science}</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-family:var(--ff)">Pontos-chave de execução</div>
+    ${ex.cues.map((c,i) => `
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:9px">
+        <div style="width:20px;height:20px;border-radius:6px;background:rgba(200,241,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--acc);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5">${c}</div>
+      </div>`).join('')}
+    <button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="closeModal('modal-treino')">Fechar</button>`;
+  openModal('modal-treino');
+}
+
+// ══════════════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════════════
+function renderProfile() {
+  if (!state.assessed) return;
+  const p = state.profile;
+  document.getElementById('profile-name').textContent = p.nome || 'Atleta';
+  document.getElementById('profile-role').textContent = `${modLabel(p['av-modalidade'])} · ${p.nivel} · ${goalLabel(p['av-objetivo'])}`;
+
+  const funcScore = p.funcScore || 5;
+  const riskScore = p.riskScore || 5;
+  const riskColor = riskScore <= 3 ? 'var(--acc)' : riskScore <= 6 ? 'var(--warn)' : 'var(--red)';
+  const riskLabel = riskScore <= 3 ? 'Baixo risco' : riskScore <= 6 ? 'Risco moderado' : 'Alto risco';
+
+  const content = document.getElementById('profile-content');
+  content.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title">Score Funcional</div>
+        <div style="text-align:center">
+          <div style="font-family:var(--ff);font-weight:800;font-size:30px;color:var(--acc)">${funcScore}<span style="font-size:16px;color:var(--muted)">/10</span></div>
+          <div style="font-size:10px;color:var(--muted)">Capacidade geral</div>
+        </div>
+      </div>
+      ${['Força','Equilíbrio','Mobilidade','Excêntrico'].map((l,i) => {
+        const keys = ['forca','equil','mobil','nordic'];
+        const val = state.scores[keys[i]] || 0;
+        const pct = (val/10)*100;
+        const col = pct >= 70 ? 'var(--acc)' : pct >= 40 ? 'var(--warn)' : 'var(--red)';
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;color:var(--muted)">${l}</span>
+            <span style="font-size:12px;font-weight:700;color:${col}">${val}/10</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Risco de Lesão</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="font-family:var(--ff);font-weight:800;font-size:36px;color:${riskColor}">${riskScore}<span style="font-size:16px;color:var(--muted)">/10</span></div>
+        <div><span class="tag" style="background:${riskColor}15;color:${riskColor};border-color:${riskColor}30">${riskLabel}</span></div>
+      </div>
+      <div class="risk-bar-outer"><div class="risk-bar-fill" style="width:${riskScore*10}%;background:${riskColor}"></div></div>
+      ${state.lesoes.length ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:6px">Regiões com prioridade:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${state.lesoes.map(l => `<span class="tag tag-orange">${lesaoLabel(l)}</span>`).join('')}</div></div>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Seu Perfil</div>
+      <div class="result-row"><div class="result-label">Modalidade</div><div class="result-val">${modLabel(p['av-modalidade'])}</div></div>
+      <div class="result-row"><div class="result-label">Objetivo</div><div class="result-val">${goalLabel(p['av-objetivo'])}</div></div>
+      <div class="result-row"><div class="result-label">Meta / prova alvo</div><div class="result-val">${provaLabel(p['av-prova'])}</div></div>
+      <div class="result-row"><div class="result-label">Experiência na modalidade</div><div class="result-val">${expLabel(p['av-exp-corrida'])}</div></div>
+      <div class="result-row"><div class="result-label">Experiência musculação</div><div class="result-val">${expMLabel(p['av-exp-muscu'])}</div></div>
+      <div class="result-row"><div class="result-label">Treino específico hoje</div><div class="result-val">${p['av-dias-modalidade'] || '—'}× /sem</div></div>
+      <div class="result-row"><div class="result-label">Fortalecimento no plano</div><div class="result-val">${p['av-dias']}× /sem</div></div>
+      <div class="result-row"><div class="result-label">Nível calculado</div><div class="result-val">${p.nivel}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Progresso — Ciclo ${state.cycleNum}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--muted)">Semanas concluídas</span>
+        <span style="font-size:12px;font-weight:700;color:var(--acc)">${state.completedWeeks.length} / 4</span>
+      </div>
+      <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${(state.completedWeeks.length/4)*100}%"></div></div>
+      <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+        ${[...Array(4)].map((_,i) => `<div style="width:28px;height:28px;border-radius:7px;background:${state.completedWeeks.includes(i+1)?'var(--acc)':state.currentWeek===i+1?'rgba(200,241,53,.15)':'var(--b1)'};border:1px solid ${state.completedWeeks.includes(i+1)?'var(--acc)':state.currentWeek===i+1?'var(--acc)':'var(--b1)'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${state.completedWeeks.includes(i+1)?'#000':state.currentWeek===i+1?'var(--acc)':'var(--sub)'};font-family:var(--ff)">${state.completedWeeks.includes(i+1)?'✓':i+1}</div>`).join('')}
+      </div>
+      ${state.completedWeeks.length === 4 ? `<button class="btn btn-acc btn-full" style="margin-top:14px" onclick="startCloseCycle()">📋 Fechar ciclo e reavaliar</button>` : ''}
+    </div>
+
+    ${state.history.length ? `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Histórico de Ciclos</div>
+      ${state.history.slice().reverse().map(h => `
+        <div style="padding:10px 0;border-bottom:1px solid var(--b1)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-family:var(--ff);font-weight:700;font-size:13px">Ciclo ${h.cycleNum} — ${h.plan.focus.name}</span>
+            <span style="font-size:12px;font-weight:700;color:${h.overallPct>=0?'var(--acc)':'var(--red)'}">${h.overallPct>=0?'+':''}${h.overallPct}%</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            ${Object.entries(h.deltas).map(([k,d]) => `<span class="tag tag-muted" style="font-size:10px">${k}: ${d.before}→${d.after} (${d.pct>=0?'+':''}${d.pct}%)</span>`).join('')}
+          </div>
+          <div style="font-size:11px;color:var(--muted)">Aderência aos treinos registrados: ${h.logsSummary.loggedEx}/${h.logsSummary.totalEx} exercícios logados${h.logsSummary.avgDificuldade!=null?` · dificuldade média ${h.logsSummary.avgDificuldade}/10`:''}${h.feedback.dorNova?' · ⚠️ dor nova relatada':''}</div>
+          ${h.aiReasoning ? `<div style="font-size:11px;color:var(--acc2);margin-top:4px;font-style:italic">🤖 ${h.aiReasoning}</div>` : ''}
+        </div>`).join('')}
+    </div>` : ''}
+
+    <button class="btn btn-warn btn-full" style="margin-top:4px" onclick="resetData()">Refazer avaliação</button>
+    ${sb ? `<button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="gateLogout()">Sair da conta</button>` : ''}`;
+}
+
+// ══════════════════════════════════════════════════════
+// SCIENCE MODAL
+// ══════════════════════════════════════════════════════
+const scienceData = {
+  economia: {
+    title: '📈 Economia de Corrida', color: 'var(--acc)',
+    content: `<b>O que é:</b> A economia de corrida (RE) mede o consumo de oxigênio por metro percorrido. Corredores com a mesma VO2max correm tempos diferentes porque os que têm boa RE gastam menos energia por passada.<br><br>
+    <b>Por que treinar força:</b><br>
+    • Støren (2008): 4×4 a 85% RM → <b>+33,2% força, +4,6% economia, +21,3% tempo até exaustão</b><br>
+    • Balsalobre-Fernández (2016): meta-análise confirma +4% economia com ≥80% RM<br>
+    • Blagrove (2018): melhora de 2-8% em corredores altamente treinados<br><br>
+    <b>O mecanismo:</b> Força máxima torna o tendão mais rígido (mola mais eficiente) e melhora o recrutamento neural — você gasta menos energia para aplicar a mesma força no solo.`
+  },
+  prevencao: {
+    title: '🛡 Prevenção de Lesões', color: 'var(--acc2)',
+    content: `<b>A evidência mais robusta:</b><br>
+    • Lauersen (2014): força reduz lesões a <b>&lt;1/3</b> — meta-análise com 26.000+ participantes<br>
+    • Lauersen (2018): dose-resposta linear — cada +10% no volume de força reduz risco em >5pp<br>
+    • Van Dyk (2019): Nordic Hamstring Curl reduz lesão de isquiotibial em <b>51%</b><br>
+    • Al Attar (2017): confirma benefício do Nordic em múltiplas populações de atletas<br><br>
+    <b>Mito derrubado:</b> Alongamento isolado NÃO previne lesões (Lauersen, 2014). A prevenção eficaz é força, não flexibilidade passiva.`
+  },
+  concorrente: {
+    title: '⚡ Treino Concorrente', color: 'var(--warn)',
+    content: `<b>Força ANTES de corrida:</b><br>
+    • Coffey & Hawley (2017): a via AMPK (corrida) inibe a mTOR (força). Fazer corrida antes "apaga" o sinal de hipertrofia<br>
+    • Held (2026): umbrella review com 1.492 participantes confirma: <b>força ANTES de endurance otimiza potência</b><br>
+    • Zhang (2026): ordem Força→Endurance otimiza adaptações neurais e potência explosiva<br><br>
+    <b>Quando separados:</b> ≥6 horas entre sessões elimina o efeito de interferência (Schumann, 2022).<br><br>
+    <b>Para mulheres:</b> Huiberts (2024) — mulheres respondem melhor ao treino concorrente que homens. Podem ser mais agressivas no volume de força sem comprometer o VO2max.`
+  },
+  pliometria: {
+    title: '🦘 Pliometria', color: 'var(--acc)',
+    content: `<b>A dose que funciona (e a que machuca):</b><br>
+    • Moran (2023): <b>&lt;250 saltos/semana</b>, por <b>mais de 7 semanas</b> — dose segura e eficaz<br>
+    • Spurrs (2003): 6 semanas de pliometria → +2,7% no tempo de 3km sem mudar VO2max<br>
+    • Xu (2024): Complex Training (força pesada + plio) maximiza rigidez musculotendinosa via PAP<br><br>
+    <b>Progressão obrigatória:</b><br>
+    1. Pogo Jumps bilaterais<br>
+    2. Box Jumps e Broad Jumps<br>
+    3. Single Leg Hops<br>
+    4. Drop Jumps (avançado)<br><br>
+    <b>Mecanismo:</b> O tendão de Aquiles armazena e devolve até 35% da energia da passada — pliometria treina essa "mola".`
+  },
+  verkhoshansky: {
+    title: '🧩 Blocos de Verkhoshansky', color: 'var(--acc2)',
+    content: `<b>Quem foi:</b> Yuri Verkhoshansky, cientista soviético conhecido como "pai da pliometria" (Shock Method), criador do Sistema de Blocos (Block Periodization / Sequência Conjugada).<br><br>
+    <b>Por que cada ciclo mensal segue esse modelo:</b><br>
+    • Cada ciclo (4 semanas — 3 de trabalho + 1 de deload/reteste) concentra ênfase em UM bloco — Base (ativação), Força (carga alta), Potência (pliometria) ou Manutenção — em vez de diluir tudo o tempo todo. No fim do ciclo, teste físico + reavaliação + seu feedback decidem qual bloco vem no mês seguinte<br>
+    • <b>Preparação Geral → Preparação Específica:</b> os exercícios começam genéricos e vão se aproximando do gesto da sua modalidade conforme a prova se aproxima<br>
+    • <b>Efeito Tardio de Treinamento:</b> o pico de força aparece 2-4 semanas depois do bloco pesado — por isso o fortalecimento pesado fica nas fases de base/construção, não na semana da prova<br><br>
+    <b>O que isso NÃO é:</b> Verkhoshansky nunca prescreveu o treino de endurance em si — o método dele organiza só o estímulo de força ao redor do calendário do atleta. É exatamente o papel deste app.`
+  },
+};
+
+function showScienceModal(key) {
+  const d = scienceData[key];
+  document.getElementById('modal-science-content').innerHTML = `
+    <div style="font-family:var(--ff);font-weight:800;font-size:18px;margin-bottom:6px">${d.title}</div>
+    <div style="height:3px;background:${d.color};width:50px;border-radius:3px;margin-bottom:16px"></div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7">${d.content}</div>`;
+  openModal('modal-science');
+}
+
+// ══════════════════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════════════════
+function openTimer() { openModal('modal-timer'); updateTimerDisplay(); }
+function setTimer(s) { timerSecs = s; resetTimer(); }
+function toggleTimer() {
+  if (timerRunning) { clearInterval(timerInterval); timerRunning = false; document.getElementById('timer-toggle').textContent = '▶ Retomar'; }
+  else {
+    timerRunning = true;
+    document.getElementById('timer-toggle').textContent = '⏸ Pausar';
+    document.getElementById('timer-label').textContent = 'Descansando…';
+    timerInterval = setInterval(() => {
+      timerSecs--;
+      if (timerSecs <= 0) { clearInterval(timerInterval); timerRunning = false; timerSecs = 0; document.getElementById('timer-toggle').textContent = '▶ Iniciar'; document.getElementById('timer-label').textContent = '✅ Tempo esgotado!'; }
+      updateTimerDisplay();
+    }, 1000);
+  }
+}
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('timer-toggle').textContent = '▶ Iniciar';
+  document.getElementById('timer-label').textContent = 'Pronto';
+  updateTimerDisplay();
+}
+function updateTimerDisplay() {
+  const m = Math.floor(timerSecs / 60), s = timerSecs % 60;
+  document.getElementById('timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+// ══════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════
+let toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function goalLabel(v) { return {corredor:'Melhorar tempo',lesao:'Prevenir lesões',hibrido:'Atleta híbrido',hyrox:'Hyrox/Spartan'}[v] || '—'; }
+function provaLabel(v) { return v && v.trim() ? v : 'Sem meta definida'; }
+function expLabel(v) { return {'<6m':'<6 meses','6m-2a':'6m – 2 anos','>2a':'>2 anos'}[v] || '—'; }
+function expMLabel(v) { return {nenhuma:'Nenhuma',basica:'Básica (1-2 anos)',avancada:'Avançada (+2 anos)'}[v] || '—'; }
+function lesaoLabel(v) { const m={lesaojoelho:'Joelho',lesaotornozelo:'Tornozelo/Aquiles',lesaoquadril:'Quadril/IT Band',lesaolombar:'Lombar/Core',lesaoisquio:'Isquiotibiais',lesaoombro:'Ombro/Manguito'}; return m[v.replace('-','')] || v; }
+function modLabel(v) { return {corrida:'🏃 Corrida',ciclismo:'🚴 Ciclismo',natacao:'🏊 Natação',hibrido:'🔥 Híbrido/Triatlo'}[v] || '—'; }
+function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[]}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
+
+// INIT
+renderExercises();
+initAuth();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW falhou', e)));
+}
+</script>
+</body>
+</html>
