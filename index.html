@@ -722,8 +722,8 @@ textarea{resize:vertical;min-height:70px}
 // TODO antes de publicar: preencha com os dados do SEU projeto Supabase
 // (Dashboard > Project Settings > API). A ANON_KEY é pública por design —
 // pode ficar aqui no código. A chave da Groq NUNCA vai neste arquivo.
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
+const SUPABASE_URL = 'https://ywfiartxnsviosqjfhkp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZmlhcnR4bnN2aW9zcWpmaGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NTYwNDAsImV4cCI6MjEwMjMzMjA0MH0.LKmLBr5HlK8Do6bdP_snup7cXCr-FMgsDt-tm-Vrq68';
 const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
