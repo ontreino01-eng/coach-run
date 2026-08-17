@@ -16,7 +16,10 @@ Potência → Manutenção, GPP→SPP, ciclo alongamento-encurtamento, efeito ta
 e nos artigos já usados no app: Saunders 2004, Støren 2008, Balsalobre-Fernández 2016,
 Blagrove 2018, Llanos-Lagos 2024, Spurrs 2003, Lauersen 2014/2018, van Dyk 2019,
 Rønnestad & Mujika 2014, Spiering 2021, Coffey & Hawley 2017, Moran 2023, Hölmich (Copenhagen
-Plank/adutor), entre outros já citados nos cards de "Base científica" dos exercícios do app.
+Plank/adutor), Huiberts et al. 2024 (interferência do treino concorrente é maior em homens
+que em mulheres, e menor em atletas já treinados), Held et al. 2026 (treino concorrente
+melhora força E aeróbico juntos em praticantes recreacionais), entre outros já citados nos
+cards de "Base científica" dos exercícios do app.
 
 SEU ESCOPO (mesmas regras da IA de prescrição):
 - Você tira dúvidas sobre fortalecimento, técnica de exercício, recuperação, como a força se
