@@ -28,8 +28,8 @@
   --txt:#EEF0FF;--muted:#7B82A8;--sub:#40456B;
   --ff:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:14px;overflow:hidden}
-#app{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:14px}
+#app{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
 
 /* scrollbar */
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
@@ -41,12 +41,12 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 .hdr-right{display:flex;gap:8px;align-items:center}
 
 /* ── SCREENS ── */
-.screen{display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(20px + env(safe-area-inset-bottom))}
+.screen{display:none;padding:0 0 24px}
 .screen.active{display:block;animation:fadeUp .2s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── BOTTOM NAV ── */
-.bnav{position:relative;flex-shrink:0;width:100%;background:rgba(9,9,14,.95);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.bnav{position:sticky;bottom:0;flex-shrink:0;width:100%;background:rgba(9,9,14,.97);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
 .chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:#000;border:none;font-size:22px;box-shadow:0 4px 16px rgba(200,241,53,.35);z-index:60;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 0;transition:all .15s}
 .bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
@@ -306,7 +306,7 @@ textarea{resize:vertical;min-height:70px}
 <!-- HOME -->
 <div id="screen-home" class="screen active">
   <div class="hero">
-    <div class="hero-eyebrow">40 artigos científicos + Verkhoshansky</div>
+    <div class="hero-eyebrow">Ciência do treinamento aplicada</div>
     <h1 class="hero-title">Fique mais forte.<br><span>Sem atrapalhar seu treino.</span></h1>
     <p class="hero-desc">Avaliação funcional + ciclos mensais de <b>fortalecimento</b> para corrida, ciclismo, natação e híbridos. A cada mês, reavaliação + reteste ajustam o próximo ciclo. Este app não prescreve seu treino específico.</p>
     <div class="hero-stats" id="home-stats">
@@ -497,7 +497,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="input-group"><label class="input-label">Dias disponíveis para fortalecimento</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-dias','2',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">2 dias/semana</div><div class="radio-card-sub">Dose mínima eficaz — mantém economia e reduz lesão (Rønnestad, 2014)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-          <div class="radio-card" onclick="selectRadio('av-dias','3',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">3 dias/semana</div><div class="radio-card-sub">Volume padrão recomendado pelos 40 artigos</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-dias','3',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">3 dias/semana</div><div class="radio-card-sub">Volume padrão recomendado pela literatura científica</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
           <div class="radio-card" onclick="selectRadio('av-dias','4',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">4 dias/semana</div><div class="radio-card-sub">Volume alto — só se sobrar recuperação para o treino específico</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         </div>
       </div>
@@ -614,7 +614,7 @@ textarea{resize:vertical;min-height:70px}
 <div id="screen-exercicios" class="screen">
   <div class="pad" style="padding-bottom:10px">
     <div class="section-title">Biblioteca de Exercícios</div>
-    <div class="section-sub">Exercícios baseados em Boyle, McGill, Alfredson, van Dyk e Verkhoshansky — corrida, ciclismo e natação</div>
+    <div class="section-sub">Exercícios com base científica — corrida, ciclismo e natação</div>
   </div>
   <div class="ex-filter" id="ex-filter"></div>
   <div class="ex-list" id="ex-list" style="padding-top:14px"></div>
@@ -659,7 +659,7 @@ textarea{resize:vertical;min-height:70px}
       <button onclick="closeChat()" style="background:none;border:none;color:var(--txt);font-size:20px;cursor:pointer;padding:4px">←</button>
       <div>
         <div class="logo" style="font-size:16px">💬 Tire sua dúvida</div>
-        <div class="hdr-sub" style="font-size:11px">Baseado nos artigos científicos + Verkhoshansky</div>
+        <div class="hdr-sub" style="font-size:11px">Baseado em ciência do treinamento</div>
       </div>
     </div>
   </div>
@@ -929,6 +929,7 @@ function goToScreen(name, btn) {
   if (name === 'exercicios') renderExercises();
   if (name === 'perfil') renderProfile();
   updateHdrSub();
+  window.scrollTo(0, 0);
 }
 
 function updateHdrSub() {
@@ -958,6 +959,7 @@ function showStep(n) {
   document.querySelectorAll('#av-dots .step-dot').forEach((d, i) => {
     d.className = 'step-dot ' + (i < n-1 ? 'done' : i === n-1 ? 'active' : '');
   });
+  window.scrollTo(0, 0);
 }
 
 function selectRadio(key, val, el) {
@@ -1136,6 +1138,7 @@ function showCloseStep(n) {
   if (n === 3 && !document.querySelector('#scale-cc-rpe .scale-btn')) {
     document.getElementById('scale-cc-rpe').innerHTML = [...Array(11).keys()].map(i => `<div class="scale-btn" onclick="selectScale('cc-rpe',${i},this)">${i}</div>`).join('');
   }
+  window.scrollTo(0, 0);
 }
 
 function goToCloseStep(n) { showCloseStep(n); }
@@ -1818,6 +1821,42 @@ const EXERCISES = [
   {id:'kit7',name:'Wall Sit (Ciclismo)',cat:'kit',icon:'🪑',bg:'rgba(91,142,255,.08)',params:'3×30-45s',level:'Iniciante',equipment:'Parede',video:'',
    science:'Isometria de quadríceps no ângulo aproximado do pedal — usado também como teste físico do app para ciclistas.',
    cues:['Joelhos a 90°, costas totalmente apoiadas na parede','Peso nos calcanhares, não na ponta do pé','Se tremer muito, é normal — sinal de fadiga isométrica','Mesmo protocolo do teste físico — dá pra comparar evolução']},
+  // MÚSCULO (força máxima — Balsalobre-Fernández)
+  {id:'m11',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(200,241,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/banco',video:'',
+   science:'Maior ativação de glúteo entre exercícios de força máxima (Balsalobre-Fernández, 2016) — extensão de quadril é o principal motor da fase de propulsão em corrida e pedalada.',
+   cues:['Escápulas apoiadas no banco, queixo levemente recolhido','Sobe até quadril e tronco alinhados — sem hiperestender a lombar','Contrai o glúteo com força no topo, 1-2s','Desce controlado, sem deixar o peso "cair"']},
+  {id:'m12',name:'Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×4-6',level:'Avançado',equipment:'Trap Bar',video:'',
+   science:'Levantamento de força máxima mais seguro que o deadlift convencional (menor exigência lombar) — base do bloco de Força que melhora economia de corrida (Balsalobre-Fernández, 2016).',
+   cues:['Peito para cima, costas retas o tempo todo','Empurra o chão com os pés — não "puxa" com as costas','Barra sobe rente ao corpo','Trava o quadril no topo, sem hiperestender']},
+  // PLIOMETRIA (Spurrs / Blagrove)
+  {id:'p7',name:'Depth Jump (Salto em Profundidade)',cat:'pliometria',icon:'📦',bg:'rgba(200,241,53,.08)',params:'3×5 · caixa de 20-30cm',level:'Avançado',equipment:'Caixa',video:'',
+   science:'Maximiza o Ciclo Alongamento-Encurtamento sob carga de impacto controlada (Spurrs, 2003) — só entra depois de meses de base de pliometria mais simples.',
+   cues:['Cai da caixa (não pula) e absorve, depois explode pra cima imediatamente','Tempo de contato com o solo deve ser mínimo — essa é a intenção do exercício','Não é indicado pra iniciantes nem em fase de dor/lesão ativa','Pare se a aterrissagem ficar barulhenta ou instável']},
+  {id:'p8',name:'Skipping Alto (A-Skip)',cat:'pliometria',icon:'🏃',bg:'rgba(200,241,53,.08)',params:'3×20m',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Drill de coordenação neuromuscular específico do padrão de passada — trabalha elevação de joelho e reatividade de tornozelo junto (Blagrove, 2018).',
+   cues:['Joelho sobe até a altura do quadril','Contato do pé embaixo do centro de massa, não à frente','Braços acompanham o ritmo das pernas','Progrida a velocidade só depois de dominar a técnica devagar']},
+  // CORE / TRONCO (rotação — bike e nado)
+  {id:'c8',name:'Russian Twist com Peso',cat:'core',icon:'🌀',bg:'rgba(255,107,53,.1)',params:'3×12/lado',level:'Intermediário',equipment:'Halter/anilha',video:'',
+   science:'Potência rotacional de tronco — transferência direta pra técnica de nado (rotação de corpo no crawl) e estabilidade em subidas de bike fora do selim.',
+   cues:['Tronco levemente inclinado para trás, core ativado','Gira pelo tronco, não só pelos braços','Pés podem ficar apoiados no chão pra reduzir dificuldade','Controle a velocidade — não é sobre girar rápido, é sobre girar com controle']},
+  {id:'c9',name:'Ab Wheel Rollout',cat:'core',icon:'🎡',bg:'rgba(255,107,53,.1)',params:'3×8-10',level:'Avançado',equipment:'Roda abdominal',video:'',
+   science:'Exige anti-extensão de tronco sob alavanca longa — um dos exercícios de core com maior transferência pra postura sob fadiga (van Dyk, 2019).',
+   cues:['Lombar nunca "afunda" — se afundar, reduza a amplitude','Core ativado do início ao fim do movimento','Comece de joelhos antes de progredir pra em pé','Pare imediatamente se sentir a lombar assumir o movimento']},
+  // KIT ANTI-LESÃO / HÍBRIDO (Hyrox/Spartan — López 2025)
+  {id:'kit8',name:'Sled Push/Pull',cat:'kit',icon:'🛷',bg:'rgba(91,142,255,.08)',params:'4×15-20m',level:'Intermediário',equipment:'Sled/trenó',video:'',
+   science:'Força de perna sob resistência horizontal contínua, sem fase excêntrica de impacto — base do treino híbrido tipo Hyrox/Spartan (López, 2025).',
+   cues:['Passos curtos e potentes, tronco inclinado à frente no push','Mantém tensão constante — não deixa o trenó "parar" entre passos','Pull: puxa com os braços e as pernas juntos, não só os braços','Ótimo pra quem tem dor articular com pliometria — zero impacto']},
+  {id:'kit9',name:'Farmer\'s Carry',cat:'kit',icon:'🎒',bg:'rgba(91,142,255,.08)',params:'3×30-40m',level:'Iniciante',equipment:'Halteres/kettlebells',video:'',
+   science:'Força de preensão + postura de tronco sob carga bilateral — transferência direta pra prova híbrida e pra qualquer atleta que carregue equipamento (mochila, bike no ombro em trail).',
+   cues:['Ombros para trás e para baixo, sem "afundar"','Passos curtos e rápidos, quase como andar normal','Core ativado — resista à vontade de inclinar para os lados','Solte o peso com controle no final, não derrube']},
+  // MOBILIDADE (van Dyk / Blagrove — tríceps sural e cadeia posterior)
+  {id:'mob8',name:'Alongamento de Panturrilha na Parede',cat:'mobilidade',icon:'🦵',bg:'rgba(255,235,59,.08)',params:'3×30s/lado',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Amplitude de tornozelo reduzida altera o padrão de passada e sobrecarrega o tendão de Aquiles (van Dyk, 2019) — mobilidade e força devem andar juntas, não uma sem a outra.',
+   cues:['Perna de trás esticada, calcanhar sempre no chão','Empurra o quadril para frente até sentir alongar a panturrilha','Depois dobra o joelho de trás pra pegar a parte mais profunda (sóleo)','Sem "quicar" — alongamento estático, mantém a posição']},
+  // OMBRO (natação — Blagrove tríceps + estabilidade)
+  {id:'o6',name:'Tríceps Testa com Halteres',cat:'ombro',icon:'💪',bg:'rgba(91,142,255,.1)',params:'3×10-12',level:'Intermediário',equipment:'Halteres',video:'',
+   science:'Força de tríceps entra na fase final da braçada (empurrar a água para trás) — músculo frequentemente negligenciado no fortalecimento de nadadores.',
+   cues:['Cotovelos apontam para o teto o tempo todo, fixos','Desce só o antebraço, não o braço inteiro','Controle a descida — não deixa o peso "cair" perto da testa','Cargas leves — é um exercício de isolamento, não de força máxima']},
 ];
 
 function renderExercises() {
