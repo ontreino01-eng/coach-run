@@ -2114,6 +2114,18 @@ function modLabel(v) { return {corrida:'🏃 Corrida',ciclismo:'🚴 Ciclismo',n
 function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[]}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
 
 // INIT
+// Autocorreção de versão: se o app mudou desde a última visita, força a
+// limpeza do cache antigo e recarrega — evita ficar travado numa versão
+// velha por causa do service worker.
+const APP_VERSION = '2026-08-19-2';
+if (localStorage.getItem('app_version') !== APP_VERSION) {
+  localStorage.setItem('app_version', APP_VERSION);
+  Promise.all([
+    'serviceWorker' in navigator ? navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))) : Promise.resolve(),
+    'caches' in window ? caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))) : Promise.resolve(),
+  ]).then(() => location.reload());
+}
+
 renderExercises();
 initAuth();
 if ('serviceWorker' in navigator) {
