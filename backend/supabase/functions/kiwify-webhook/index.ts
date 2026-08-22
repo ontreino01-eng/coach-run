@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'CoachEndurance <acesso@seudominio.com>',
+          from: 'PersonalCoach <acesso@seudominio.com>',
           to: email,
-          subject: 'Seu acesso ao CoachEndurance chegou 🏃',
+          subject: 'Seu acesso ao PersonalCoach chegou 🏃',
           html: `<p>Seu pagamento foi confirmado!</p>
                  <p>Código de acesso: <b>${code}</b></p>
                  <p>Cadastre-se em: <a href="https://SEU-APP.vercel.app/cadastro">https://SEU-APP.vercel.app/cadastro</a></p>

@@ -1,4 +1,4 @@
-# CoachEndurance — Guia de Deploy e Lançamento
+# PersonalCoach — Guia de Deploy e Lançamento
 
 Ordem recomendada. Cada etapa tem o "pronto quando" pra você saber que pode seguir pra próxima.
 
@@ -56,7 +56,7 @@ Mais simples: **Vercel** (grátis, sem cartão).
 1. Crie uma conta em vercel.com (pode logar com GitHub).
 2. Suba os arquivos: `CoachRunner.html` (renomeie para `index.html`), `pwa/manifest.json`, `pwa/sw.js`, `pwa/icons/*` — na raiz do projeto, mantendo `manifest.json`, `sw.js` e a pasta `icons/` no mesmo nível do `index.html` (é assim que os caminhos `/manifest.json`, `/sw.js`, `/icons/...` no HTML esperam encontrar).
    - Forma mais rápida sem git: Vercel → Add New → Project → "Deploy" por upload direto da pasta (arraste os arquivos).
-3. Deploy. Você recebe uma URL tipo `coachendurance.vercel.app`.
+3. Deploy. Você recebe uma URL tipo `personalcoach.vercel.app`.
 4. **(Recomendado)** Configure um domínio próprio em Vercel → Domains — fica mais profissional pra vender.
    ✅ Pronto quando: você abre a URL no celular e o app carrega.
 

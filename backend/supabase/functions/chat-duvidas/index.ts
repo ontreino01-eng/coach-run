@@ -8,7 +8,7 @@
 // Deploy: supabase functions deploy chat-duvidas --no-verify-jwt
 // ══════════════════════════════════════════════════════════════
 
-const SYSTEM_PROMPT = `Você é o assistente de dúvidas do CoachEndurance — um app de fortalecimento
+const SYSTEM_PROMPT = `Você é o assistente de dúvidas do PersonalCoach — um app de fortalecimento
 para atletas de endurance (corrida, ciclismo, natação, híbridos/triatlo).
 
 BASE CIENTÍFICA: responda com base em Verkhoshansky (blocos de periodização: Base → Força →

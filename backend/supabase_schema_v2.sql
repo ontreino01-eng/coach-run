@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════
--- CoachEndurance — Schema Supabase (versão 2, à prova de reexecução)
+-- PersonalCoach — Schema Supabase (versão 2, à prova de reexecução)
 -- Cole isso inteiro numa "New query" do SQL Editor e clique em Run.
 -- Pode rodar quantas vezes precisar — não dá erro se já existir.
 -- ══════════════════════════════════════════════════════════════
