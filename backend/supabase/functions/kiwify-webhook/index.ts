@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     // Ajuste estes caminhos conforme o payload real do Kiwify
     // (confira em Kiwify > Webhooks > "Ver exemplo de payload").
     const status = body.order_status || body.status;
-    const cpf = (body.Customer?.cpf || body.customer?.cpf || '').replace(/\D/g, '');
+    const cpf = (body.Customer?.CPF || body.Customer?.cpf || body.customer?.CPF || body.customer?.cpf || '').replace(/\D/g, '');
     const email = body.Customer?.email || body.customer?.email;
     const orderId = body.order_id || body.id;
 
