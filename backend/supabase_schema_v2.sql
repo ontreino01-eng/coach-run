@@ -56,3 +56,19 @@ $$ language plpgsql;
 select
   (select count(*) from information_schema.tables where table_name = 'licenses' and table_schema = 'public') as tabela_licenses_existe,
   (select count(*) from information_schema.tables where table_name = 'profiles' and table_schema = 'public') as tabela_profiles_existe;
+
+-- Leads: captura nome+telefone ANTES do pagamento, na tela inicial do funil.
+-- Serve pra você fazer remarketing de quem fez a avaliação mas não comprou.
+create table if not exists leads (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  telefone text not null,
+  assessment jsonb,        -- snapshot da avaliação (se já preenchida no momento da captura)
+  status text not null default 'novo',
+  created_at timestamptz not null default now()
+);
+alter table leads enable row level security;
+drop policy if exists "Qualquer um pode criar lead" on leads;
+create policy "Qualquer um pode criar lead" on leads for insert with check (true);
+-- Sem policy de SELECT pública — só você vendo pelo painel do Supabase (Table Editor)
+-- ou uma Edge Function com service_role enxerga os leads.

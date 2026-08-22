@@ -319,7 +319,7 @@ textarea{resize:vertical;min-height:70px}
     <div id="home-cta-area">
       <div class="card">
         <div class="card-title">🎯 Começar avaliação</div>
-        <div class="card-sub">Responda 6 blocos de perguntas + um teste físico para gerar seu 1º ciclo de <b>fortalecimento</b> (4 semanas) — o treino específico da sua modalidade continua sendo o do seu treinador.</div>
+        <div class="card-sub">Responda 6 blocos de perguntas + um teste físico, de graça, e veja a periodização de fortalecimento montada pro seu perfil — o treino específico da sua modalidade continua sendo o do seu treinador.</div>
         <button class="btn btn-acc btn-full" style="margin-top:12px" onclick="startAssessment()">Fazer avaliação agora →</button>
       </div>
     </div>
@@ -364,11 +364,26 @@ textarea{resize:vertical;min-height:70px}
         </div>
         <div class="quick-card" onclick="showScienceModal('verkhoshansky')" style="grid-column:1/-1">
           <span class="quick-card-icon">🧩</span>
-          <div class="quick-card-title">Blocos de Verkhoshansky</div>
+          <div class="quick-card-title">Blocos de Periodização</div>
           <div class="quick-card-sub">Como cada ciclo mensal é estruturado</div>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- CAPTURA DE LEAD (primeira tela — antes de qualquer login/pagamento) -->
+<div id="screen-lead" class="screen">
+  <div class="pad" style="padding-top:28px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:40px;margin-bottom:10px">🏃</div>
+      <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Vamos montar sua periodização</h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6">Responda uma avaliação gratuita de 2 minutos e veja exatamente qual fortalecimento seu corpo precisa agora.</p>
+    </div>
+    <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="lead-nome" placeholder="Ex: Jonadabe"/></div>
+    <div class="input-group"><label class="input-label">Seu WhatsApp</label><input type="tel" id="lead-telefone" placeholder="(00) 00000-0000"/></div>
+    <button class="btn btn-acc btn-full" style="margin-top:8px" onclick="submitLead()">Começar avaliação gratuita →</button>
+    <p style="font-size:11px;color:var(--sub);margin-top:16px;text-align:center;line-height:1.5">Já comprou? <a href="javascript:void(0)" onclick="showGate('licenca')" style="color:var(--acc)">Ativar meu acesso</a></p>
   </div>
 </div>
 
@@ -526,6 +541,11 @@ textarea{resize:vertical;min-height:70px}
     <button class="btn btn-ghost" onclick="cancelTeste()">← Voltar</button>
     <button class="btn btn-acc" style="flex:1" id="teste-submit-btn" onclick="submitTeste()">Salvar teste e gerar Ciclo 1 ✓</button>
   </div>
+</div>
+
+<!-- RESULTADO / PAYWALL (pré-pagamento) -->
+<div id="screen-paywall" class="screen">
+  <div class="pad" style="padding-top:28px" id="paywall-content"></div>
 </div>
 
 <!-- FECHAMENTO DE CICLO: reavaliação + reteste + feedback -->
@@ -732,23 +752,41 @@ let gateData = {};
 
 async function initAuth() {
   if (!sb) {
-    // Supabase ainda não configurado — libera o app direto (modo desenvolvimento/demo).
-    console.warn('Supabase não configurado — rodando sem gate de licença.');
+    console.warn('Supabase não configurado — rodando sem funil de venda.');
     hideGate();
-    renderHome();
-    if (state.assessed) renderProfile();
-    updateHdrSub();
+    routeToEntryScreen();
     return;
   }
-  showGate('loading');
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (session) { await onAuthenticated(session); }
-    else { showGate('licenca'); }
+    else { hideGate(); routeToEntryScreen(); }
   } catch (e) {
     console.error(e);
-    showGate('licenca');
+    hideGate();
+    routeToEntryScreen();
   }
+}
+
+// Decide em qual tela o visitante (ainda sem login) deve cair:
+// captura de lead → avaliação → teste físico → resultado/paywall.
+function routeToEntryScreen() {
+  renderExercises();
+  updateHdrSub();
+  if (state.assessed) { renderHome(); goToScreen('home', document.getElementById('bnav-home')); return; }
+  if (!state.lead || !state.lead.nome) { goToScreen('lead'); return; }
+  if (!state.profile || !state.profile['av-modalidade']) { goToScreen('avaliacao'); showStep(1); return; }
+  if (!state.tests || !state.tests[0]) {
+    testMode = 'inicial';
+    document.getElementById('teste-title').textContent = 'Teste Físico';
+    document.getElementById('teste-sub').textContent = 'Últimos dados — depois disso já mostramos sua periodização';
+    document.getElementById('teste-submit-btn').textContent = 'Ver minha periodização →';
+    renderTesteInputs('teste-inputs', 'teste-', state.tests ? state.tests[0] : null);
+    goToScreen('teste');
+    return;
+  }
+  renderPaywall();
+  goToScreen('paywall');
 }
 
 function showGate(name) {
@@ -769,10 +807,24 @@ async function onAuthenticated(session) {
       localStorage.setItem('cr_state', JSON.stringify(state));
     }
   } catch (e) { console.warn('Não consegui carregar da nuvem, usando dado local.', e); }
+
+  // Primeiro login depois do pagamento: a avaliação + teste já foram feitos
+  // ANTES da compra (fluxo gratuito) — gera o Ciclo 1 agora, sem pedir de novo.
+  if (!state.assessed && state.profile && state.profile['av-modalidade'] && state.tests && state.tests[0]) {
+    state.cycleNum = 1;
+    state.plan = generateCycle(1, state.profile, state.lesoes, 'base');
+    state.currentWeek = 1;
+    state.completedWeeks = [];
+    state.assessed = true;
+    viewedCycle = null;
+    saveState();
+  }
+
   hideGate();
   renderHome(); renderExercises();
-  if (state.assessed) renderProfile();
+  if (state.assessed) { renderProfile(); renderPlan(); }
   updateHdrSub();
+  goToScreen(state.assessed ? 'plano' : 'home', document.getElementById(state.assessed ? 'bnav-plano' : 'bnav-home'));
 }
 
 async function syncStateToCloud() {
@@ -902,7 +954,7 @@ async function sendChatMsg() {
 let state = JSON.parse(localStorage.getItem('cr_state') || 'null') || {
   assessed: false, cycleNum: 0, currentWeek: 1, completedWeeks: [],
   profile: {}, scores: {}, lesoes: [], plan: null, parqAlert: false,
-  logs: {}, tests: {}, history: []
+  logs: {}, tests: {}, history: [], lead: null
 };
 let avData = {};
 let avChecks = {};
@@ -944,6 +996,7 @@ function updateHdrSub() {
 // ASSESSMENT
 // ══════════════════════════════════════════════════════
 function startAssessment() {
+  if (!state.lead || !state.lead.nome) { goToScreen('lead'); return; }
   avData = {}; avChecks = {}; avScales = {};
   goToScreen('avaliacao', document.getElementById('bnav-avaliacao'));
   showStep(1);
@@ -1039,18 +1092,18 @@ function finishAssessment() {
   const expM = muscu === 'nenhuma' ? 'Iniciante' : muscu === 'basica' ? 'Intermediário' : 'Avançado';
   const nivelFinal = forca < 4 && muscu === 'nenhuma' ? 'Iniciante' : forca > 6 && muscu === 'avancada' ? 'Avançado' : 'Intermediário';
 
-  state.profile = { ...avData, nivel: nivelFinal, funcScore, riskScore };
+  state.profile = { ...avData, nome: state.lead ? state.lead.nome : avData.nome, nivel: nivelFinal, funcScore, riskScore };
   state.scores = { forca, equil, mobil, nordic, dor };
   state.parqAlert = !!avChecks['parq-risco'];
   state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && k !== 'parq-risco');
   saveState();
 
-  // Antes de gerar o Ciclo 1, o aluno faz o teste físico inicial —
+  // Antes de ver a periodização sugerida, o aluno faz o teste físico —
   // isso vira a referência de comparação para a reavaliação do mês 1.
   testMode = 'inicial';
-  document.getElementById('teste-title').textContent = 'Teste Físico Inicial';
-  document.getElementById('teste-sub').textContent = 'Vira sua referência para medir evolução no fim do mês';
-  document.getElementById('teste-submit-btn').textContent = 'Salvar teste e gerar Ciclo 1 ✓';
+  document.getElementById('teste-title').textContent = 'Teste Físico';
+  document.getElementById('teste-sub').textContent = 'Últimos dados — depois disso já mostramos sua periodização';
+  document.getElementById('teste-submit-btn').textContent = 'Ver minha periodização →';
   renderTesteInputs('teste-inputs', 'teste-', null);
   goToScreen('teste');
 }
@@ -1058,13 +1111,17 @@ function finishAssessment() {
 // ══════════════════════════════════════════════════════
 // TESTE FÍSICO (inicial + reteste ao fim de cada ciclo)
 // ══════════════════════════════════════════════════════
+const INVERTED_METRICS = ['tempo1km']; // testes onde MENOR é melhor (tempo)
+
 function getTests(sport) {
   const base = [
     { id:'salto', label:'Salto Horizontal (Broad Jump)', unit:'cm', desc:'Pés juntos, sem corrida de aproximação — melhor de 2 tentativas.' },
     { id:'prancha', label:'Prancha Ventral', unit:'segundos', desc:'Tempo máximo mantendo o quadril alinhado, sem deixar cair.' },
     { id:'agacha', label:'Agachamento Livre', unit:'repetições em 60s', desc:'Amplitude completa, ritmo constante, sem pausar.' },
+    { id:'flexao', label:'Flexão de Joelhos', unit:'repetições em 60s', desc:'Joelhos apoiados no chão, peito toca o chão a cada repetição, ritmo constante.' },
     { id:'nordic', label:'Nordic Curl (ou variação assistida)', unit:'repetições controladas', desc:'Descida de 3-5 segundos, sem "cair" no final.' },
   ];
+  if (sport === 'corrida' || sport === 'hibrido') base.push({ id:'tempo1km', label:'Tempo de 1km corrido', unit:'minutos (ex: 5.5 = 5min30s)', desc:'Percurso plano, esforço forte e controlado — use a MESMA rota nas duas vezes para poder comparar.' });
   if (sport === 'natacao') base.push({ id:'ombro', label:'Rotação Externa com Elástico até a falha', unit:'repetições/lado', desc:'Use a MESMA resistência de elástico nos dois testes para poder comparar.' });
   if (sport === 'ciclismo' || sport === 'hibrido') base.push({ id:'wallsit', label:'Wall Sit (cadeira na parede)', unit:'segundos', desc:'Joelho a 90°, encostado na parede, tempo máximo.' });
   return base;
@@ -1093,16 +1150,9 @@ function submitTeste() {
   }
   if (testMode === 'inicial') {
     state.tests[0] = result;
-    state.cycleNum = 1;
-    state.plan = generateCycle(1, state.profile, state.lesoes, 'base');
-    state.currentWeek = 1;
-    state.completedWeeks = [];
-    state.assessed = true;
-    viewedCycle = null;
     saveState();
-    renderHome(); renderPlan(); renderProfile();
-    goToScreen('plano', document.getElementById('bnav-plano'));
-    showToast('✅ Teste salvo — Ciclo 1 gerado!');
+    renderPaywall();
+    goToScreen('paywall');
   } else {
     closeData.testeFinal = result;
     goToCloseStep(3);
@@ -1112,6 +1162,63 @@ function submitTeste() {
 function cancelTeste() {
   if (testMode === 'inicial') { goToScreen('avaliacao', document.getElementById('bnav-avaliacao')); showStep(6); }
   else { goToScreen('fechociclo'); showCloseStep(1); }
+}
+
+// ══════════════════════════════════════════════════════
+// CAPTURA DE LEAD (antes de qualquer cadastro/pagamento)
+// ══════════════════════════════════════════════════════
+async function submitLead() {
+  const nome = document.getElementById('lead-nome').value.trim();
+  const telefoneRaw = document.getElementById('lead-telefone').value.trim();
+  const telefone = telefoneRaw.replace(/\D/g, '');
+  if (!nome || telefone.length < 10) { showToast('⚠️ Preencha nome e um telefone válido (com DDD)'); return; }
+  state.lead = { nome, telefone };
+  saveState();
+  if (sb) {
+    try { await sb.from('leads').insert({ nome, telefone }); }
+    catch (e) { console.warn('Não consegui salvar o lead na nuvem (offline?)', e); }
+  }
+  goToScreen('avaliacao');
+  showStep(1);
+  const nomeInput = document.getElementById('av-nome');
+  if (nomeInput) nomeInput.value = nome;
+}
+
+// ══════════════════════════════════════════════════════
+// TELA DE RESULTADO / PAYWALL (pré-pagamento)
+// ══════════════════════════════════════════════════════
+const KIWIFY_CHECKOUT_URL = 'https://SUA-URL-DE-CHECKOUT.kiwify.com.br'; // TODO: cole o link real do seu produto no Kiwify
+
+function renderPaywall() {
+  const p = state.profile;
+  const focus = FOCUS_DEFS.base;
+  const nome = (state.lead && state.lead.nome ? state.lead.nome.split(' ')[0] : (p.nome || 'atleta'));
+  document.getElementById('paywall-content').innerHTML = `
+    <div style="text-align:center;padding:8px 0 20px">
+      <div style="font-size:40px;margin-bottom:10px">🎯</div>
+      <h1 style="font-family:var(--ff);font-weight:800;font-size:21px;margin-bottom:8px">${nome}, sua periodização está pronta</h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6">Baseado na sua avaliação, montamos um ciclo de <b>4 semanas de fortalecimento</b> — foco em <b>${focus.name}</b> — pensado pro seu perfil de ${modLabel(p['av-modalidade'])}, nível ${p.nivel}, com o objetivo de ${goalLabel(p['av-objetivo'])}.</p>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:10px">O que você já garantiu com a avaliação</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;color:var(--txt)">✅ Perfil de atleta calibrado (nível ${p.nivel})</div>
+        <div style="font-size:13px;color:var(--txt)">✅ Teste físico salvo como sua referência de evolução</div>
+        <div style="font-size:13px;color:var(--txt)">✅ 1º ciclo de treino pronto pra liberar</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:18px;border-color:var(--acc)">
+      <div class="card-title" style="margin-bottom:6px">Com o acesso completo você tem</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted)">
+        <div>🔁 Ciclos mensais que se ajustam sozinhos ao seu progresso</div>
+        <div>📚 Biblioteca com mais de 100 exercícios, com vídeo</div>
+        <div>💬 Chat com IA pra tirar dúvida a qualquer hora</div>
+        <div>📊 Comparação de teste físico a cada mês</div>
+      </div>
+    </div>
+    <button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="window.open(KIWIFY_CHECKOUT_URL,'_blank')">Quero meu plano →</button>
+    <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
+  `;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1197,7 +1304,8 @@ async function closeTheCycle() {
   Object.keys(testAfter).forEach(k => {
     const before = testBefore[k] || 0;
     const after = testAfter[k];
-    const pct = before > 0 ? ((after - before) / before) * 100 : 0;
+    let pct = before > 0 ? ((after - before) / before) * 100 : 0;
+    if (INVERTED_METRICS.includes(k)) pct = -pct; // ex: tempo de 1km — menor tempo = melhora, então inverte o sinal
     deltas[k] = { before, after, pct: Math.round(pct * 10) / 10 };
     pcts.push(pct);
   });
@@ -1905,6 +2013,96 @@ const EXERCISES = [
   {id:'kit12',name:'Isometria de Adutor com Bola',cat:'kit',icon:'⚽',bg:'rgba(91,142,255,.08)',params:'3×20-30s',level:'Iniciante',equipment:'Bola pequena',video:'',
    science:'Complementa o Copenhagen Plank com uma versão de entrada mais acessível — fortalece adutores, reduzindo risco de lesão de virilha em volume alto de treino.',
    cues:['Bola entre os joelhos, deitado ou sentado','Aperta a bola com força controlada, sem "socar"','Segura a contração pelo tempo determinado','Progrida para o Copenhagen Plank conforme ganha força']},
+  {id:'t8',name:'Elevação de Panturrilha Unilateral',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'3×12-15/lado',level:'Iniciante',equipment:'Degrau/solo',video:'',
+   science:'Progressão natural do calf raise bilateral — a corrida é um gesto unipodal, então a força de panturrilha precisa ser testada e treinada perna por perna.',
+   cues:['Apoia só a ponta do pé no degrau, calcanhar livre para descer','Sobe o mais alto possível, desce até alongar bem a panturrilha','Segure em um apoio para equilíbrio, sem ajudar com o outro pé','Progrida adicionando peso na mão quando ficar fácil']},
+  {id:'t9',name:'Isometria de Agachamento na Parede (Wall Sit Alto)',cat:'tendão',icon:'🧱',bg:'rgba(91,142,255,.12)',params:'3×30-40s',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Isometria em ângulo mais aberto que o Spanish Squat — boa porta de entrada pra quem sente dor no ângulo mais fechado, com efeito analgésico similar em tendinopatia patelar.',
+   cues:['Ângulo do joelho mais aberto que 90 graus (mais alto na parede)','Aumente a profundidade gradualmente ao longo das semanas','Pare se sentir dor aguda, não apenas cansaço muscular','Bom exercício de entrada antes de progredir pro Spanish Squat completo']},
+  {id:'t10',name:'Nordic Curl Assistido com Elástico',cat:'tendão',icon:'🎗',bg:'rgba(91,142,255,.12)',params:'3×6-8',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Versão de entrada do Nordic Hamstring Curl — o elástico reduz a carga na fase mais difícil, permitindo que iniciantes construam a força excêntrica sem precisar de assistência de outra pessoa.',
+   cues:['Prenda o elástico numa estrutura fixa atrás do corpo','O elástico ajuda a puxar de volta na parte mais difícil do movimento','Desça o mais devagar que conseguir controlar','Reduza a assistência do elástico conforme ganha força']},
+  {id:'m17b',name:'Goblet Squat',cat:'músculo',icon:'🏺',bg:'rgba(200,241,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
+   science:'Agachamento carregado na frente do corpo — mais acessível tecnicamente que o back squat, ótimo ponto de entrada pra quem treina em casa sem barra.',
+   cues:['Segura o peso junto ao peito, cotovelos apontando para baixo','Agachamento completo, cotovelos passam por dentro dos joelhos','Tronco ereto o tempo todo','Bom substituto do back squat quando não há acesso a barra ou rack']},
+  {id:'m18b',name:'Romanian Deadlift com Halteres',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Halteres',video:'',
+   science:'Variação do RDL usando halteres em vez de barra — mesma exigência de cadeia posterior, mais acessível pra quem treina em casa.',
+   cues:['Joelhos levemente flexionados, fixos durante o movimento','Halteres deslizam perto das pernas','Sente alongar atrás da coxa, para antes de perder a lombar neutra','Sobe contraindo o glúteo, sem puxar com a lombar']},
+  {id:'m19',name:'Afundo Búlgaro sem Peso',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'3×12/lado',level:'Iniciante',equipment:'Banco/cadeira',video:'',
+   science:'Versão de peso corporal do Bulgarian Split Squat — porta de entrada acessível antes de progredir pra versão com halteres.',
+   cues:['Pé de trás apoiado num banco ou cadeira firme','Desce até 90 graus no joelho da frente','Torso levemente inclinado à frente','Progrida pra versão com halteres quando ficar fácil']},
+  {id:'m20',name:'Elevação Pélvica Unilateral',cat:'músculo',icon:'🍑',bg:'rgba(200,241,53,.1)',params:'3×10/lado',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Versão unilateral da ponte de glúteo — corrige assimetrias entre os dois lados e prepara o glúteo pra exigência unipodal da corrida.',
+   cues:['Uma perna estendida ou dobrada no ar, a outra faz o trabalho','Quadril sobe alinhado, sem torcer para o lado','Contrai o glúteo no topo com força','Progrida elevando os ombros num banco para mais amplitude']},
+  {id:'m21',name:'Remada Unilateral com Halter',cat:'músculo',icon:'💪',bg:'rgba(200,241,53,.1)',params:'3×10-12/lado',level:'Iniciante',equipment:'Halter/banco',video:'',
+   science:'Trabalho unilateral de costas — corrige assimetrias e trabalha estabilidade de tronco anti-rotação ao mesmo tempo que a força de puxada.',
+   cues:['Apoia joelho e mão no banco, costas paralelas ao chão','Cotovelo passa rente ao corpo, puxa até a altura das costelas','Sem girar o tronco durante o movimento','Controle a descida do peso, não solta']},
+  {id:'m22',name:'Flexão de Braço (Push-up)',cat:'músculo',icon:'💪',bg:'rgba(200,241,53,.1)',params:'3×máximo controlado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Força de empurrar de peito/tríceps/ombro sem precisar de nenhum equipamento — mantém o equilíbrio push/pull do treino em qualquer contexto de treino em casa.',
+   cues:['Corpo em linha reta da cabeça aos calcanhares','Desce até o peito quase tocar o chão','Cotovelos a 45 graus do corpo, não retos para os lados','Regride nos joelhos se não conseguir a versão completa']},
+  {id:'m23',name:'Elevação de Panturrilha em Pé (Bilateral)',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'4×15-20',level:'Iniciante',equipment:'Degrau/solo',video:'',
+   science:'Volume alto de panturrilha bilateral — construção de base antes de progredir pra versão unilateral e pra versão excêntrica.',
+   cues:['Amplitude completa — desce bem embaixo, sobe bem alto','Ritmo controlado, sem saltitar','Pode ser feito em qualquer superfície com um degrau','Progrida pra unilateral quando dominar essa versão']},
+  {id:'m24',name:'Agachamento Sumô',cat:'músculo',icon:'🤸',bg:'rgba(200,241,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
+   science:'Variação com pernas mais afastadas e pés rodados para fora — recruta mais adutor e glúteo, complementando o padrão do agachamento tradicional.',
+   cues:['Pés bem mais afastados que a largura dos ombros, ponta rodada para fora','Joelhos seguem a direção dos pés durante a descida','Tronco ereto, peso segurado entre as pernas','Boa opção pra variar o estímulo sem trocar de exercício principal']},
+  {id:'c12',name:'Prancha com Toque de Ombro',cat:'core',icon:'🤚',bg:'rgba(255,107,53,.1)',params:'3×20 toques',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Anti-rotação dinâmica em prancha — o quadril tenta girar a cada toque, e o core precisa resistir a isso, transferindo direto pra estabilidade de tronco na corrida.',
+   cues:['Prancha alta, mãos sob os ombros, pés afastados pra mais base','Toca o ombro oposto sem deixar o quadril balançar','Quanto menos o quadril se move, melhor a execução','Reduza a velocidade se o quadril começar a balançar demais']},
+  {id:'c13',name:'Bicycle Crunch',cat:'core',icon:'🚲',bg:'rgba(255,107,53,.1)',params:'3×15/lado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Trabalho de oblíquos com componente rotacional dinâmico — complementa os exercícios anti-rotação com um estímulo de rotação controlada.',
+   cues:['Mãos atrás da cabeça sem puxar o pescoço','Cotovelo toca o joelho oposto na rotação','Pernas fazem o movimento de pedalar continuamente','Ritmo controlado, sem pressa']},
+  {id:'c14',name:'Superman',cat:'core',icon:'🦸',bg:'rgba(255,107,53,.1)',params:'3×12-15',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Fortalece a cadeia posterior de tronco — complementa os exercícios de anti-flexão trabalhando a extensão.',
+   cues:['Deitado de bruços, eleva braços e pernas ao mesmo tempo','Olha para o chão, sem forçar o pescoço para cima','Segura o topo por 1-2 segundos','Movimento pequeno e controlado, não é sobre altura']},
+  {id:'c15',name:'V-Up',cat:'core',icon:'🔺',bg:'rgba(255,107,53,.1)',params:'3×10-12',level:'Avançado',equipment:'Solo',video:'',
+   science:'Exercício avançado de flexão de tronco completa — exige mobilidade e força de core em toda a amplitude, boa progressão depois de dominar o Hollow Body Hold.',
+   cues:['Braços e pernas sobem ao mesmo tempo, formando um V','Toca as mãos nos pés no topo, se possível','Desce controlado, sem deixar cair','Regride flexionando os joelhos se for muito difícil']},
+  {id:'c16',name:'Bird-Dog com Carga',cat:'core',icon:'🐕',bg:'rgba(255,107,53,.1)',params:'3×8/lado',level:'Intermediário',equipment:'Halter leve/caneleira',video:'',
+   science:'Progressão do Bird-Dog clássico — adiciona resistência no braço ou perna estendida para aumentar a exigência de estabilidade lombar anti-rotação.',
+   cues:['Mesma execução do Bird-Dog, com peso leve no tornozelo ou pulso','Lombar não pode cair para nenhum lado durante o movimento','Movimento lento e controlado','Reduza o peso se perder a estabilidade']},
+  {id:'p11b',name:'Tuck Jump',cat:'pliometria',icon:'🤾',bg:'rgba(200,241,53,.08)',params:'3×8-10',level:'Avançado',equipment:'Solo',video:'',
+   science:'Potência vertical máxima com flexão de quadril no ar — desenvolve explosão de quadril/joelho que se soma à rigidez de tornozelo já trabalhada no Pogo Jump.',
+   cues:['Salta o mais alto possível, joelhos sobem até o peito no ar','Aterrissagem suave, absorvendo com os joelhos','Descanso completo entre séries — é potência máxima, não resistência','Só para atletas sem dor articular ativa']},
+  {id:'p12',name:'Broad Jump Duplo (Salto Horizontal Repetido)',cat:'pliometria',icon:'🐸',bg:'rgba(200,241,53,.08)',params:'3×4-5 saltos seguidos',level:'Avançado',equipment:'Solo',video:'',
+   science:'Progressão do salto horizontal simples — a repetição sem pausa exige reatividade imediata na aterrissagem, simulando a demanda de choque repetido da corrida.',
+   cues:['Aterrissa e já explode para o próximo salto, sem parar','Absorve cada aterrissagem com os joelhos flexionados','Comece com 2-3 saltos seguidos antes de progredir pra mais','Pare se a técnica degradar com a fadiga']},
+  {id:'p13',name:'Jump Squat',cat:'pliometria',icon:'⬆️',bg:'rgba(200,241,53,.08)',params:'3×8-10',level:'Intermediário',equipment:'Solo/halteres leves',video:'',
+   science:'Potência concêntrica de membro inferior a partir do agachamento — ponte entre força máxima e pliometria pura.',
+   cues:['Agacha e explode para cima o mais rápido possível','Aterrissagem suave, joelhos absorvendo o impacto','Pode ser feito só com peso corporal ou halteres leves','Foco em altura e velocidade, não em quantidade']},
+  {id:'p14',name:'Split Jump (Afundo com Salto)',cat:'pliometria',icon:'🦘',bg:'rgba(200,241,53,.08)',params:'3×8/lado',level:'Avançado',equipment:'Solo',video:'',
+   science:'Potência unilateral em posição de afundo — transferência direta pra fase de impulsão da passada em corredores de médio/alto nível.',
+   cues:['Posição de afundo, salta trocando a perna no ar','Aterrissagem controlada na posição de afundo oposta','Exige boa mobilidade de quadril — não force se faltar amplitude','Comece devagar antes de aumentar a velocidade dos saltos']},
+  {id:'mob10b',name:'Alongamento de Isquiotibiais em Pé',cat:'mobilidade',icon:'🦵',bg:'rgba(255,235,59,.08)',params:'3×30s/lado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Mobilidade de cadeia posterior — isquiotibiais encurtados alteram a mecânica do quadril durante a passada e podem aumentar sobrecarga lombar.',
+   cues:['Perna esticada apoiada à frente, tronco inclina levemente','Sente alongar atrás da coxa, sem forçar o joelho','Mantém a coluna reta, não arredonda as costas','Alongamento estático, sem saltitar']},
+  {id:'mob11',name:'Mobilidade de Quadril (Pombo)',cat:'mobilidade',icon:'🕊',bg:'rgba(255,235,59,.08)',params:'2×45-60s/lado',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Mobilidade de rotação externa de quadril e piriforme — importante para amplitude de passada e frequentemente encurtado em quem passa muito tempo sentado.',
+   cues:['Perna da frente dobrada, canela perpendicular ao corpo','Perna de trás esticada, quadril quadrado para frente','Sente alongar no glúteo da perna da frente','Use apoio nas mãos se faltar mobilidade pra sentar totalmente']},
+  {id:'mob12',name:'Cat-Cow (Mobilidade de Coluna)',cat:'mobilidade',icon:'🐱',bg:'rgba(255,235,59,.08)',params:'2×10 repetições',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Mobilidade dinâmica de coluna — bom aquecimento pré-treino e alívio de tensão lombar após sessões de força ou corridas longas.',
+   cues:['Posição de quatro apoios, mãos sob ombros, joelhos sob quadril','Arqueia a coluna para cima, depois para baixo','Movimento lento, sincronizado com a respiração','Ótimo tanto no aquecimento quanto no desaquecimento']},
+  {id:'mob13',name:'Alongamento de Piriforme Deitado',cat:'mobilidade',icon:'🧘',bg:'rgba(255,235,59,.08)',params:'2×30-45s/lado',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Alívio de tensão no piriforme — relevante para corredores com desconforto glúteo profundo associado a encurtamento muscular.',
+   cues:['Deitado de costas, tornozelo cruzado sobre o joelho oposto','Puxa a coxa de trás em sua direção, sentindo alongar o glúteo','Se sentir formigamento ou dor irradiando pela perna, pare e procure avaliação','Alongamento suave, sem forçar']},
+  {id:'kit13',name:'Ponte de Glúteo com Marcha',cat:'kit',icon:'🚶',bg:'rgba(91,142,255,.08)',params:'3×8/lado',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Progressão da ponte de glúteo bilateral — adiciona instabilidade unilateral controlada, preparando o quadril pra fase de apoio único da corrida.',
+   cues:['Quadril elevado e estável, como na ponte normal','Eleva um joelho em direção ao peito sem deixar o quadril cair','Alterna as pernas mantendo o quadril sempre no alto','Se o quadril afundar de um lado, reduza a amplitude']},
+  {id:'kit14',name:'Caminhada Lateral com Banda (variação baixa)',cat:'kit',icon:'🦀',bg:'rgba(91,142,255,.08)',params:'3×10m/direção',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Variação do Monster Walk com banda mais abaixo e postura mais agachada — aumenta a exigência de glúteo médio em relação à versão padrão.',
+   cues:['Banda nos tornozelos, leve flexão de joelhos e quadril','Passos largos para o lado, sem perder a postura agachada','Tronco ereto o tempo todo','Alterna a direção a cada série']},
+  {id:'kit15',name:'Wall Angels (Anjo na Parede)',cat:'kit',icon:'👼',bg:'rgba(91,142,255,.08)',params:'3×10-12',level:'Iniciante',equipment:'Parede',video:'',
+   science:'Mobilidade e controle escapular contra a parede — melhora postura torácica, relevante para eficiência respiratória e postura geral de tronco.',
+   cues:['Costas, cabeça e braços encostados na parede o tempo todo','Desliza os braços para cima e para baixo, imitando um anjo','Se a lombar arquear muito, afasta um pouco os pés da parede','Movimento lento e controlado']},
+  {id:'kit16',name:'Isometria de Glúteo Médio Deitado',cat:'kit',icon:'🐚',bg:'rgba(91,142,255,.08)',params:'3×20s/lado',level:'Iniciante',equipment:'Elástico',video:'',
+   science:'Versão isométrica do Clamshell — segurar a posição no topo aumenta o tempo sob tensão do glúteo médio, útil em fases iniciais de reabilitação/prevenção.',
+   cues:['Mesma posição do Clamshell, mas segura no topo em vez de repetir','Quadril não pode rolar para trás durante a pausa','Sente o trabalho na lateral do glúteo, não na lombar','Bom para fases de dor onde repetições dinâmicas incomodam']},
+  {id:'o7',name:'Rotação Externa Deitado de Lado',cat:'ombro',icon:'🛌',bg:'rgba(91,142,255,.1)',params:'3×12-15/lado',level:'Iniciante',equipment:'Haltere leve',video:'',
+   science:'Isolamento clássico de manguito rotador — um dos exercícios com melhor evidência para prevenção de lesão de ombro em esportes de braçada repetitiva.',
+   cues:['Deitado de lado, cotovelo colado ao corpo a 90 graus','Gira o antebraço para cima, sem mover o cotovelo do lugar','Carga bem leve — é um exercício de isolamento fino','Controle tanto a subida quanto a descida']},
+  {id:'o8',name:'Face Pull com Ponto Alto',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×15',level:'Iniciante',equipment:'Cabo/elástico',video:'',
+   science:'Variação do Face Pull com ponto de ancoragem mais alto — muda o ângulo de trabalho dos estabilizadores escapulares e do deltoide posterior.',
+   cues:['Elástico ou cabo preso num ponto alto, na altura da cabeça','Puxa em direção ao rosto, cotovelos abrem para os lados','Aperta as escápulas no final do movimento','Controle a volta, sem soltar de forma brusca']},
 ];
 
 function renderExercises() {
@@ -2123,13 +2321,12 @@ const scienceData = {
     <b>Mecanismo:</b> O tendão de Aquiles armazena e devolve até 35% da energia da passada — pliometria treina essa "mola".`
   },
   verkhoshansky: {
-    title: '🧩 Blocos de Verkhoshansky', color: 'var(--acc2)',
-    content: `<b>Quem foi:</b> Yuri Verkhoshansky, cientista soviético conhecido como "pai da pliometria" (Shock Method), criador do Sistema de Blocos (Block Periodization / Sequência Conjugada).<br><br>
-    <b>Por que cada ciclo mensal segue esse modelo:</b><br>
+    title: '🧩 Blocos de Periodização', color: 'var(--acc2)',
+    content: `<b>Por que cada ciclo mensal segue esse modelo:</b><br>
     • Cada ciclo (4 semanas — 3 de trabalho + 1 de deload/reteste) concentra ênfase em UM bloco — Base (ativação), Força (carga alta), Potência (pliometria) ou Manutenção — em vez de diluir tudo o tempo todo. No fim do ciclo, teste físico + reavaliação + seu feedback decidem qual bloco vem no mês seguinte<br>
     • <b>Preparação Geral → Preparação Específica:</b> os exercícios começam genéricos e vão se aproximando do gesto da sua modalidade conforme a prova se aproxima<br>
     • <b>Efeito Tardio de Treinamento:</b> o pico de força aparece 2-4 semanas depois do bloco pesado — por isso o fortalecimento pesado fica nas fases de base/construção, não na semana da prova<br><br>
-    <b>O que isso NÃO é:</b> Verkhoshansky nunca prescreveu o treino de endurance em si — o método dele organiza só o estímulo de força ao redor do calendário do atleta. É exatamente o papel deste app.`
+    <b>O que isso NÃO é:</b> este método nunca prescreve o treino de endurance em si — ele organiza só o estímulo de força ao redor do calendário do atleta. É exatamente o papel deste app.`
   },
 };
 
@@ -2198,13 +2395,13 @@ function expLabel(v) { return {'<6m':'<6 meses','6m-2a':'6m – 2 anos','>2a':'>
 function expMLabel(v) { return {nenhuma:'Nenhuma',basica:'Básica (1-2 anos)',avancada:'Avançada (+2 anos)'}[v] || '—'; }
 function lesaoLabel(v) { const m={lesaojoelho:'Joelho',lesaotornozelo:'Tornozelo/Aquiles',lesaoquadril:'Quadril/IT Band',lesaolombar:'Lombar/Core',lesaoisquio:'Isquiotibiais',lesaoombro:'Ombro/Manguito'}; return m[v.replace('-','')] || v; }
 function modLabel(v) { return {corrida:'🏃 Corrida',ciclismo:'🚴 Ciclismo',natacao:'🏊 Natação',hibrido:'🔥 Híbrido/Triatlo'}[v] || '—'; }
-function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[]}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
+function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[],lead:null}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
 
 // INIT
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-08-19-2';
+const APP_VERSION = '2026-08-21-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
@@ -2213,7 +2410,6 @@ if (localStorage.getItem('app_version') !== APP_VERSION) {
   ]).then(() => location.reload());
 }
 
-renderExercises();
 initAuth();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW falhou', e)));
