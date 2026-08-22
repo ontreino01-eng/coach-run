@@ -1,4 +1,4 @@
-// CoachEndurance — Service Worker
+// PersonalCoach — Service Worker
 // v2: HTML/JS sempre busca a versão mais nova da rede primeiro (network-first) —
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first

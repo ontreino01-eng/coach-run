@@ -1,6 +1,6 @@
 {
-  "name": "CoachEndurance — Fortalecimento para Endurance",
-  "short_name": "CoachEndurance",
+  "name": "PersonalCoach — Treino Baseado em Ciência",
+  "short_name": "PersonalCoach",
   "description": "Fortalecimento para corrida, ciclismo, natação e híbridos, com IA de acompanhamento mensal.",
   "start_url": "./",
   "scope": "./",

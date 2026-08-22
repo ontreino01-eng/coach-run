@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>CoachEndurance — Fortalecimento para Atletas de Endurance</title>
+<title>PersonalCoach — Treino Baseado em Ciência</title>
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="manifest.json"/>
@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="CoachEndurance"/>
+<meta name="apple-mobile-web-app-title" content="PersonalCoach"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <link rel="icon" href="icons/icon-192.png"/>
 
@@ -249,7 +249,7 @@ textarea{resize:vertical;min-height:70px}
 
 <!-- GATE DE ACESSO: licença (CPF+código) → cadastro → confirmação de e-mail → login -->
 <div id="gate-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column;overflow-y:auto">
-  <div style="padding:32px 22px 18px"><div class="logo" style="font-size:20px">⚡ CoachEndurance</div></div>
+  <div style="padding:32px 22px 18px"><div class="logo" style="font-size:20px">⚡ PersonalCoach</div></div>
 
   <div class="gate-step" id="gate-loading" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:10px">
     <div style="font-size:13px;color:var(--muted)">Carregando…</div>
@@ -295,8 +295,8 @@ textarea{resize:vertical;min-height:70px}
 <!-- HEADER -->
 <header class="hdr">
   <div>
-    <div class="logo">⚡ CoachEndurance</div>
-    <div class="hdr-sub" id="hdr-sub">Fortalecimento para Endurance</div>
+    <div class="logo">⚡ PersonalCoach</div>
+    <div class="hdr-sub" id="hdr-sub">Treino baseado em ciência</div>
   </div>
   <div class="hdr-right" id="hdr-right"></div>
 </header>
@@ -989,7 +989,7 @@ function updateHdrSub() {
   if (!el) return;
   el.textContent = state.assessed && state.profile['av-modalidade']
     ? `${modLabel(state.profile['av-modalidade'])} · Ciclo ${state.cycleNum}`
-    : 'Fortalecimento para Endurance';
+    : 'Treino baseado em ciência';
 }
 
 // ══════════════════════════════════════════════════════
@@ -2401,7 +2401,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-08-21-1';
+const APP_VERSION = '2026-08-21-2';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([

@@ -1,4 +1,4 @@
-# CoachEndurance
+# PersonalCoach
 
 App de fortalecimento para atletas de endurance (corrida, ciclismo, natação, híbridos).
 Ver `DEPLOY_GUIDE.md` para o passo a passo completo de deploy e lançamento.
