@@ -286,7 +286,15 @@ textarea{resize:vertical;min-height:70px}
     <div class="input-group"><label class="input-label">E-mail</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
     <div class="input-group"><label class="input-label">Senha</label><input type="password" id="gate-login-senha" placeholder="Sua senha"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateLogin()">Entrar</button>
+    <p style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="gateForgotPassword()" style="color:var(--acc);font-size:12px">Esqueci minha senha</a></p>
     <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('licenca')">← Ainda não tenho conta</button>
+  </div>
+
+  <div class="gate-step" id="gate-newpassword" style="display:none;flex-direction:column;padding:0 22px">
+    <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Criar nova senha</h1>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Você clicou no link de recuperação — defina sua nova senha abaixo.</p>
+    <div class="input-group"><label class="input-label">Nova senha</label><input type="password" id="gate-newpassword-input" placeholder="Mínimo 6 caracteres"/></div>
+    <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateSetNewPassword()">Salvar nova senha</button>
   </div>
 </div>
 
@@ -747,6 +755,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+if (sb) {
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') showGate('newpassword');
+  });
+}
+
 let currentUserId = null;
 let gateData = {};
 
@@ -775,7 +789,7 @@ function routeToEntryScreen() {
   updateHdrSub();
   if (state.assessed) { renderHome(); goToScreen('home', document.getElementById('bnav-home')); return; }
   if (!state.lead || !state.lead.nome) { goToScreen('lead'); return; }
-  if (!state.profile || !state.profile['av-modalidade']) { goToScreen('avaliacao'); showStep(1); return; }
+  if (!state.profile || !state.profile['av-modalidade']) { goToScreen('avaliacao'); showStep(1); buildScales(); return; }
   if (!state.tests || !state.tests[0]) {
     testMode = 'inicial';
     document.getElementById('teste-title').textContent = 'Teste Físico';
@@ -883,6 +897,32 @@ async function gateLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
   if (error) { showToast('⚠️ ' + error.message); return; }
   await onAuthenticated(data.session);
+}
+
+async function gateForgotPassword() {
+  const email = document.getElementById('gate-login-email').value.trim();
+  if (!email) { showToast('⚠️ Digite seu e-mail no campo acima primeiro'); return; }
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+    showToast('📩 Mandamos um link pra trocar sua senha em ' + email);
+  } catch (e) {
+    showToast('⚠️ Não consegui enviar — confira o e-mail digitado');
+  }
+}
+
+async function gateSetNewPassword() {
+  const senha = document.getElementById('gate-newpassword-input').value;
+  if (senha.length < 6) { showToast('⚠️ Senha muito curta (mínimo 6 caracteres)'); return; }
+  try {
+    const { error } = await sb.auth.updateUser({ password: senha });
+    if (error) throw error;
+    showToast('✅ Senha atualizada! Você já está logado.');
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) await onAuthenticated(session);
+  } catch (e) {
+    showToast('⚠️ Não consegui salvar a nova senha — tente de novo');
+  }
 }
 
 async function gateLogout() {
@@ -1012,6 +1052,8 @@ function showStep(n) {
   document.querySelectorAll('#av-dots .step-dot').forEach((d, i) => {
     d.className = 'step-dot ' + (i < n-1 ? 'done' : i === n-1 ? 'active' : '');
   });
+  // Trava de segurança: se chegou no passo 5 e as escalas nunca foram montadas, monta agora.
+  if (n === 5 && !document.querySelector('#av-scales .scale-btn')) buildScales();
   window.scrollTo(0, 0);
 }
 
@@ -2109,12 +2151,36 @@ function renderExercises() {
   const cats = ['all','tendão','músculo','core','ombro','pliometria','mobilidade','kit'];
   const catLabels = {'all':'Todos','tendão':'Tendões','músculo':'Músculos','core':'Core','ombro':'Ombro (nado)','pliometria':'Pliometria','mobilidade':'Mobilidade','kit':'Kit Anti-Lesão'};
   const filter = document.getElementById('ex-filter');
+  const list = document.getElementById('ex-list');
+
+  if (!state.assessed) {
+    filter.innerHTML = '';
+    const preview = EXERCISES.slice(0, 3);
+    list.innerHTML = `
+      <div style="filter:blur(4px);pointer-events:none;opacity:.6">
+        ${preview.map(ex => `
+        <div class="exl-card">
+          <div class="exl-icon" style="background:${ex.bg}">${ex.icon}</div>
+          <div class="exl-info">
+            <div class="exl-name">${ex.name}</div>
+            <div class="exl-tags"><span class="tag tag-muted" style="font-size:10px">${ex.cat}</span></div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="card" style="text-align:center;margin-top:-40px;position:relative;z-index:2">
+        <div style="font-size:28px;margin-bottom:8px">🔒</div>
+        <div class="card-title" style="margin-bottom:6px">101 exercícios com vídeo</div>
+        <div class="card-sub" style="margin-bottom:14px">Libere fazendo a avaliação gratuita e ativando seu acesso.</div>
+        <button class="btn btn-acc btn-full" onclick="routeToEntryScreen()">Fazer avaliação gratuita →</button>
+      </div>`;
+    return;
+  }
+
   filter.innerHTML = cats.map(c => `
     <button class="tag ${c===currentExFilter?'tag-green':'tag-muted'}" style="cursor:pointer;padding:7px 14px;border-radius:20px;font-size:12px" onclick="filterEx('${c}')">
       ${catLabels[c]}
     </button>`).join('');
 
-  const list = document.getElementById('ex-list');
   const filtered = currentExFilter === 'all' ? EXERCISES : EXERCISES.filter(e => e.cat === currentExFilter);
   list.innerHTML = filtered.map(ex => `
     <div class="exl-card" onclick="openExModal('${ex.id}')">
@@ -2140,6 +2206,7 @@ function filterEx(cat) {
 }
 
 function openExModal(id) {
+  if (!state.assessed) { showToast('🔒 Faça a avaliação e ative seu acesso pra ver os exercícios'); return; }
   const ex = EXERCISES.find(e => e.id === id);
   if (!ex) return;
   const content = document.getElementById('modal-treino-content');
@@ -2196,6 +2263,14 @@ function renderProfile() {
 
   const content = document.getElementById('profile-content');
   content.innerHTML = `
+    <div class="card" id="profile-account-card">
+      <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
+      <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${p.nome || '—'}</div></div>
+      <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
+      <div class="result-row"><div class="result-label">Acesso</div><div class="result-val" style="color:var(--acc)">✅ Ativo</div></div>
+      <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="requestPasswordReset()">Trocar senha</button>
+    </div>
+
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <div class="card-title">Score Funcional</div>
@@ -2274,6 +2349,27 @@ function renderProfile() {
 
     <button class="btn btn-warn btn-full" style="margin-top:4px" onclick="resetData()">Refazer avaliação</button>
     ${sb ? `<button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="gateLogout()">Sair da conta</button>` : ''}`;
+
+  if (sb) {
+    sb.auth.getUser().then(({ data }) => {
+      const el = document.getElementById('profile-email');
+      if (el && data && data.user) el.textContent = data.user.email;
+    }).catch(() => {});
+  }
+}
+
+async function requestPasswordReset() {
+  if (!sb) { showToast('⚠️ Backend não configurado'); return; }
+  try {
+    const { data } = await sb.auth.getUser();
+    const email = data && data.user ? data.user.email : null;
+    if (!email) { showToast('⚠️ Não encontrei seu e-mail'); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+    showToast('📩 Mandamos um link pra trocar sua senha em ' + email);
+  } catch (e) {
+    showToast('⚠️ Não consegui enviar o e-mail — tente de novo');
+  }
 }
 
 // ══════════════════════════════════════════════════════
