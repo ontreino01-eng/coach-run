@@ -551,6 +551,11 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
+<!-- ASSINATURA PAUSADA (atraso/cancelamento) -->
+<div id="screen-renew" class="screen">
+  <div class="pad" style="padding-top:28px" id="renew-content"></div>
+</div>
+
 <!-- RESULTADO / PAYWALL (pré-pagamento) -->
 <div id="screen-paywall" class="screen">
   <div class="pad" style="padding-top:28px" id="paywall-content"></div>
@@ -834,11 +839,47 @@ async function onAuthenticated(session) {
     saveState();
   }
 
+  // Confere se a assinatura mensal está em dia antes de liberar o app.
+  let assinaturaAtiva = true, assinaturaInfo = null;
+  if (sb && state.assessed) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/verificar-assinatura`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON_KEY },
+      });
+      assinaturaInfo = await res.json();
+      assinaturaAtiva = !!assinaturaInfo.active;
+    } catch (e) { console.warn('Não consegui checar a assinatura — liberando por precaução.', e); }
+  }
+  state.subscriptionInfo = assinaturaInfo;
+
   hideGate();
+  if (state.assessed && !assinaturaAtiva) {
+    renderRenewScreen(assinaturaInfo);
+    goToScreen('renew');
+    return;
+  }
+
   renderHome(); renderExercises();
   if (state.assessed) { renderProfile(); renderPlan(); }
   updateHdrSub();
   goToScreen(state.assessed ? 'plano' : 'home', document.getElementById(state.assessed ? 'bnav-plano' : 'bnav-home'));
+}
+
+function renderRenewScreen(info) {
+  const status = info && info.status;
+  const msg = status === 'atrasada'
+    ? 'Identificamos um atraso no pagamento da sua assinatura. Regularize pra continuar treinando.'
+    : status === 'cancelada'
+    ? 'Sua assinatura foi cancelada. Reative pra voltar a ter acesso ao seu plano.'
+    : 'Sua assinatura não está ativa no momento.';
+  document.getElementById('renew-content').innerHTML = `
+    <div style="text-align:center;padding-top:12px">
+      <div style="font-size:40px;margin-bottom:12px">⏸</div>
+      <h1 style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:10px">Assinatura pausada</h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px">${msg} Seu histórico e progresso continuam salvos — assim que regularizar, tudo volta ao normal.</p>
+      <button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
+      <button class="btn btn-ghost btn-full" onclick="gateLogout()">Sair da conta</button>
+    </div>`;
 }
 
 async function syncStateToCloud() {
@@ -1258,7 +1299,8 @@ function renderPaywall() {
         <div>📊 Comparação de teste físico a cada mês</div>
       </div>
     </div>
-    <button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="window.open(KIWIFY_CHECKOUT_URL,'_blank')">Quero meu plano →</button>
+    <button class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="window.open(KIWIFY_CHECKOUT_URL,'_blank')">Quero meu plano →</button>
+    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 19,90/mês · cancele quando quiser</p>
     <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
   `;
 }
@@ -2267,8 +2309,10 @@ function renderProfile() {
       <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
       <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${p.nome || '—'}</div></div>
       <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
-      <div class="result-row"><div class="result-label">Acesso</div><div class="result-val" style="color:var(--acc)">✅ Ativo</div></div>
-      <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="requestPasswordReset()">Trocar senha</button>
+      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--acc)">💳 R$ 19,90/mês</div></div>
+      ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
+      <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="requestPasswordReset()">Trocar senha</button>
     </div>
 
     <div class="card">

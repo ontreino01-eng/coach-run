@@ -1,23 +1,23 @@
 // ══════════════════════════════════════════════════════════════
 // Edge Function: kiwify-webhook
-// Recebe o evento de compra aprovada do Kiwify, gera um código de
-// acesso ligado ao CPF do comprador e devolve pro Kiwify confirmar.
+// Trata TODOS os eventos de assinatura mensal:
+//  - compra_aprovada        → gera código de acesso (1ª compra)
+//  - subscription_renewed   → estende o período por +30 dias
+//  - subscription_late      → marca como atrasada (acesso pausa)
+//  - subscription_canceled  → marca como cancelada (acesso pausa)
+//  - compra_reembolsada / chargeback → revoga o acesso na hora
+//
+// Configure no Kiwify TODOS esses eventos no mesmo webhook (Configurações >
+// Webhooks > Eventos): Compra Aprovada, Assinatura Renovada, Assinatura
+// Atrasada, Assinatura Cancelada, Reembolso, Chargeback.
 //
 // Deploy: supabase functions deploy kiwify-webhook
-// Configurar no Kiwify: Configurações > Webhooks > URL =
-//   https://SEU-PROJETO.supabase.co/functions/v1/kiwify-webhook
-//
-// IMPORTANTE: o Kiwify manda um "token" de assinatura no payload
-// (campo varia conforme a integração — confira na documentação do
-// Kiwify em Configurações > Webhooks). Guarde esse token como
-// secret KIWIFY_WEBHOOK_TOKEN e valide abaixo antes de confiar no
-// payload — sem isso, qualquer um pode forjar uma "compra aprovada".
 // ══════════════════════════════════════════════════════════════
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, // service role: ignora RLS, só existe no servidor
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 );
 
 const KIWIFY_TOKEN = Deno.env.get('KIWIFY_WEBHOOK_TOKEN')!;
@@ -32,51 +32,80 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
 
-    // Ajuste estes caminhos conforme o payload real do Kiwify
-    // (confira em Kiwify > Webhooks > "Ver exemplo de payload").
-    const status = body.order_status || body.status;
+    // O Kiwify identifica o evento por um destes campos, dependendo da
+    // integração — checamos os três formatos conhecidos por segurança.
+    const eventType = body.webhook_event_type || body.event || body.type || '';
+    const status = body.order_status || body.subscription_status || body.status || '';
     const cpf = (body.Customer?.CPF || body.Customer?.cpf || body.customer?.CPF || body.customer?.cpf || '').replace(/\D/g, '');
     const email = body.Customer?.email || body.customer?.email;
     const orderId = body.order_id || body.id;
 
-    if (status !== 'paid' && status !== 'approved') {
-      return new Response(JSON.stringify({ ok: true, skipped: 'status não aprovado' }), { status: 200 });
-    }
-    if (!cpf || !email) {
-      return new Response(JSON.stringify({ error: 'CPF ou e-mail ausente no payload' }), { status: 400 });
+    if (!cpf) {
+      return new Response(JSON.stringify({ error: 'CPF ausente no payload — confira o evento no Kiwify > Ver logs' }), { status: 400 });
     }
 
-    // Gera o código (a função gen_license_code() está no banco — ver supabase_schema.sql)
-    const { data: codeRow } = await supabase.rpc('gen_license_code');
-    const code = codeRow as unknown as string;
+    // ── Compra aprovada (1ª vez) — gera o código de acesso ──
+    if (eventType === 'compra_aprovada' || status === 'paid' || status === 'approved') {
+      if (!email) return new Response(JSON.stringify({ error: 'E-mail ausente no payload' }), { status: 400 });
+      const { data: codeRow } = await supabase.rpc('gen_license_code');
+      const code = codeRow as unknown as string;
+      const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { error } = await supabase.from('licenses').upsert({
-      cpf, email, code, kiwify_order_id: orderId, status: 'pendente',
-    }, { onConflict: 'cpf' });
+      const { error } = await supabase.from('licenses').upsert({
+        cpf, email, code, kiwify_order_id: orderId, status: 'pendente',
+        subscription_status: 'ativa', current_period_end: periodEnd,
+      }, { onConflict: 'cpf' });
+      if (error) throw error;
 
-    if (error) throw error;
-
-    // Envio do e-mail com o link de cadastro + código.
-    // Recomendado: Resend (resend.com) — free tier cobre a maioria dos lançamentos.
-    // Troque RESEND_API_KEY nos secrets e o domínio remetente abaixo.
-    const RESEND_KEY = Deno.env.get('RESEND_API_KEY');
-    if (RESEND_KEY) {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: 'PersonalCoach <acesso@seudominio.com>',
-          to: email,
-          subject: 'Seu acesso ao PersonalCoach chegou 🏃',
-          html: `<p>Seu pagamento foi confirmado!</p>
-                 <p>Código de acesso: <b>${code}</b></p>
-                 <p>Cadastre-se em: <a href="https://SEU-APP.vercel.app/cadastro">https://SEU-APP.vercel.app/cadastro</a></p>
-                 <p>Use o CPF cadastrado na compra + este código para liberar o app.</p>`,
-        }),
-      });
+      const RESEND_KEY = Deno.env.get('RESEND_API_KEY');
+      if (RESEND_KEY) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'PersonalCoach <acesso@seudominio.com>',
+            to: email,
+            subject: 'Seu acesso ao PersonalCoach chegou 🏃',
+            html: `<p>Seu pagamento foi confirmado!</p>
+                   <p>Código de acesso: <b>${code}</b></p>
+                   <p>Cadastre-se em: <a href="https://ontreino01-eng.github.io/coach-run/">ontreino01-eng.github.io/coach-run/</a></p>
+                   <p>Use o CPF cadastrado na compra + este código para liberar o app.</p>`,
+          }),
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, code }), { status: 200 });
     }
 
-    return new Response(JSON.stringify({ ok: true, code }), { status: 200 });
+    // ── Assinatura renovada — estende +30 dias e reativa se estava atrasada ──
+    if (eventType === 'subscription_renewed') {
+      const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from('licenses')
+        .update({ subscription_status: 'ativa', current_period_end: periodEnd })
+        .eq('cpf', cpf);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true, renewed: true }), { status: 200 });
+    }
+
+    // ── Pagamento atrasado — pausa o acesso até regularizar ──
+    if (eventType === 'subscription_late') {
+      const { error } = await supabase.from('licenses')
+        .update({ subscription_status: 'atrasada' })
+        .eq('cpf', cpf);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true, late: true }), { status: 200 });
+    }
+
+    // ── Cancelamento, reembolso ou chargeback — revoga o acesso ──
+    if (eventType === 'subscription_canceled' || eventType === 'compra_reembolsada' || eventType === 'chargeback') {
+      const { error } = await supabase.from('licenses')
+        .update({ subscription_status: 'cancelada' })
+        .eq('cpf', cpf);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true, canceled: true }), { status: 200 });
+    }
+
+    // Evento não tratado (ex: carrinho_abandonado, boleto_gerado) — ignora sem erro.
+    return new Response(JSON.stringify({ ok: true, skipped: eventType || 'evento não reconhecido' }), { status: 200 });
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
