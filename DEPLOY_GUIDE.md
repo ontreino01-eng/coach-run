@@ -1,126 +1,132 @@
 # PersonalCoach — Guia de Deploy e Lançamento
 
-Ordem recomendada. Cada etapa tem o "pronto quando" pra você saber que pode seguir pra próxima.
+Atualizado para o fluxo real: tudo pelo painel do Supabase (sem CLI/terminal),
+com assinatura mensal via Kiwify.
 
 ---
 
-## 1. Supabase (backend: login, licenças, IA) — ~15 min
+## 1. Banco de dados (uma vez só, ou sempre que atualizar o schema)
 
-1. Crie conta em supabase.com → New Project (anote a senha do banco).
-2. **Dashboard → SQL Editor → New query** → cole o conteúdo de `backend/supabase_schema.sql` → Run.
-   ✅ Pronto quando: aparecem as tabelas `licenses` e `profiles` em Table Editor.
-3. **Authentication → Providers** → confirme que "Email" está habilitado e que "Confirm email" está ligado (é o que dispara a validação automática por e-mail).
-4. **Authentication → URL Configuration** → em "Site URL" coloque a URL onde o app vai morar (você pega isso no passo 3 do Vercel — pode voltar aqui depois pra ajustar).
-5. Instale a CLI do Supabase na sua máquina (não dá pra fazer isso daqui do chat):
-   ```
-   npm install -g supabase
-   supabase login
-   supabase link --project-ref SEU_PROJECT_REF   (está em Project Settings > General)
-   ```
-6. Configure os secrets (a chave da Groq fica SÓ aqui, nunca no app):
-   ```
-   supabase secrets set GROQ_API_KEY=sua_chave_groq_aqui
-   supabase secrets set KIWIFY_WEBHOOK_TOKEN=crie_uma_senha_aleatoria_forte
-   supabase secrets set RESEND_API_KEY=sua_chave_resend_aqui   (opcional, ver passo 2)
-   ```
-7. Deploy das 4 funções:
-   ```
-   supabase functions deploy validar-licenca --no-verify-jwt
-   supabase functions deploy kiwify-webhook --no-verify-jwt
-   supabase functions deploy ativar-licenca
-   supabase functions deploy groq-proxy --no-verify-jwt
-   ```
-   ✅ Pronto quando: `supabase functions list` mostra as 4 ativas.
-8. Pegue sua **URL** e **anon key**: Project Settings → API. Você vai colar isso no `CoachRunner.html` (passo 4).
+1. Supabase → **SQL Editor** → **New query**
+2. Cole o conteúdo de `backend/supabase_schema.sql` (arquivo único, atualizado —
+   substitui qualquer versão anterior que você tenha rodado)
+3. **Run**
+4. ✅ Pronto quando: a consulta devolve uma linha com `tabela_licenses`,
+   `tabela_profiles`, `tabela_leads` todos = 1
+
+Esse arquivo é **idempotente** — pode rodar de novo a qualquer momento sem
+quebrar nada, é a única fonte da verdade do schema.
 
 ---
 
-## 2. E-mail de entrega do código (opcional mas recomendado) — ~10 min
+## 2. Autenticação
 
-Sem isso, o código de acesso é gerado mas ninguém recebe por e-mail automaticamente.
-
-1. Crie conta grátis em resend.com.
-2. Verifique um domínio seu (ou use o domínio de teste deles pra começar).
-3. Pegue a API key → `supabase secrets set RESEND_API_KEY=...` (passo 1.6 acima).
-4. Edite `backend/supabase/functions/kiwify-webhook/index.ts`, troque `acesso@seudominio.com` pelo seu remetente verificado, e o link `https://SEU-APP.vercel.app/cadastro` pela URL real (passo 3).
-5. Redeploy: `supabase functions deploy kiwify-webhook --no-verify-jwt`.
-
-Sem Resend configurado, o código ainda é gerado e fica salvo na tabela `licenses` — você consegue ver e mandar manualmente enquanto não configura o e-mail automático.
-
----
-
-## 3. Hospedar o app (front-end) — ~10 min
-
-Mais simples: **Vercel** (grátis, sem cartão).
-
-1. Crie uma conta em vercel.com (pode logar com GitHub).
-2. Suba os arquivos: `CoachRunner.html` (renomeie para `index.html`), `pwa/manifest.json`, `pwa/sw.js`, `pwa/icons/*` — na raiz do projeto, mantendo `manifest.json`, `sw.js` e a pasta `icons/` no mesmo nível do `index.html` (é assim que os caminhos `/manifest.json`, `/sw.js`, `/icons/...` no HTML esperam encontrar).
-   - Forma mais rápida sem git: Vercel → Add New → Project → "Deploy" por upload direto da pasta (arraste os arquivos).
-3. Deploy. Você recebe uma URL tipo `personalcoach.vercel.app`.
-4. **(Recomendado)** Configure um domínio próprio em Vercel → Domains — fica mais profissional pra vender.
-   ✅ Pronto quando: você abre a URL no celular e o app carrega.
+1. **Authentication → Providers** → confirme "Email" habilitado e
+   "Confirm email" ligado.
+2. **Authentication → URL Configuration**:
+   - **Site URL**: `https://ontreino01-eng.github.io/coach-run/` (com a barra
+     `/coach-run/` no final — sem isso o link de confirmação de e-mail quebra)
+   - **Redirect URLs**: mesma URL
+3. **Authentication → Providers → Email → Leaked Password Protection** →
+   liga essa opção (impede senha já vazada em outros vazamentos de dados —
+   recomendação de segurança, sem custo).
 
 ---
 
-## 4. Conectar o app ao Supabase — 2 min
+## 3. Secrets (Edge Functions → Secrets)
 
-Abra `index.html` (o antigo `CoachRunner.html`) num editor de texto, ache estas duas linhas perto do topo do `<script>`:
+Adicione exatamente estes dois (nomes em maiúsculo, com underline):
+
+| Nome | Valor |
+|---|---|
+| `GROQ_API_KEY` | sua chave da Groq (começa com `gsk_...`) |
+| `KIWIFY_WEBHOOK_TOKEN` | uma senha aleatória forte, inventada por você |
+
+A `SUPABASE_SERVICE_ROLE_KEY` e `SUPABASE_URL` já vêm automáticas em toda
+Edge Function — não precisa configurar.
+
+---
+
+## 4. As 6 Edge Functions
+
+Pra cada uma: **Edge Functions → Deploy a new function → Via Editor** →
+nome exato → cola o código de `backend/supabase/functions/<nome>/index.ts` →
+confere o **Verify JWT** → **Deploy**.
+
+| Nome exato | Verify JWT | O que faz |
+|---|---|---|
+| `validar-licenca` | **Desligado** | Confere CPF+código no cadastro |
+| `ativar-licenca` | **Ligado** | Trava o código depois do 1º uso |
+| `kiwify-webhook` | **Desligado** | Recebe eventos do Kiwify (compra, renovação, atraso, cancelamento) |
+| `verificar-assinatura` | **Ligado** | Confere se a assinatura está em dia a cada login |
+| `groq-proxy` | **Ligado** | Decide o próximo ciclo via IA (só pra quem já pagou) |
+| `chat-duvidas` | **Ligado** | Chat de dúvidas com IA (só pra quem já pagou) |
+
+⚠️ `groq-proxy` e `chat-duvidas` mudaram de "Desligado" para **"Ligado"** —
+se você já tinha essas duas deployadas de antes com Verify JWT desligado,
+precisa reconfigurar isso (normalmente não dá pra mudar só o toggle depois
+do deploy — redeploye a função e confirme a opção na hora).
+
+---
+
+## 5. Conectar o app ao Supabase
+
+No `index.html`, confirme estas duas linhas com os valores do SEU projeto
+(Project Settings → API):
 
 ```js
 const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
+const SUPABASE_ANON_KEY = 'sua_anon_key_aqui';
 ```
 
-Troque pelos valores reais do passo 1.8. Suba o arquivo atualizado de novo no Vercel.
-
-⚠️ **A anon key pode ficar aqui no código — ela é pública por design, protegida pelas regras de segurança (RLS) que o `supabase_schema.sql` já criou.** A chave da Groq é a única que NUNCA deve aparecer neste arquivo.
-
----
-
-## 5. Instalar como app no celular — 1 min (você já pode testar agora)
-
-- **Android (Chrome):** abrir a URL → menu (⋮) → "Adicionar à tela inicial" / "Instalar app".
-- **iPhone (Safari):** abrir a URL → botão Compartilhar → "Adicionar à Tela de Início".
-
-Isso instala de verdade — ícone próprio, abre em tela cheia sem barra do navegador. Não é loja de app (isso exigiria conta de desenvolvedor Apple/Google + processo de revisão, um projeto à parte), mas pro seu caso de uso — vender direto pelo Kiwify e entregar acesso — o PWA cobre bem.
+A anon key é pública por design (protegida pelas regras RLS do schema) —
+pode ficar no código. A `GROQ_API_KEY` é a única que NUNCA vai aqui.
 
 ---
 
-## 6. Kiwify — ~10 min
+## 6. Hospedar (GitHub Pages — já configurado)
 
-1. Configure seu produto normalmente no Kiwify.
-2. **Configurações → Webhooks** → adicione a URL:
-   `https://SEU-PROJETO.supabase.co/functions/v1/kiwify-webhook?token=SEU_KIWIFY_WEBHOOK_TOKEN`
-   (o token é o que você definiu no passo 1.6 — protege pra ninguém forjar uma "compra aprovada" falsa).
-3. Faça uma compra de teste (ou use o modo sandbox do Kiwify, se tiver) e confira em Supabase → Table Editor → `licenses` se a linha apareceu com um código gerado.
-4. **Importante:** o payload exato do Kiwify pode variar. Se a linha não aparecer, veja em Kiwify → Webhooks → "Ver exemplo de payload" e ajuste os campos `Customer.cpf` / `Customer.email` em `backend/supabase/functions/kiwify-webhook/index.ts` pra bater com o formato real, depois redeploy.
+O app já está publicado automaticamente em
+**https://ontreino01-eng.github.io/coach-run/** — todo push no branch
+`main` do repositório atualiza o site sozinho em ~1 minuto.
 
 ---
 
-## 7. Vídeos dos exercícios — sempre que quiser
+## 7. Kiwify
 
-1. Suba o vídeo no YouTube com visibilidade **"Não listado"** (Privado não funciona incorporado — só Não Listado ou Público).
-2. Pegue o ID do vídeo (a parte depois de `v=` na URL, ex: `youtube.com/watch?v=ABC123XYZ` → ID é `ABC123XYZ`).
-3. No `index.html`, ache o exercício em `const EXERCISES = [...]` (procure pelo nome) e preencha `video:''` → `video:'ABC123XYZ'`.
-4. Suba o arquivo atualizado no Vercel.
-
-Todos os 47 exercícios já têm o campo pronto — é só preencher aos poucos, o app já funciona sem vídeo nenhum (mostra "vídeo ainda não cadastrado").
+1. Configure seu produto como **assinatura mensal**.
+2. **Configurações → Webhooks** → adiciona a URL:
+   ```
+   https://SEU-PROJETO.supabase.co/functions/v1/kiwify-webhook?token=SEU_KIWIFY_WEBHOOK_TOKEN
+   ```
+3. Marca **todos** estes eventos: Compra Aprovada, Assinatura Renovada,
+   Assinatura Atrasada, Assinatura Cancelada, Reembolso, Chargeback.
+4. Use o botão **"Testar Webhook"** e confira em **Ver logs** se o payload
+   bate com o que a função espera (campo `Customer.CPF` maiúsculo).
+5. Confirme que o link de checkout do produto está funcionando (teste
+   abrindo ele — "Produto Indisponível" significa que o produto não está
+   publicado/ativo no Kiwify).
 
 ---
 
-## O que ficou de fora (decisão consciente, não esquecimento)
+## 8. Vídeos dos exercícios
 
-- **Recuperação de senha** ("esqueci minha senha") — o Supabase Auth já tem isso pronto (`supabase.auth.resetPasswordForEmail`), só não coloquei tela pra isso ainda. Avisa se quiser que eu adicione.
-- **Painel administrativo** pra você ver/gerenciar licenças sem entrar direto no Supabase — hoje isso é feito pelo Table Editor do próprio Supabase (funciona, só não é uma tela bonita).
-- **App nas lojas (App Store / Play Store)** — fora do escopo do PWA; exigiria Capacitor/Bubblewrap + contas de desenvolvedor pagas + revisão.
-- **Reenvio de código** se o aluno perder o e-mail — hoje só reenvia manualmente por você (olhando a tabela `licenses`).
+YouTube com visibilidade **"Não listado"** (Privado não funciona
+incorporado). Pega o ID do vídeo e preenche o campo `video:''` do
+exercício correspondente em `const EXERCISES = [...]` no `index.html`.
 
-## Checklist rápido antes de vender
+---
 
-- [ ] Rodei o SQL no Supabase
-- [ ] `GROQ_API_KEY` e `KIWIFY_WEBHOOK_TOKEN` configurados como secret
-- [ ] As 4 funções deployadas
-- [ ] `SUPABASE_URL`/`ANON_KEY` preenchidos no `index.html`
-- [ ] App no ar no Vercel, testei instalar no meu celular
-- [ ] Webhook do Kiwify configurado e testei uma compra
-- [ ] Testei o fluxo completo: comprar → receber código → validar → cadastrar → confirmar e-mail → entrar → fazer avaliação → gerar Ciclo 1
+## Checklist antes de vender de verdade
+
+- [ ] `backend/supabase_schema.sql` rodado (schema consolidado)
+- [ ] Site URL / Redirect URLs configurados com `/coach-run/` no final
+- [ ] Leaked Password Protection ligado
+- [ ] `GROQ_API_KEY` e `KIWIFY_WEBHOOK_TOKEN` nos secrets
+- [ ] As 6 funções deployadas com o Verify JWT certo (tabela acima)
+- [ ] `SUPABASE_URL`/`ANON_KEY` corretos no `index.html`
+- [ ] Webhook do Kiwify configurado com TODOS os 6 eventos de assinatura
+- [ ] Link de checkout do Kiwify testado e funcionando (sem "Produto Indisponível")
+- [ ] Testei o fluxo completo: lead → avaliação → teste → paywall → Kiwify →
+      código por e-mail → cadastro → confirmação → login → Ciclo 1 gerado →
+      chat responde → assinatura aparece certa no Perfil

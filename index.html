@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
 <!-- Cliente Supabase (auth + banco). Preencha SUPABASE_URL/ANON_KEY no <script> abaixo. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -47,7 +47,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 
 /* ── BOTTOM NAV ── */
 .bnav{position:sticky;bottom:0;flex-shrink:0;width:100%;background:rgba(9,9,14,.97);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:#000;border:none;font-size:22px;box-shadow:0 4px 16px rgba(200,241,53,.35);z-index:60;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:#000;border:none;font-size:22px;box-shadow:0 4px 16px rgba(200,241,53,.35);z-index:60;display:none;align-items:center;justify-content:center;cursor:pointer}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 0;transition:all .15s}
 .bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
 .bnav-lbl{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ff);transition:all .15s}
@@ -977,6 +977,7 @@ async function gateLogout() {
 let chatHistory = [];
 
 function openChat() {
+  if (!state.assessed) { showToast('🔒 O chat é liberado depois que você ativa seu acesso'); return; }
   document.getElementById('screen-chat').style.display = 'flex';
   if (!chatHistory.length) {
     addChatBubble('assistant', 'Oi! Pode perguntar sobre técnica de exercício, sobre como o fortalecimento se encaixa no seu treino, ou dúvidas sobre o app. Não substituo seu treinador nem um profissional de saúde — pra dor ou lesão, sempre procure avaliação presencial.');
@@ -1001,8 +1002,9 @@ function addChatBubble(role, text) {
 
 async function sendChatMsg() {
   const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
+  let msg = input.value.trim();
   if (!msg) return;
+  if (msg.length > 1000) msg = msg.slice(0, 1000); // limite de tamanho — protege custo de IA
   input.value = '';
   addChatBubble('user', msg);
   chatHistory.push({ role: 'user', content: msg });
@@ -1010,6 +1012,8 @@ async function sendChatMsg() {
 
   try {
     if (!sb) throw new Error('backend não configurado');
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('não autenticado');
     const context = state.assessed ? {
       sport: modLabel(state.profile['av-modalidade']),
       nivel: state.profile.nivel,
@@ -1017,8 +1021,8 @@ async function sendChatMsg() {
     } : null;
     const res = await fetch(`${SUPABASE_URL}/functions/v1/chat-duvidas`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-      body: JSON.stringify({ message: msg, history: chatHistory.slice(0, -1), context }),
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ message: msg, history: chatHistory.slice(-8, -1), context }),
     });
     const data = await res.json();
     thinking.textContent = data.reply || 'Não consegui responder agora — tenta de novo em instantes.';
@@ -1065,12 +1069,21 @@ function goToScreen(name, btn) {
   window.scrollTo(0, 0);
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function updateHdrSub() {
   const el = document.getElementById('hdr-sub');
-  if (!el) return;
-  el.textContent = state.assessed && state.profile['av-modalidade']
-    ? `${modLabel(state.profile['av-modalidade'])} · Ciclo ${state.cycleNum}`
-    : 'Treino baseado em ciência';
+  if (el) {
+    el.textContent = state.assessed && state.profile['av-modalidade']
+      ? `${modLabel(state.profile['av-modalidade'])} · Ciclo ${state.cycleNum}`
+      : 'Treino baseado em ciência';
+  }
+  const fab = document.getElementById('chat-fab');
+  if (fab) fab.style.display = state.assessed ? 'flex' : 'none';
 }
 
 // ══════════════════════════════════════════════════════
@@ -1275,7 +1288,7 @@ const KIWIFY_CHECKOUT_URL = 'https://pay.kiwify.com.br/p1b7FFx'; // TODO: cole o
 function renderPaywall() {
   const p = state.profile;
   const focus = FOCUS_DEFS.base;
-  const nome = (state.lead && state.lead.nome ? state.lead.nome.split(' ')[0] : (p.nome || 'atleta'));
+  const nome = escapeHtml(state.lead && state.lead.nome ? state.lead.nome.split(' ')[0] : (p.nome || 'atleta'));
   document.getElementById('paywall-content').innerHTML = `
     <div style="text-align:center;padding:8px 0 20px">
       <div style="font-size:40px;margin-bottom:10px">🎯</div>
@@ -1819,7 +1832,7 @@ function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
             <option value="">Dificuldade</option>
             ${[...Array(11).keys()].map(n=>`<option value="${n}" ${String(log.dificuldade)===String(n)?'selected':''}>${n}/10</option>`).join('')}
           </select>
-          <input type="text" placeholder="Conseguiu fazer? ex: sim / fiz só 6" value="${log.obs||''}" ${editable?'':'disabled'}
+          <input type="text" placeholder="Conseguiu fazer? ex: sim / fiz só 6" value="${escapeHtml(log.obs||'')}" ${editable?'':'disabled'}
             style="flex:1;min-width:140px;padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
             onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'obs',this.value)"/>
         </div>` : ''}
@@ -2307,7 +2320,7 @@ function renderProfile() {
   content.innerHTML = `
     <div class="card" id="profile-account-card">
       <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
-      <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${p.nome || '—'}</div></div>
+      <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${escapeHtml(p.nome) || '—'}</div></div>
       <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
       <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--acc)">💳 R$ 19,90/mês</div></div>
       ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
@@ -2530,7 +2543,7 @@ function showToast(msg) {
 // HELPERS
 // ══════════════════════════════════════════════════════
 function goalLabel(v) { return {corredor:'Melhorar tempo',lesao:'Prevenir lesões',hibrido:'Atleta híbrido',hyrox:'Hyrox/Spartan'}[v] || '—'; }
-function provaLabel(v) { return v && v.trim() ? v : 'Sem meta definida'; }
+function provaLabel(v) { return v && v.trim() ? escapeHtml(v) : 'Sem meta definida'; }
 function expLabel(v) { return {'<6m':'<6 meses','6m-2a':'6m – 2 anos','>2a':'>2 anos'}[v] || '—'; }
 function expMLabel(v) { return {nenhuma:'Nenhuma',basica:'Básica (1-2 anos)',avancada:'Avançada (+2 anos)'}[v] || '—'; }
 function lesaoLabel(v) { const m={lesaojoelho:'Joelho',lesaotornozelo:'Tornozelo/Aquiles',lesaoquadril:'Quadril/IT Band',lesaolombar:'Lombar/Core',lesaoisquio:'Isquiotibiais',lesaoombro:'Ombro/Manguito'}; return m[v.replace('-','')] || v; }

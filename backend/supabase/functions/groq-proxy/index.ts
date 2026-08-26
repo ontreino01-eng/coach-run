@@ -7,10 +7,15 @@
 // Configurar o secret (uma vez só, no terminal, NUNCA no código):
 //   supabase secrets set GROQ_API_KEY=sua_chave_aqui
 //
-// Deploy: supabase functions deploy groq-proxy --no-verify-jwt
-// (tire o --no-verify-jwt se quiser exigir usuário logado — recomendado
-// depois que o cadastro com Supabase Auth estiver funcionando)
+// Deploy: supabase functions deploy groq-proxy
+// (SEM --no-verify-jwt — exige usuário logado, é recurso pago)
 // ══════════════════════════════════════════════════════════════
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+);
 
 const SYSTEM_PROMPT = `Você é o NÚCLEO 8 — Preparador de Força, agente de IA especialista
 em fortalecimento para atletas de endurance (corrida, ciclismo, natação, híbridos/triatlo).
@@ -50,7 +55,18 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
   try {
-    const payload = await req.json();
+    // Exige usuário autenticado (Verify JWT precisa estar LIGADO nesta função).
+    const jwt = req.headers.get('Authorization')?.replace('Bearer ', '');
+    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(jwt);
+    if (userErr || !user) {
+      return new Response(JSON.stringify({ error: 'Não autenticado' }), { status: 401, headers: cors });
+    }
+
+    const rawBody = await req.text();
+    if (rawBody.length > 8000) { // limite de tamanho — protege contra payload gigante/abuso de custo
+      return new Response(JSON.stringify({ error: 'Payload muito grande' }), { status: 413, headers: cors });
+    }
+    const payload = JSON.parse(rawBody);
     // payload esperado (montado pelo front-end em closeTheCycle):
     // { prevFocus, sport, nivel, testDeltas, overallPct, reassess, feedback, logsSummary }
 
@@ -63,6 +79,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: 'openai/gpt-oss-120b',
         temperature: 0.3,
+        max_tokens: 400,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
@@ -80,10 +97,15 @@ Deno.serve(async (req) => {
     const content = groqData.choices?.[0]?.message?.content || '{}';
     const decision = JSON.parse(content);
 
+    // Valida o formato antes de devolver — nunca repassa algo fora do schema esperado.
+    const validFocus = ['base', 'forca', 'potencia', 'manutencao'];
+    if (!validFocus.includes(decision.nextFocus)) throw new Error('Resposta da IA fora do formato esperado');
+
     return new Response(JSON.stringify(decision), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
   } catch (e) {
-    console.error(e);
+    console.error(e); // detalhe completo só no log do servidor
     // Front-end deve cair para a lógica local (decideNextFocus) se isto falhar.
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: cors });
+    // Mensagem genérica pro cliente — não vaza detalhe interno.
+    return new Response(JSON.stringify({ error: 'Não foi possível gerar a decisão da IA agora' }), { status: 500, headers: cors });
   }
 });
