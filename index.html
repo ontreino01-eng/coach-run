@@ -1313,7 +1313,7 @@ function renderPaywall() {
       </div>
     </div>
     <button class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="window.open(KIWIFY_CHECKOUT_URL,'_blank')">Quero meu plano →</button>
-    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 19,90/mês · cancele quando quiser</p>
+    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 9,90/mês · preço fundador · cancele quando quiser</p>
     <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
   `;
 }
@@ -2322,7 +2322,7 @@ function renderProfile() {
       <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
       <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${escapeHtml(p.nome) || '—'}</div></div>
       <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
-      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--acc)">💳 R$ 19,90/mês</div></div>
+      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--acc)">💳 R$ 9,90/mês · preço fundador</div></div>
       ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
       <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="requestPasswordReset()">Trocar senha</button>
