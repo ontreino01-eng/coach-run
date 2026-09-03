@@ -489,10 +489,14 @@ textarea{resize:vertical;min-height:70px}
       </div>
       <div class="divider"></div>
       <div class="input-group">
-        <label class="input-label">Sinal de alerta (PAR-Q)</label>
+        <label class="input-label">Triagem básica de segurança — PAR-Q</label>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px">Marque se qualquer item abaixo se aplica a você. Esta triagem não é diagnóstico nem substitui avaliação profissional.</div>
         <div class="check-group">
-          <div class="check-item" onclick="toggleCheck('parq-risco',this)"><div class="check-box" id="parq-risco">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Já senti dor no peito, tontura/desmaio durante esforço, ou tenho problema cardíaco/ósseo diagnosticado</div><div style="font-size:11px;color:var(--muted)">Marcar libera aviso de liberação médica antes do bloco de força</div></div></div>
+          <div class="check-item" onclick="toggleCheck('parq-risco',this)"><div class="check-box" id="parq-risco">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Tenho doença cardíaca, pressão alta não controlada ou fui orientado por profissional de saúde a não iniciar exercício sem liberação</div></div></div>
+          <div class="check-item" onclick="toggleCheck('parq-sintoma',this)"><div class="check-box" id="parq-sintoma">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Sinto dor no peito, tontura, desmaio ou falta de ar incomum durante esforço</div></div></div>
+          <div class="check-item" onclick="toggleCheck('parq-lesao',this)"><div class="check-box" id="parq-lesao">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:600;font-size:13px">Tenho uma lesão, cirurgia recente ou condição óssea/articular que pode limitar o exercício</div></div></div>
         </div>
+        <div style="font-size:11px;color:var(--warn);line-height:1.5;margin-top:8px">Se marcar algum item, procure orientação de um profissional de saúde antes de iniciar ou aumentar o treinamento.</div>
       </div>
     </div>
     <div class="pad" style="padding-top:0;display:flex;gap:10px">
@@ -524,8 +528,32 @@ textarea{resize:vertical;min-height:70px}
           <div class="radio-card" onclick="selectRadio('av-dias','4',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">4 dias/semana</div><div class="radio-card-sub">Volume alto — só se sobrar recuperação para o treino específico</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         </div>
       </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Tempo disponível por sessão</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-tempo-sessao','30',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">Até 30 minutos</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-tempo-sessao','45',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">30 a 45 minutos</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-tempo-sessao','60',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">Mais de 45 minutos</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Equipamentos disponíveis</label>
+        <input type="text" id="av-equipamentos" placeholder="Ex: academia completa, halteres, elástico, peso corporal..."/>
+      </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Como está seu sono na maioria das noites?</label>
+        <div class="radio-group" style="margin-top:6px">
+          <div class="radio-card" onclick="selectRadio('av-sono','ruim',this)"><span class="radio-card-icon">🌙</span><div class="radio-card-text"><div class="radio-card-title">Ruim</div><div class="radio-card-sub">Durmo mal ou acordo sem recuperar</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-sono','regular',this)"><span class="radio-card-icon">🌙</span><div class="radio-card-text"><div class="radio-card-title">Regular</div><div class="radio-card-sub">Varia bastante</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-sono','bom',this)"><span class="radio-card-icon">🌙</span><div class="radio-card-text"><div class="radio-card-title">Bom</div><div class="radio-card-sub">Acordo geralmente recuperado</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Nível de estresse atual</label>
+        <div class="scale-btns" id="scale-av-estresse">${[...Array(11).keys()].map(i => `<div class="scale-btn" onclick="selectScale('av-estresse',${i},this)">${i}</div>`).join('')}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">0 = muito baixo · 10 = muito alto</div>
+      </div>
       <div class="input-group" style="margin-top:16px"><label class="input-label">Meta / prova-alvo (opcional)</label>
         <input type="text" id="av-prova" placeholder="Ex: Meia-maratona em outubro, 100km de bike, travessia de 2km..."/>
+      </div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Algo importante sobre sua rotina? (opcional)</label>
+        <input type="text" id="av-observacoes" placeholder="Ex: trabalho em turnos, filhos, viagem, semana imprevisível..."/>
       </div>
     </div>
     <div class="pad" style="padding-top:0;display:flex;gap:10px">
@@ -1164,6 +1192,12 @@ function nextStep(current) {
     const needed = ['eq-forca','eq-equilibrio','eq-mobilidade','eq-nordic'];
     if (needed.some(k => avScales[k] === undefined)) { showToast('⚠️ Avalie todos os itens'); return; }
   }
+  if (current === 6) {
+    avData['av-equipamentos'] = document.getElementById('av-equipamentos').value.trim();
+    avData['av-observacoes'] = document.getElementById('av-observacoes').value.trim();
+    avData['av-estresse'] = avScales['av-estresse'] == null ? 5 : avScales['av-estresse'];
+    if (!avData['av-tempo-sessao'] || !avData['av-sono']) { showToast('⚠️ Informe tempo disponível e sono'); return; }
+  }
   showStep(current + 1);
 }
 
@@ -1190,8 +1224,8 @@ function finishAssessment() {
 
   state.profile = { ...avData, nome: state.lead ? state.lead.nome : avData.nome, nivel: nivelFinal, funcScore, riskScore };
   state.scores = { forca, equil, mobil, nordic, dor };
-  state.parqAlert = !!avChecks['parq-risco'];
-  state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && k !== 'parq-risco');
+  state.parqAlert = !!(avChecks['parq-risco'] || avChecks['parq-sintoma'] || avChecks['parq-lesao']);
+  state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && !k.startsWith('parq-'));
   saveState();
 
   // Antes de ver a periodização sugerida, o aluno faz o teste físico —
@@ -2555,7 +2589,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-03-1';
+const APP_VERSION = '2026-09-03-2';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
