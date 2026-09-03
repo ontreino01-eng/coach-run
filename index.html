@@ -786,7 +786,7 @@ textarea{resize:vertical;min-height:70px}
 const SUPABASE_URL = 'https://ywfiartxnsviosqjfhkp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZmlhcnR4bnN2aW9zcWpmaGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NTYwNDAsImV4cCI6MjEwMjMzMjA0MH0.LKmLBr5HlK8Do6bdP_snup7cXCr-FMgsDt-tm-Vrq68';
 const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null;
 
 if (sb) {
   sb.auth.onAuthStateChange((event) => {
@@ -936,7 +936,8 @@ async function gateCriarConta() {
   const nome = document.getElementById('gate-nome').value.trim();
   const senha = document.getElementById('gate-senha').value;
   if (!nome || senha.length < 6) { showToast('⚠️ Nome e senha (mín. 6 caracteres)'); return; }
-  const { error } = await sb.auth.signUp({ email: gateData.email, password: senha, options: { data: { nome, telefone: gateData.telefone } } });
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await sb.auth.signUp({ email: gateData.email, password: senha, options: { emailRedirectTo: redirectTo, data: { nome, telefone: gateData.telefone } } });
   if (error) { showToast('⚠️ ' + error.message); return; }
   gateData.nome = nome;
   document.getElementById('gate-confirm-email').textContent = gateData.email;
@@ -2607,7 +2608,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-03-5';
+const APP_VERSION = '2026-09-03-6';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
