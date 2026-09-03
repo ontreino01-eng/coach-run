@@ -2256,11 +2256,35 @@ const EXERCISES = [
   {id:'o8',name:'Face Pull com Ponto Alto',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×15',level:'Iniciante',equipment:'Cabo/elástico',video:'',
    science:'Variação do Face Pull com ponto de ancoragem mais alto — muda o ângulo de trabalho dos estabilizadores escapulares e do deltoide posterior.',
    cues:['Elástico ou cabo preso num ponto alto, na altura da cabeça','Puxa em direção ao rosto, cotovelos abrem para os lados','Aperta as escápulas no final do movimento','Controle a volta, sem soltar de forma brusca']},
+  {id:'tec1',name:'Chute no Bumbum (Butt Kicks)',cat:'técnica',icon:'🔁',bg:'rgba(91,142,255,.15)',params:'3×20m',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Drill de ativação de isquiotibiais e ritmo de recuperação da perna — parte do aquecimento dinâmico padrão pré-corrida, junto do A-Skip já presente na biblioteca.',
+   cues:['Calcanhar toca o glúteo a cada passada, joelho aponta pro chão','Ritmo rápido e leve, sem se deslocar rápido demais','Braços acompanham o ritmo, relaxados','Use como aquecimento antes do treino de qualidade, não como treino em si']},
+  {id:'tec2',name:'High Knees (Joelho Alto)',cat:'técnica',icon:'🦵',bg:'rgba(91,142,255,.15)',params:'3×20m',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Drill de frequência de passada e ativação de flexores de quadril — complementa o A-Skip trabalhando o ritmo em vez da amplitude.',
+   cues:['Joelho sobe até a altura do quadril a cada passada','Passos rápidos e curtos, quase no lugar','Tronco ereto, sem inclinar para trás','Aumenta a cadência progressivamente ao longo dos 20m']},
+  {id:'tec3',name:'Carioca (Passada Cruzada Lateral)',cat:'técnica',icon:'↔️',bg:'rgba(91,142,255,.15)',params:'2×20m/direção',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Drill de coordenação e mobilidade de quadril no plano lateral/rotacional — ativa musculatura pouco usada no gesto puramente sagital da corrida.',
+   cues:['Desloca de lado, cruzando uma perna na frente e depois atrás da outra','Quadril gira suavemente a cada passo','Braços ajudam o equilíbrio, relaxados','Faz nos dois sentidos, indo e voltando']},
+  {id:'tec4',name:'Tiros Progressivos (Strides)',cat:'técnica',icon:'🏃',bg:'rgba(91,142,255,.15)',params:'4-6×80-100m',level:'Intermediário',equipment:'Espaço aberto',video:'',
+   science:'Ativação neuromuscular de alta velocidade em volume baixíssimo — prepara o sistema nervoso pra correr rápido sem o desgaste de um treino intervalado completo (Saunders, 2004).',
+   cues:['Acelera progressivamente nos primeiros 30m até quase a velocidade máxima','Mantém 2-3 segundos na velocidade alta, depois desacelera','Caminha de volta pro início — recuperação completa entre tiros','Foco em relaxamento e técnica, não em cronômetro']},
+  {id:'tec5',name:'Ankling (Drill de Tornozelo)',cat:'técnica',icon:'🦶',bg:'rgba(91,142,255,.15)',params:'3×15m',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Isola o trabalho do complexo tornozelo-pé no toque do solo — reforça o padrão de rigidez que a pliometria (Pogo Jumps) já desenvolve, aplicado diretamente ao gesto da passada.',
+   cues:['Pequenos saltos no lugar, quicando só com o tornozelo (sem dobrar muito o joelho)','Contato mínimo com o solo, como pisando em brasa','Avança lentamente pra frente enquanto quica','Mantém o corpo ereto, olhando pra frente']},
+  {id:'tec6',name:'Skip Lateral com Elevação de Joelho',cat:'técnica',icon:'🤾',bg:'rgba(91,142,255,.15)',params:'2×20m/direção',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Combina deslocamento lateral com elevação de joelho — trabalha estabilidade de quadril em múltiplos planos, útil pra corredores de trilha ou terreno irregular.',
+   cues:['Desloca de lado alternando elevação de joelho a cada passo','Ritmo controlado, sem pressa','Mantém o quadril estável, sem balançar demais','Faz nos dois sentidos']},
+  {id:'tec7',name:'Rotina de Aquecimento Dinâmico Pré-Corrida',cat:'técnica',icon:'🔥',bg:'rgba(91,142,255,.15)',params:'5-8min',level:'Iniciante',equipment:'Solo',video:'',
+   science:'Sequência curta de mobilidade dinâmica (não estática) antes de correr — prepara amplitude de movimento sem o efeito de queda de força que alongamento estático prolongado pode causar pré-treino.',
+   cues:['Leg swings (frente/trás e lateral) — 10 cada direção por perna','Circular de quadril — 10 cada direção','Agachamento com rotação de tronco — 10 repetições','Finaliza com 3-4 acelerações curtas e leves antes do treino de qualidade']},
+  {id:'tec8',name:'Corrida de Costas (Backward Running)',cat:'técnica',icon:'⏪',bg:'rgba(91,142,255,.15)',params:'3×15m',level:'Intermediário',equipment:'Solo',video:'',
+   science:'Ativa a cadeia posterior e o quadríceps de forma diferente da corrida convencional — usado como variação de baixo impacto pra reforçar controle de joelho em fases de retorno de lesão.',
+   cues:['Espaço livre e visível — sem obstáculos atrás','Passos curtos e controlados, olhando por cima do ombro periodicamente','Foco em técnica, não em velocidade','Bom substituto de impacto reduzido em semanas de retorno pós-lesão']},
 ];
 
 function renderExercises() {
-  const cats = ['all','tendão','músculo','core','ombro','pliometria','mobilidade','kit'];
-  const catLabels = {'all':'Todos','tendão':'Tendões','músculo':'Músculos','core':'Core','ombro':'Ombro (nado)','pliometria':'Pliometria','mobilidade':'Mobilidade','kit':'Kit Anti-Lesão'};
+  const cats = ['all','técnica','tendão','músculo','core','ombro','pliometria','mobilidade','kit'];
+  const catLabels = {'all':'Todos','técnica':'Técnica de Corrida','tendão':'Tendões','músculo':'Músculos','core':'Core','ombro':'Ombro (nado)','pliometria':'Pliometria','mobilidade':'Mobilidade','kit':'Kit Anti-Lesão'};
   const filter = document.getElementById('ex-filter');
   const list = document.getElementById('ex-list');
 
