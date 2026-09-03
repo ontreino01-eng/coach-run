@@ -247,7 +247,7 @@ textarea{resize:vertical;min-height:70px}
 </head>
 <body>
 
-<!-- GATE DE ACESSO: licença (CPF+código) → cadastro → confirmação de e-mail → login -->
+<!-- GATE DE ACESSO: licença (telefone+código) → cadastro → confirmação de e-mail → login -->
 <div id="gate-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column;overflow-y:auto">
   <div style="padding:32px 22px 18px"><div class="logo" style="font-size:20px">⚡ PersonalCoach</div></div>
 
@@ -257,8 +257,8 @@ textarea{resize:vertical;min-height:70px}
 
   <div class="gate-step" id="gate-licenca" style="display:none;flex-direction:column;padding:0 22px">
     <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Ativar acesso</h1>
-    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o CPF usado na compra e o código que você recebeu por e-mail.</p>
-    <div class="input-group"><label class="input-label">CPF</label><input type="text" id="gate-cpf" placeholder="000.000.000-00" inputmode="numeric"/></div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o telefone usado na avaliação/compra e o código que você recebeu por e-mail.</p>
+    <div class="input-group"><label class="input-label">Telefone</label><input type="tel" id="gate-cpf" placeholder="(00) 00000-0000" inputmode="tel"/></div>
     <div class="input-group"><label class="input-label">Código de acesso</label><input type="text" id="gate-code" placeholder="Ex: F3K9-XQ2P" style="text-transform:uppercase"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" id="gate-licenca-btn" onclick="gateValidarLicenca()">Validar código</button>
     <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('login')">Já tenho conta — Entrar</button>
@@ -857,14 +857,10 @@ async function onAuthenticated(session) {
 
   // Primeiro login depois do pagamento: a avaliação + teste já foram feitos
   // ANTES da compra (fluxo gratuito) — gera o Ciclo 1 agora, sem pedir de novo.
+  // A ativação já deve entregar o primeiro plano gerado no backend.
+  // Não gere um plano local aqui: isso poderia liberar uma prescrição diferente da IA.
   if (!state.assessed && state.profile && state.profile['av-modalidade'] && state.tests && state.tests[0]) {
-    state.cycleNum = 1;
-    state.plan = generateCycle(1, state.profile, state.lesoes, 'base');
-    state.currentWeek = 1;
-    state.completedWeeks = [];
-    state.assessed = true;
-    viewedCycle = null;
-    saveState();
+    console.warn('Avaliação encontrada sem plano gerado pelo backend; aguardando ativação correta.');
   }
 
   // Confere se a assinatura mensal está em dia antes de liberar o app.
@@ -917,18 +913,18 @@ async function syncStateToCloud() {
 }
 
 async function gateValidarLicenca() {
-  const cpf = document.getElementById('gate-cpf').value.replace(/\D/g, '');
+  const telefone = document.getElementById('gate-cpf').value.replace(/\D/g, '');
   const code = document.getElementById('gate-code').value.trim().toUpperCase();
-  if (!cpf || !code) { showToast('⚠️ Preencha CPF e código'); return; }
+  if (telefone.length < 10 || !code) { showToast('⚠️ Preencha telefone e código'); return; }
   const btn = document.getElementById('gate-licenca-btn');
   btn.textContent = 'Validando...';
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/validar-licenca`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cpf, code }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone, code }),
     });
     const data = await res.json();
     if (!data.valid) { showToast('⚠️ ' + (data.reason || 'Código inválido')); btn.textContent = 'Validar código'; return; }
-    gateData = { cpf, code, email: data.email };
+    gateData = { telefone, code, email: data.email };
     document.getElementById('gate-cadastro-email').textContent = data.email;
     showGate('cadastro');
   } catch (e) {
@@ -940,7 +936,7 @@ async function gateCriarConta() {
   const nome = document.getElementById('gate-nome').value.trim();
   const senha = document.getElementById('gate-senha').value;
   if (!nome || senha.length < 6) { showToast('⚠️ Nome e senha (mín. 6 caracteres)'); return; }
-  const { error } = await sb.auth.signUp({ email: gateData.email, password: senha, options: { data: { nome, cpf: gateData.cpf } } });
+  const { error } = await sb.auth.signUp({ email: gateData.email, password: senha, options: { data: { nome, telefone: gateData.telefone } } });
   if (error) { showToast('⚠️ ' + error.message); return; }
   gateData.nome = nome;
   document.getElementById('gate-confirm-email').textContent = gateData.email;
@@ -951,12 +947,19 @@ async function gateEntrarAposConfirmar() {
   const { data, error } = await sb.auth.signInWithPassword({ email: gateData.email, password: document.getElementById('gate-senha').value });
   if (error) { showToast('⚠️ Confirme o e-mail antes de entrar'); return; }
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/ativar-licenca`, {
+    const activation = await fetch(`${SUPABASE_URL}/functions/v1/ativar-licenca`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.session.access_token}` },
-      body: JSON.stringify({ cpf: gateData.cpf, nome: gateData.nome }),
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${data.session.access_token}` },
+      body: JSON.stringify({ telefone: gateData.telefone, code: gateData.code, nome: gateData.nome }),
     });
-  } catch (e) { console.warn('Falha ao ativar licença', e); }
+    const activationData = await activation.json();
+    if (!activation.ok || !activationData.ok || !activationData.state) {
+      showToast('⚠️ ' + (activationData.error || 'Não foi possível gerar seu plano'));
+      return;
+    }
+    state = activationData.state;
+    localStorage.setItem('cr_state', JSON.stringify(state));
+  } catch (e) { showToast('⚠️ Falha ao ativar e gerar seu plano. Tente novamente.'); return; }
   await onAuthenticated(data.session);
 }
 
@@ -1079,6 +1082,16 @@ let viewedCycle = null; // null = ciclo atual; N = revisando histórico do ciclo
 let closeData = {}; // dados temporários do fechamento de ciclo em andamento
 
 function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); syncStateToCloud(); }
+
+async function syncAssessmentToCloud() {
+  if (!sb || !state.lead || !state.lead.id || !state.lead.telefone || !state.profile || !state.profile['av-modalidade']) return;
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/salvar-avaliacao`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ leadId: state.lead.id, telefone: state.lead.telefone, assessment: { profile: state.profile, scores: state.scores, lesoes: state.lesoes, parqAlert: state.parqAlert, tests: state.tests[0] || null } }),
+    });
+  } catch (e) { console.warn('Não consegui salvar a avaliação na nuvem', e); }
+}
 
 // ══════════════════════════════════════════════════════
 // NAV
@@ -1227,6 +1240,7 @@ function finishAssessment() {
   state.parqAlert = !!(avChecks['parq-risco'] || avChecks['parq-sintoma'] || avChecks['parq-lesao']);
   state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && !k.startsWith('parq-'));
   saveState();
+  syncAssessmentToCloud();
 
   // Antes de ver a periodização sugerida, o aluno faz o teste físico —
   // isso vira a referência de comparação para a reavaliação do mês 1.
@@ -1281,6 +1295,7 @@ function submitTeste() {
   if (testMode === 'inicial') {
     state.tests[0] = result;
     saveState();
+    syncAssessmentToCloud();
     renderPaywall();
     goToScreen('paywall');
   } else {
@@ -1302,11 +1317,14 @@ async function submitLead() {
   const telefoneRaw = document.getElementById('lead-telefone').value.trim();
   const telefone = telefoneRaw.replace(/\D/g, '');
   if (!nome || telefone.length < 10) { showToast('⚠️ Preencha nome e um telefone válido (com DDD)'); return; }
-  state.lead = { nome, telefone };
+state.lead = { nome, telefone };
   saveState();
   if (sb) {
-    try { await sb.from('leads').insert({ nome, telefone }); }
-    catch (e) { console.warn('Não consegui salvar o lead na nuvem (offline?)', e); }
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/registrar-lead`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ nome, telefone }) });
+      const data = await res.json();
+      if (res.ok && data.leadId) state.lead.id = data.leadId;
+    } catch (e) { console.warn('Não consegui registrar o lead na nuvem (offline?)', e); }
   }
   goToScreen('avaliacao');
   showStep(1);
@@ -2589,7 +2607,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-03-2';
+const APP_VERSION = '2026-09-03-5';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
