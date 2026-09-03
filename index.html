@@ -424,7 +424,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="input-group"><label class="input-label">Gênero</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-genero','M',this)"><span class="radio-card-icon">👨</span><div class="radio-card-text"><div class="radio-card-title">Masculino</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-          <div class="radio-card" onclick="selectRadio('av-genero','F',this)"><span class="radio-card-icon">👩</span><div class="radio-card-text"><div class="radio-card-title">Feminino</div><div class="radio-card-sub">Mulheres respondem melhor ao treino concorrente (Huiberts, 2024)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-genero','F',this)"><span class="radio-card-icon">👩</span><div class="radio-card-text"><div class="radio-card-title">Feminino</div><div class="radio-card-sub">Ajuste o volume conforme seu objetivo, experiência e recuperação</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         </div>
       </div>
     </div>
@@ -1476,19 +1476,22 @@ async function closeTheCycle() {
 function decideNextFocus(prevFocusKey, testResult, feedback, logsSummary) {
   const order = ['base', 'forca', 'potencia', 'manutencao'];
   let idx = order.indexOf(prevFocusKey);
-  const pioraTest = testResult.overallPct < -3;
-  const dorNova = feedback.dorNova || (closeData.reassess && closeData.reassess.dor >= 6);
+  const pioraTest = Number(testResult.overallPct || 0) < -3;
+  const dorNova = !!feedback.dorNova || (closeData.reassess && Number(closeData.reassess.dor || 0) >= 6);
   const querReduzir = feedback.volumeWish === 'reduzir';
   const querAumentar = feedback.volumeWish === 'aumentar';
   const aderenciaBaixa = feedback.aderencia === 'nao';
-  const dificuldadeAlta = logsSummary.avgDificuldade >= 8.5;
+  const dificuldadeAlta = Number(logsSummary.avgDificuldade || 0) >= 8.5;
+  const melhoraClara = Number(testResult.overallPct || 0) > 5;
 
+  // Nunca aumenta a ênfase automaticamente só porque um mês terminou.
+  // A progressão precisa ser sustentada por melhora, boa aderência e recuperação.
   if (pioraTest || dorNova || querReduzir || aderenciaBaixa || dificuldadeAlta) {
     return prevFocusKey === 'base' ? 'base' : order[Math.max(idx - 1, 0)];
   }
-  if (prevFocusKey === 'manutencao') return querAumentar ? 'forca' : 'manutencao';
-  if (querAumentar || testResult.overallPct > 5) return order[Math.min(idx + 1, order.length - 1)];
-  return order[Math.min(idx + 1, order.length - 1)];
+  if (prevFocusKey === 'manutencao') return querAumentar && melhoraClara ? 'forca' : 'manutencao';
+  if (querAumentar && melhoraClara) return order[Math.min(idx + 1, order.length - 1)];
+  return prevFocusKey || 'base';
 }
 
 function summarizeLogs(cycleNum) {
@@ -1550,9 +1553,9 @@ function generateCycle(cycleNum, data, lesoes, focusKey) {
 // pace, watts ou séries de nado — o treino específico é do seu treinador.
 function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
   const { temJoelho, temAquiles, temIsquio, temLombar, temOmbro } = flags;
-  const isDeload = week % 4 === 0 && week < 15;
+  const isDeload = week === 4;
   const deloadMod = isDeload ? ' (volume -40%)' : '';
-  const encaixe = 'Encaixe: faça esta sessão de força ANTES do treino específico do dia, ou com ≥6h de intervalo (Coffey & Hawley, 2017; Zhang, 2026).';
+  const encaixe = 'Encaixe: siga o calendário do seu treino específico de endurance. Evite colocar esta sessão pesada imediatamente antes de uma sessão importante; quando ocorrer no mesmo dia, separe as sessões quando possível e priorize conforme seu objetivo principal.';
 
   const anti = ['McGill Modified Curl-up — 3×10 seg.10s','Bird-Dog — 3×8/lado seg.8s','Side Plank — 3×30s/lado'];
   const core = [...anti, 'Pallof Press — 3×10/lado'];
@@ -2444,21 +2447,19 @@ const scienceData = {
   },
   prevencao: {
     title: '🛡 Prevenção de Lesões', color: 'var(--acc2)',
-    content: `<b>A evidência mais robusta:</b><br>
-    • Lauersen (2014): força reduz lesões a <b>&lt;1/3</b> — meta-análise com 26.000+ participantes<br>
-    • Lauersen (2018): dose-resposta linear — cada +10% no volume de força reduz risco em >5pp<br>
-    • Van Dyk (2019): Nordic Hamstring Curl reduz lesão de isquiotibial em <b>51%</b><br>
-    • Al Attar (2017): confirma benefício do Nordic em múltiplas populações de atletas<br><br>
-    <b>Mito derrubado:</b> Alongamento isolado NÃO previne lesões (Lauersen, 2014). A prevenção eficaz é força, não flexibilidade passiva.`
+    content: `<b>O que o app pode afirmar:</b><br>
+    • O fortalecimento pode contribuir para capacidade física, tolerância à carga e desempenho, mas nenhum exercício garante prevenção de lesões para todas as pessoas.<br>
+    • O Nordic Hamstring Curl é uma opção de fortalecimento dos isquiotibiais quando houver experiência, técnica e ausência de contraindicação; não é obrigatório para todos.<br>
+    • Dor persistente, piora de sintomas ou sinais de alerta exigem avaliação de profissional habilitado.<br><br>
+    <b>Regra de comunicação:</b> o Personal Coach não diagnostica, não trata e não promete prevenir lesões. Ele oferece fortalecimento individualizado e orienta quando buscar avaliação profissional.`
   },
   concorrente: {
     title: '⚡ Treino Concorrente', color: 'var(--warn)',
-    content: `<b>Força ANTES de corrida:</b><br>
-    • Coffey & Hawley (2017): a via AMPK (corrida) inibe a mTOR (força). Fazer corrida antes "apaga" o sinal de hipertrofia<br>
-    • Held (2026): umbrella review com 1.492 participantes confirma: <b>força ANTES de endurance otimiza potência</b><br>
-    • Zhang (2026): ordem Força→Endurance otimiza adaptações neurais e potência explosiva<br><br>
-    <b>Quando separados:</b> ≥6 horas entre sessões elimina o efeito de interferência (Schumann, 2022).<br><br>
-    <b>Para mulheres:</b> Huiberts (2024) — mulheres respondem melhor ao treino concorrente que homens. Podem ser mais agressivas no volume de força sem comprometer o VO2max.`
+    content: `<b>A organização importa:</b><br>
+    • O treino concorrente combina força e endurance, mas as respostas dependem do volume, frequência, modalidade, nível de treinamento e recuperação.<br>
+    • Não existe uma ordem única ideal para todas as pessoas. O app não substitui o calendário específico do treinador de corrida, bike ou natação.<br>
+    • Quando possível, separar sessões exigentes e evitar força pesada de pernas imediatamente antes de uma sessão importante de endurance.<br><br>
+    <b>Regra do Personal Coach:</b> o aplicativo prescreve fortalecimento e informa o melhor encaixe relativo ao calendário fornecido pelo atleta; não promete eliminar um suposto “efeito de interferência”.`
   },
   pliometria: {
     title: '🦘 Pliometria', color: 'var(--acc)',
@@ -2554,7 +2555,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-08-21-2';
+const APP_VERSION = '2026-09-03-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
