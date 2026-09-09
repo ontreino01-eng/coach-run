@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>PersonalCoach — Treino Baseado em Ciência</title>
+<title>Base do Corre — Fortalecimento para Corrida</title>
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="manifest.json"/>
@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="PersonalCoach"/>
+<meta name="apple-mobile-web-app-title" content="Base do Corre"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <link rel="icon" href="icons/icon-192.png"/>
 
@@ -249,7 +249,7 @@ textarea{resize:vertical;min-height:70px}
 
 <!-- GATE DE ACESSO: licença (telefone+código) → cadastro → confirmação de e-mail → login -->
 <div id="gate-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column;overflow-y:auto">
-  <div style="padding:32px 22px 18px"><div class="logo" style="font-size:20px">⚡ PersonalCoach</div></div>
+  <div style="padding:32px 22px 18px"><div class="logo" style="font-size:20px">⚡ Base do Corre</div></div>
 
   <div class="gate-step" id="gate-loading" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:10px">
     <div style="font-size:13px;color:var(--muted)">Carregando…</div>
@@ -303,8 +303,8 @@ textarea{resize:vertical;min-height:70px}
 <!-- HEADER -->
 <header class="hdr">
   <div>
-    <div class="logo">⚡ PersonalCoach</div>
-    <div class="hdr-sub" id="hdr-sub">Treino baseado em ciência</div>
+    <div class="logo">⚡ Base do Corre</div>
+    <div class="hdr-sub" id="hdr-sub">Fortalecimento inteligente para corredores</div>
   </div>
   <div class="hdr-right" id="hdr-right"></div>
 </header>
@@ -316,7 +316,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="hero">
     <div class="hero-eyebrow">Ciência do treinamento aplicada</div>
     <h1 class="hero-title">Fique mais forte.<br><span>Sem atrapalhar seu treino.</span></h1>
-    <p class="hero-desc">Avaliação funcional + ciclos mensais de <b>fortalecimento</b> para corrida, ciclismo, natação e híbridos. A cada mês, reavaliação + reteste ajustam o próximo ciclo. Este app não prescreve seu treino específico.</p>
+    <p class="hero-desc">Avaliação funcional + ciclos mensais de <b>fortalecimento para corrida</b>. A cada mês, reavaliação e reteste ajustam o próximo ciclo para ajudar você a correr melhor, com mais força, controle e consistência. O app não prescreve sua planilha de corrida.</p>
     <div class="hero-stats" id="home-stats">
       <div class="hero-stat"><div class="hero-stat-val" id="hs-week">—</div><div class="hero-stat-lbl">Semana atual</div></div>
       <div class="hero-stat"><div class="hero-stat-val" id="hs-phase">—</div><div class="hero-stat-lbl">Fase</div></div>
@@ -327,7 +327,7 @@ textarea{resize:vertical;min-height:70px}
     <div id="home-cta-area">
       <div class="card">
         <div class="card-title">🎯 Começar avaliação</div>
-        <div class="card-sub">Responda 6 blocos de perguntas + um teste físico, de graça, e veja a periodização de fortalecimento montada pro seu perfil — o treino específico da sua modalidade continua sendo o do seu treinador.</div>
+        <div class="card-sub">Responda 6 blocos de perguntas + um teste físico, de graça, e veja um ciclo mensal de fortalecimento criado para o seu perfil de corredor — sua planilha de corrida continua sendo a do seu treinador.</div>
         <button class="btn btn-acc btn-full" style="margin-top:12px" onclick="startAssessment()">Fazer avaliação agora →</button>
       </div>
     </div>
@@ -363,7 +363,7 @@ textarea{resize:vertical;min-height:70px}
         <div class="quick-card" onclick="showScienceModal('concorrente')">
           <span class="quick-card-icon">⚡</span>
           <div class="quick-card-title">Treino concorrente</div>
-          <div class="quick-card-sub">Força ANTES do treino específico</div>
+          <div class="quick-card-sub">Encaixe a força sem prejudicar sua corrida</div>
         </div>
         <div class="quick-card" onclick="showScienceModal('pliometria')">
           <span class="quick-card-icon">🦘</span>
@@ -409,15 +409,9 @@ textarea{resize:vertical;min-height:70px}
   <!-- STEP 1: PERFIL -->
   <div class="av-step active" id="av-step-1">
     <div class="pad">
-      <p class="section-sub">Vamos montar seu perfil de atleta de endurance para personalizar seus ciclos mensais de fortalecimento.</p>
-      <div class="input-group"><label class="input-label">Qual sua modalidade principal?</label>
-        <div class="radio-group" style="margin-top:6px">
-          <div class="radio-card" onclick="selectRadio('av-modalidade','corrida',this)"><span class="radio-card-icon">🏃</span><div class="radio-card-text"><div class="radio-card-title">Corrida</div><div class="radio-card-sub">Rua, pista ou trail</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-          <div class="radio-card" onclick="selectRadio('av-modalidade','ciclismo',this)"><span class="radio-card-icon">🚴</span><div class="radio-card-text"><div class="radio-card-title">Ciclismo</div><div class="radio-card-sub">Estrada, MTB ou indoor</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-          <div class="radio-card" onclick="selectRadio('av-modalidade','natacao',this)"><span class="radio-card-icon">🏊</span><div class="radio-card-text"><div class="radio-card-title">Natação</div><div class="radio-card-sub">Piscina ou águas abertas</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-          <div class="radio-card" onclick="selectRadio('av-modalidade','hibrido',this)"><span class="radio-card-icon">🔥</span><div class="radio-card-text"><div class="radio-card-title">Híbrido / Triatlo</div><div class="radio-card-sub">Combina duas ou mais modalidades</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-        </div>
-      </div>
+      <p class="section-sub">Vamos montar seu perfil de corredor para personalizar seus ciclos mensais de fortalecimento.</p>
+      <input type="hidden" id="av-modalidade" value="corrida"/>
+      <div class="card" style="border-color:var(--b2);margin-bottom:16px"><div class="card-title">🏃 Base do Corre</div><div class="card-sub">Fortalecimento especializado para corredores de rua, pista e trail. O app organiza força, estabilidade, mobilidade e potência sem substituir sua planilha de corrida.</div></div>
       <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="av-nome" placeholder="Ex: Jonadabe"/></div>
       <div class="input-group"><label class="input-label">Idade</label><input type="number" id="av-idade" placeholder="Ex: 32" min="16" max="80"/></div>
       <div class="input-group"><label class="input-label">Peso (kg)</label><input type="number" id="av-peso" placeholder="Ex: 75" min="40" max="150"/></div>
@@ -434,15 +428,15 @@ textarea{resize:vertical;min-height:70px}
   <!-- STEP 2: EXPERIÊNCIA -->
   <div class="av-step" id="av-step-2">
     <div class="pad">
-      <p class="section-sub">Entender sua experiência é fundamental para calibrar a carga inicial.</p>
-      <div class="input-group"><label class="input-label" id="lbl-exp-modalidade">Quanto tempo pratica sua modalidade regularmente?</label>
+      <p class="section-sub">Entender sua experiência de corrida e musculação é fundamental para calibrar o fortalecimento inicial.</p>
+      <div class="input-group"><label class="input-label" id="lbl-exp-modalidade">Há quanto tempo você corre regularmente?</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-exp-corrida','<6m',this)"><span class="radio-card-icon">🌱</span><div class="radio-card-text"><div class="radio-card-title">Menos de 6 meses</div><div class="radio-card-sub">Iniciante na modalidade</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
           <div class="radio-card" onclick="selectRadio('av-exp-corrida','6m-2a',this)"><span class="radio-card-icon">🏃</span><div class="radio-card-text"><div class="radio-card-title">6 meses a 2 anos</div><div class="radio-card-sub">Praticante recreacional</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
           <div class="radio-card" onclick="selectRadio('av-exp-corrida','>2a',this)"><span class="radio-card-icon">🥇</span><div class="radio-card-text"><div class="radio-card-title">Mais de 2 anos</div><div class="radio-card-sub">Praticante experiente</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         </div>
       </div>
-      <div class="input-group" style="margin-top:16px"><label class="input-label">Quantos dias/semana treina a modalidade hoje? (fora deste app)</label><input type="number" id="av-dias-modalidade" placeholder="Ex: 4" min="0" max="14"/></div>
+      <div class="input-group" style="margin-top:16px"><label class="input-label">Quantos dias por semana você corre hoje? (fora deste app)</label><input type="number" id="av-dias-modalidade" placeholder="Ex: 4" min="0" max="14"/></div>
       <div class="input-group" style="margin-top:16px"><label class="input-label">Experiência com musculação?</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-exp-muscu','nenhuma',this)"><span class="radio-card-icon">❌</span><div class="radio-card-text"><div class="radio-card-title">Nenhuma ou quase nenhuma</div><div class="radio-card-sub">Nunca fiz academia regularmente</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
@@ -464,8 +458,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="radio-group">
         <div class="radio-card" onclick="selectRadio('av-objetivo','corredor',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">Melhorar tempo de prova</div><div class="radio-card-sub">Foco em economia de corrida e força máxima (Støren, 2008)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         <div class="radio-card" onclick="selectRadio('av-objetivo','lesao',this)"><span class="radio-card-icon">🛡</span><div class="radio-card-text"><div class="radio-card-title">Prevenir lesões e treinar sem dor</div><div class="radio-card-sub">Foco em tendões, Nordic Curl e controle neuromuscular</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-        <div class="radio-card" onclick="selectRadio('av-objetivo','hibrido',this)"><span class="radio-card-icon">⚡</span><div class="radio-card-text"><div class="radio-card-title">Atleta híbrido (corpo + endurance)</div><div class="radio-card-sub">Hipertrofia + endurance (Bouamra, 2022 — CT superior para composição corporal)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-        <div class="radio-card" onclick="selectRadio('av-objetivo','hyrox',this)"><span class="radio-card-icon">🏆</span><div class="radio-card-text"><div class="radio-card-title">Prova híbrida (Hyrox/Spartan)</div><div class="radio-card-sub">HIFT + corrida + força funcional (López, 2025)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        
       </div>
     </div>
     <div class="pad" style="padding-top:0;display:flex;gap:10px">
@@ -520,12 +513,12 @@ textarea{resize:vertical;min-height:70px}
   <!-- STEP 6: DISPONIBILIDADE -->
   <div class="av-step" id="av-step-6">
     <div class="pad">
-      <p class="section-sub">Quantos dias por semana você pode dedicar ao <b>fortalecimento</b>? O treino específico da sua modalidade continua sendo definido à parte — isso aqui é só o volume de força.</p>
+      <p class="section-sub">Quantos dias por semana você pode dedicar ao <b>fortalecimento</b>? Sua planilha de corrida continua sendo definida à parte — aqui organizamos apenas o volume de força.</p>
       <div class="input-group"><label class="input-label">Dias disponíveis para fortalecimento</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-dias','2',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">2 dias/semana</div><div class="radio-card-sub">Dose mínima eficaz — mantém economia e reduz lesão (Rønnestad, 2014)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
           <div class="radio-card" onclick="selectRadio('av-dias','3',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">3 dias/semana</div><div class="radio-card-sub">Volume padrão recomendado pela literatura científica</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-          <div class="radio-card" onclick="selectRadio('av-dias','4',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">4 dias/semana</div><div class="radio-card-sub">Volume alto — só se sobrar recuperação para o treino específico</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+          <div class="radio-card" onclick="selectRadio('av-dias','4',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">4 dias/semana</div><div class="radio-card-sub">Volume alto — só se sobrar recuperação para os treinos de corrida</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         </div>
       </div>
       <div class="input-group" style="margin-top:16px"><label class="input-label">Tempo disponível por sessão</label>
@@ -675,7 +668,7 @@ textarea{resize:vertical;min-height:70px}
 <div id="screen-exercicios" class="screen">
   <div class="pad" style="padding-bottom:10px">
     <div class="section-title">Biblioteca de Exercícios</div>
-    <div class="section-sub">Exercícios com base científica — corrida, ciclismo e natação</div>
+    <div class="section-sub">Exercícios com base científica para corredores</div>
   </div>
   <div class="ex-filter" id="ex-filter"></div>
   <div class="ex-list" id="ex-list" style="padding-top:14px"></div>
@@ -1122,7 +1115,7 @@ function updateHdrSub() {
   if (el) {
     el.textContent = state.assessed && state.profile['av-modalidade']
       ? `${modLabel(state.profile['av-modalidade'])} · Ciclo ${state.cycleNum}`
-      : 'Treino baseado em ciência';
+      : 'Fortalecimento inteligente para corredores';
   }
   const fab = document.getElementById('chat-fab');
   if (fab) fab.style.display = state.assessed ? 'flex' : 'none';
@@ -1133,7 +1126,7 @@ function updateHdrSub() {
 // ══════════════════════════════════════════════════════
 function startAssessment() {
   if (!state.lead || !state.lead.nome) { goToScreen('lead'); return; }
-  avData = {}; avChecks = {}; avScales = {};
+  avData = {'av-modalidade':'corrida'}; avChecks = {}; avScales = {};
   goToScreen('avaliacao', document.getElementById('bnav-avaliacao'));
   showStep(1);
   buildScales();
@@ -1143,7 +1136,7 @@ function showStep(n) {
   document.querySelectorAll('.av-step').forEach(s => s.classList.remove('active'));
   document.getElementById('av-step-' + n).classList.add('active');
   document.getElementById('av-step-num').textContent = `PASSO ${n} DE 6`;
-  const titles = ['Perfil do atleta','Experiência','Objetivo','Histórico de lesões','Capacidade funcional','Disponibilidade'];
+  const titles = ['Perfil do corredor','Experiência','Objetivo de corrida','Histórico de lesões','Capacidade funcional','Disponibilidade'];
   document.getElementById('av-step-title').textContent = titles[n-1];
   document.querySelectorAll('#av-dots .step-dot').forEach((d, i) => {
     d.className = 'step-dot ' + (i < n-1 ? 'done' : i === n-1 ? 'active' : '');
@@ -1170,7 +1163,7 @@ function buildScales() {
     {id:'eq-equilibrio', label:'Equilíbrio unipodal (uma perna)', desc:'1 = caio facilmente · 10 = fico 30+ segundos sem problema'},
     {id:'eq-mobilidade', label:'Mobilidade (agachamento profundo)', desc:'1 = muito rígido · 10 = agacha fundo sem apoio'},
     {id:'eq-nordic', label:'Controle excêntrico (descida lenta)', desc:'1 = nunca fiz · 10 = faço Nordic Curl completo'},
-    {id:'eq-dor', label:'Dor durante o treino específico (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede o treino'},
+    {id:'eq-dor', label:'Dor durante a corrida (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede a corrida'},
   ];
   const container = document.getElementById('av-scales');
   container.innerHTML = scales.map(s => `
@@ -1191,10 +1184,11 @@ function selectScale(id, val, el) {
 
 function nextStep(current) {
   if (current === 1) {
-    avData['nome'] = document.getElementById('av-nome').value || 'Atleta';
+    avData['av-modalidade'] = 'corrida';
+    avData['nome'] = document.getElementById('av-nome').value || 'Corredor';
     avData['idade'] = document.getElementById('av-idade').value;
     avData['peso'] = document.getElementById('av-peso').value;
-    if (!avData['av-modalidade']) { showToast('⚠️ Selecione sua modalidade'); return; }
+    avData['av-modalidade'] = 'corrida';
     if (!avData['av-genero']) { showToast('⚠️ Selecione o gênero'); return; }
   }
   if (current === 2) {
@@ -1266,15 +1260,13 @@ function getTests(sport) {
     { id:'flexao', label:'Flexão de Joelhos', unit:'repetições em 60s', desc:'Joelhos apoiados no chão, peito toca o chão a cada repetição, ritmo constante.' },
     { id:'nordic', label:'Nordic Curl (ou variação assistida)', unit:'repetições controladas', desc:'Descida de 3-5 segundos, sem "cair" no final.' },
   ];
-  if (sport === 'corrida' || sport === 'hibrido') base.push({ id:'tempo1km', label:'Tempo de 1km corrido', unit:'minutos (ex: 5.5 = 5min30s)', desc:'Percurso plano, esforço forte e controlado — use a MESMA rota nas duas vezes para poder comparar.' });
-  if (sport === 'natacao') base.push({ id:'ombro', label:'Rotação Externa com Elástico até a falha', unit:'repetições/lado', desc:'Use a MESMA resistência de elástico nos dois testes para poder comparar.' });
-  if (sport === 'ciclismo' || sport === 'hibrido') base.push({ id:'wallsit', label:'Wall Sit (cadeira na parede)', unit:'segundos', desc:'Joelho a 90°, encostado na parede, tempo máximo.' });
+  base.push({ id:'tempo1km', label:'Tempo de 1 km corrido', unit:'minutos (ex: 5.5 = 5min30s)', desc:'Percurso plano, esforço forte e controlado — use a mesma rota nas duas avaliações para comparar.' });
   return base;
 }
 
 function renderTesteInputs(containerId, idPrefix, prefill) {
-  const sport = state.profile['av-modalidade'] || 'corrida';
-  const tests = getTests(sport);
+  const sport = 'corrida';
+  const tests = getTests('corrida');
   document.getElementById(containerId).innerHTML = tests.map(t => `
     <div class="input-group">
       <label class="input-label">${t.label} <span style="color:var(--muted);font-weight:400">(${t.unit})</span></label>
@@ -1285,8 +1277,8 @@ function renderTesteInputs(containerId, idPrefix, prefill) {
 
 function submitTeste() {
   const prefix = testMode === 'inicial' ? 'teste-' : 'cc-teste-';
-  const sport = state.profile['av-modalidade'] || 'corrida';
-  const tests = getTests(sport);
+  const sport = 'corrida';
+  const tests = getTests('corrida');
   const result = {};
   for (const t of tests) {
     const el = document.getElementById(prefix + t.id);
@@ -1406,7 +1398,7 @@ function buildCloseScales() {
     {id:'cc-equilibrio', label:'Equilíbrio unipodal (uma perna)', desc:'1 = caio facilmente · 10 = fico 30+ segundos sem problema'},
     {id:'cc-mobilidade', label:'Mobilidade (agachamento profundo)', desc:'1 = muito rígido · 10 = agacha fundo sem apoio'},
     {id:'cc-nordic', label:'Controle excêntrico (descida lenta)', desc:'1 = nunca fiz · 10 = faço Nordic Curl completo'},
-    {id:'cc-dor', label:'Dor atual durante o treino específico (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede o treino'},
+    {id:'cc-dor', label:'Dor atual durante a corrida (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede a corrida'},
   ];
   document.getElementById('cc-scales').innerHTML = scales.map(s => `
     <div class="input-group">
@@ -1478,7 +1470,7 @@ async function closeTheCycle() {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
       body: JSON.stringify({
-        prevFocus, sport: state.profile['av-modalidade'], nivel: state.profile.nivel,
+        prevFocus, sport: 'corrida', nivel: state.profile.nivel,
         testDeltas: deltas, overallPct, reassess: closeData.reassess, feedback: closeData.feedback, logsSummary,
       }),
     });
@@ -1579,7 +1571,7 @@ function generateCycle(cycleNum, data, lesoes, focusKey) {
   const dias = parseInt(data['av-dias'] || '3');
   const nivel = data.nivel || 'Intermediário';
   const genero = data['av-genero'];
-  const sport = data['av-modalidade'] || 'corrida';
+  const sport = 'corrida';
   const temJoelho = lesoes.includes('lesao-joelho');
   const temAquiles = lesoes.includes('lesao-tornozelo');
   const temIsquio = lesoes.includes('lesao-isquio');
@@ -1602,24 +1594,24 @@ function generateCycle(cycleNum, data, lesoes, focusKey) {
   return { cycleNum, focus, weeks };
 }
 
-// Este app SÓ prescreve fortalecimento. As sessões abaixo nunca incluem
-// pace, watts ou séries de nado — o treino específico é do seu treinador.
+// Este app SÓ prescreve fortalecimento para corrida. As sessões abaixo nunca incluem
+// pace, quilometragem ou planilha de corrida — o treino de corrida é do seu treinador.
 function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
   const { temJoelho, temAquiles, temIsquio, temLombar, temOmbro } = flags;
   const isDeload = week === 4;
   const deloadMod = isDeload ? ' (volume -40%)' : '';
-  const encaixe = 'Encaixe: siga o calendário do seu treino específico de endurance. Evite colocar esta sessão pesada imediatamente antes de uma sessão importante; quando ocorrer no mesmo dia, separe as sessões quando possível e priorize conforme seu objetivo principal.';
+  const encaixe = 'Encaixe: siga sua planilha de corrida. Evite colocar esta sessão pesada imediatamente antes do treino de corrida mais importante; quando ocorrer no mesmo dia, separe as sessões quando possível e priorize seu objetivo principal.';
 
   const anti = ['McGill Modified Curl-up — 3×10 seg.10s','Bird-Dog — 3×8/lado seg.8s','Side Plank — 3×30s/lado'];
   const core = [...anti, 'Pallof Press — 3×10/lado'];
   const shoulder = buildShoulder(isDeload, temOmbro);
-  const impact = sport !== 'natacao'; // natação não usa pliometria de impacto
+  const impact = true;
 
   const sessions2 = [
     { day: 'Sessão A', type: 'força', emoji:'🏋️', name: 'Full Body — Força Máxima' + deloadMod,
       exercises: [...buildLower(phase, nivel, { temJoelho, temAquiles, temIsquio }, isDeload, sport), encaixe] },
-    { day: 'Sessão B', type: 'força', emoji:'💪', name: 'Full Body — Unilateral + Core' + (sport==='natacao'?' + Ombro':''),
-      exercises: [...buildUnilateral(phase, nivel, isDeload, sport), ...core, ...(sport==='natacao'?shoulder:[]), encaixe] },
+    { day: 'Sessão B', type: 'força', emoji:'💪', name: 'Full Body — Unilateral + Core',
+      exercises: [...buildUnilateral(phase, nivel, isDeload, sport), ...core, encaixe] },
   ];
 
   const sessions3 = [
@@ -1628,7 +1620,7 @@ function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
     { day: 'Sessão B', type: 'força', emoji:'💪', name: 'Força — Unilateral' + (impact?' + Pliometria':' + Estabilidade'),
       exercises: [...buildUnilateral(phase, nivel, isDeload, sport), ...(impact ? buildPlio(phase, isDeload, sport) : shoulder), encaixe] },
     { day: 'Sessão C', type: 'força', emoji:'🏋️', name: 'Força — Upper Body + Core',
-      exercises: [...buildUpper(isDeload), ...core, ...(sport==='natacao'?shoulder:[]), encaixe] },
+      exercises: [...buildUpper(isDeload), ...core, encaixe] },
   ];
 
   const sessions4 = [
@@ -1639,7 +1631,7 @@ function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
     { day: 'Sessão C', type: 'força', emoji:'🏋️', name: 'Força — Upper Body + Core',
       exercises: [...buildUpper(isDeload), ...core, encaixe] },
     { day: 'Sessão D', type: 'força', emoji:'🛡', name: 'Kit Anti-Lesão + Mobilidade',
-      exercises: [...buildKitAntiLesao(sport), ...(sport==='natacao'?shoulder:[]), encaixe] },
+      exercises: [...buildKitAntiLesao(sport), encaixe] },
   ];
 
   return dias <= 2 ? sessions2 : dias === 3 ? sessions3 : sessions4;
@@ -1655,7 +1647,6 @@ function buildLower(phase, nivel, flags, isDeload, sport) {
   if (temJoelho) ex.push('Spanish Squat Isométrico — 3×45s (60° flexão, analgesia cortical)');
   ex.push('Hip Thrust — 3×10-12 (pico iso 1-2s)');
   if (temIsquio) ex.push('Nordic Hamstring Curl — 2×5-8 exc. lento 3-5s (assistido → livre)');
-  if (sport === 'ciclismo') ex.push('Leg Press Unilateral — 3×8-10/lado (gesto pedal é cíclico e unilateral)');
   ex.push('Calf Raise Excêntrico — 3×12/lado (4s descida)');
   ex.push('Kit Anti-Lesão: Tibialis Raises 3×15 · Peroneal 3×15 · Clamshells 3×15');
   return ex;
@@ -1670,20 +1661,14 @@ function buildUnilateral(phase, nivel, isDeload, sport) {
     'Step-Up — 3×10/lado (banco 30cm, empurrar com perna da frente)',
     'Deadbug — 3×10 (lombar colada ao chão)',
   ];
-  if (sport === 'natacao') ex.push('Pallof Press com rotação de tronco — 3×10/lado (transferência do "catch")');
-  if (sport === 'ciclismo') ex.push('Prancha com anti-flexão lombar prolongada — 3×45-60s (postura aerodinâmica sustentada)');
   return ex;
 }
 
 function buildPlio(phase, isDeload, sport) {
   if (phase.num < 2 || isDeload) return [];
-  const capNote = sport === 'ciclismo' ? 'Dose reduzida no ciclismo — sem fase de impacto/aterrissagem, prioridade é força máxima (Rønnestad & Mujika, 2014).' : '<250 saltos/semana total (Moran, 2023)';
-  if (phase.num === 2) return sport === 'ciclismo'
-    ? ['Pogo Jumps — 2×15 (dose reduzida — foco é RFD, não SSC)']
-    : ['Pogo Jumps — 3×15-20 (mínimo contato solo — rigidez tendão)'];
-  const base = sport === 'ciclismo'
-    ? ['Pogo Jumps — 2×15', 'Box Jumps — 2×5 (altura máx, foco em potência concêntrica)']
-    : ['Pogo Jumps — 3×20', 'Box Jumps — 3×5 (altura máx, aterr. silenciosa)', 'Broad Jumps — 3×5 (potência horizontal — padrão da passada)'];
+  const capNote = '<250 saltos/semana total (Moran, 2023)';
+  if (phase.num === 2) return ['Pogo Jumps — 3×15-20 (mínimo contato solo — rigidez tendão)'];
+  const base = ['Pogo Jumps — 3×20', 'Box Jumps — 3×5 (altura máx, aterr. silenciosa)', 'Broad Jumps — 3×5 (potência horizontal — padrão da passada)'];
   return [...base, capNote];
 }
 
@@ -1700,7 +1685,7 @@ function buildUpper(isDeload) {
 function buildShoulder(isDeload, temOmbro) {
   const s = isDeload ? '2' : '3';
   return [
-    `Rotação Externa com elástico — ${s}×15/lado (manguito rotador — "Nordic Curl da natação")`,
+    `Rotação Externa com elástico — ${s}×15/lado (controle do ombro e postura de corrida)`,
     'Face Pull com elástico — 3×15 (controle escapular)',
     'Serrátil Anterior (Wall Slide) — 3×12',
     temOmbro ? 'Reduza amplitude e carga em caso de dor >3/10 — priorize controle sobre volume' : 'Y-T-W em prono — 3×10 cada',
@@ -1714,8 +1699,6 @@ function buildKitAntiLesao(sport) {
     'Clamshells com Banda — 3×15/lado',
     'Deep Squat Hold — 3-5min (mobilidade de quadril)',
   ];
-  if (sport === 'natacao') ex.push('90/90 Hip Switch — 3×10 (rotação de tronco para o nado)');
-  if (sport === 'ciclismo') ex.push('Couch Stretch — 2-3min/lado (flexor de quadril encurtado pela postura na bike)');
   return ex;
 }
 
@@ -2103,13 +2086,7 @@ const EXERCISES = [
   {id:'c9',name:'Ab Wheel Rollout',cat:'core',icon:'🎡',bg:'rgba(255,107,53,.1)',params:'3×8-10',level:'Avançado',equipment:'Roda abdominal',video:'',
    science:'Exige anti-extensão de tronco sob alavanca longa — um dos exercícios de core com maior transferência pra postura sob fadiga (van Dyk, 2019).',
    cues:['Lombar nunca "afunda" — se afundar, reduza a amplitude','Core ativado do início ao fim do movimento','Comece de joelhos antes de progredir pra em pé','Pare imediatamente se sentir a lombar assumir o movimento']},
-  // KIT ANTI-LESÃO / HÍBRIDO (Hyrox/Spartan — López 2025)
-  {id:'kit8',name:'Sled Push/Pull',cat:'kit',icon:'🛷',bg:'rgba(91,142,255,.08)',params:'4×15-20m',level:'Intermediário',equipment:'Sled/trenó',video:'',
-   science:'Força de perna sob resistência horizontal contínua, sem fase excêntrica de impacto — base do treino híbrido tipo Hyrox/Spartan (López, 2025).',
-   cues:['Passos curtos e potentes, tronco inclinado à frente no push','Mantém tensão constante — não deixa o trenó "parar" entre passos','Pull: puxa com os braços e as pernas juntos, não só os braços','Ótimo pra quem tem dor articular com pliometria — zero impacto']},
-  {id:'kit9',name:'Farmer\'s Carry',cat:'kit',icon:'🎒',bg:'rgba(91,142,255,.08)',params:'3×30-40m',level:'Iniciante',equipment:'Halteres/kettlebells',video:'',
-   science:'Força de preensão + postura de tronco sob carga bilateral — transferência direta pra prova híbrida e pra qualquer atleta que carregue equipamento (mochila, bike no ombro em trail).',
-   cues:['Ombros para trás e para baixo, sem "afundar"','Passos curtos e rápidos, quase como andar normal','Core ativado — resista à vontade de inclinar para os lados','Solte o peso com controle no final, não derrube']},
+
   // MOBILIDADE (van Dyk / Blagrove — tríceps sural e cadeia posterior)
   {id:'mob8',name:'Alongamento de Panturrilha na Parede',cat:'mobilidade',icon:'🦵',bg:'rgba(255,235,59,.08)',params:'3×30s/lado',level:'Iniciante',equipment:'Parede',video:'',
    science:'Amplitude de tornozelo reduzida altera o padrão de passada e sobrecarrega o tendão de Aquiles (van Dyk, 2019) — mobilidade e força devem andar juntas, não uma sem a outra.',
@@ -2283,14 +2260,15 @@ const EXERCISES = [
 ];
 
 function renderExercises() {
-  const cats = ['all','técnica','tendão','músculo','core','ombro','pliometria','mobilidade','kit'];
-  const catLabels = {'all':'Todos','técnica':'Técnica de Corrida','tendão':'Tendões','músculo':'Músculos','core':'Core','ombro':'Ombro (nado)','pliometria':'Pliometria','mobilidade':'Mobilidade','kit':'Kit Anti-Lesão'};
+  const cats = ['all','técnica','tendão','músculo','core','pliometria','mobilidade','kit'];
+  const catLabels = {'all':'Todos','técnica':'Técnica de Corrida','tendão':'Tendões','músculo':'Músculos','core':'Core','pliometria':'Pliometria','mobilidade':'Mobilidade','kit':'Kit Anti-Lesão'};
+  const visibleExercises = EXERCISES.filter(e => !/natacao|natação|ciclismo|bike|nado|hyrox|spartan/i.test(`${e.name} ${e.cat} ${e.science || ''}`));
   const filter = document.getElementById('ex-filter');
   const list = document.getElementById('ex-list');
 
   if (!state.assessed) {
     filter.innerHTML = '';
-    const preview = EXERCISES.slice(0, 3);
+    const preview = visibleExercises.slice(0, 3);
     list.innerHTML = `
       <div style="filter:blur(4px);pointer-events:none;opacity:.6">
         ${preview.map(ex => `
@@ -2316,7 +2294,7 @@ function renderExercises() {
       ${catLabels[c]}
     </button>`).join('');
 
-  const filtered = currentExFilter === 'all' ? EXERCISES : EXERCISES.filter(e => e.cat === currentExFilter);
+  const filtered = currentExFilter === 'all' ? visibleExercises : visibleExercises.filter(e => e.cat === currentExFilter);
   list.innerHTML = filtered.map(ex => `
     <div class="exl-card" onclick="openExModal('${ex.id}')">
       <div class="exl-icon" style="background:${ex.bg}">${ex.icon}</div>
@@ -2449,7 +2427,7 @@ function renderProfile() {
       <div class="result-row"><div class="result-label">Meta / prova alvo</div><div class="result-val">${provaLabel(p['av-prova'])}</div></div>
       <div class="result-row"><div class="result-label">Experiência na modalidade</div><div class="result-val">${expLabel(p['av-exp-corrida'])}</div></div>
       <div class="result-row"><div class="result-label">Experiência musculação</div><div class="result-val">${expMLabel(p['av-exp-muscu'])}</div></div>
-      <div class="result-row"><div class="result-label">Treino específico hoje</div><div class="result-val">${p['av-dias-modalidade'] || '—'}× /sem</div></div>
+      <div class="result-row"><div class="result-label">Corridas atuais</div><div class="result-val">${p['av-dias-modalidade'] || '—'}× /sem</div></div>
       <div class="result-row"><div class="result-label">Fortalecimento no plano</div><div class="result-val">${p['av-dias']}× /sem</div></div>
       <div class="result-row"><div class="result-label">Nível calculado</div><div class="result-val">${p.nivel}</div></div>
     </div>
@@ -2534,7 +2512,7 @@ const scienceData = {
     title: '⚡ Treino Concorrente', color: 'var(--warn)',
     content: `<b>A organização importa:</b><br>
     • O treino concorrente combina força e endurance, mas as respostas dependem do volume, frequência, modalidade, nível de treinamento e recuperação.<br>
-    • Não existe uma ordem única ideal para todas as pessoas. O app não substitui o calendário específico do treinador de corrida, bike ou natação.<br>
+    • Não existe uma ordem única ideal para todas as pessoas. O app não substitui a planilha específica do treinador de corrida.<br>
     • Quando possível, separar sessões exigentes e evitar força pesada de pernas imediatamente antes de uma sessão importante de endurance.<br><br>
     <b>Regra do Personal Coach:</b> o aplicativo prescreve fortalecimento e informa o melhor encaixe relativo ao calendário fornecido pelo atleta; não promete eliminar um suposto “efeito de interferência”.`
   },
@@ -2555,7 +2533,7 @@ const scienceData = {
     title: '🧩 Blocos de Periodização', color: 'var(--acc2)',
     content: `<b>Por que cada ciclo mensal segue esse modelo:</b><br>
     • Cada ciclo (4 semanas — 3 de trabalho + 1 de deload/reteste) concentra ênfase em UM bloco — Base (ativação), Força (carga alta), Potência (pliometria) ou Manutenção — em vez de diluir tudo o tempo todo. No fim do ciclo, teste físico + reavaliação + seu feedback decidem qual bloco vem no mês seguinte<br>
-    • <b>Preparação Geral → Preparação Específica:</b> os exercícios começam genéricos e vão se aproximando do gesto da sua modalidade conforme a prova se aproxima<br>
+    • <b>Preparação Geral → Preparação Específica:</b> os exercícios começam genéricos e vão se aproximando das demandas da corrida conforme a prova se aproxima<br>
     • <b>Efeito Tardio de Treinamento:</b> o pico de força aparece 2-4 semanas depois do bloco pesado — por isso o fortalecimento pesado fica nas fases de base/construção, não na semana da prova<br><br>
     <b>O que isso NÃO é:</b> este método nunca prescreve o treino de endurance em si — ele organiza só o estímulo de força ao redor do calendário do atleta. É exatamente o papel deste app.`
   },
@@ -2620,19 +2598,19 @@ function showToast(msg) {
 // ══════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════
-function goalLabel(v) { return {corredor:'Melhorar tempo',lesao:'Prevenir lesões',hibrido:'Atleta híbrido',hyrox:'Hyrox/Spartan'}[v] || '—'; }
+function goalLabel(v) { return {corredor:'Melhorar desempenho na corrida',lesao:'Correr com mais controle e tolerância à carga'}[v] || 'Fortalecimento para corrida'; }
 function provaLabel(v) { return v && v.trim() ? escapeHtml(v) : 'Sem meta definida'; }
 function expLabel(v) { return {'<6m':'<6 meses','6m-2a':'6m – 2 anos','>2a':'>2 anos'}[v] || '—'; }
 function expMLabel(v) { return {nenhuma:'Nenhuma',basica:'Básica (1-2 anos)',avancada:'Avançada (+2 anos)'}[v] || '—'; }
 function lesaoLabel(v) { const m={lesaojoelho:'Joelho',lesaotornozelo:'Tornozelo/Aquiles',lesaoquadril:'Quadril/IT Band',lesaolombar:'Lombar/Core',lesaoisquio:'Isquiotibiais',lesaoombro:'Ombro/Manguito'}; return m[v.replace('-','')] || v; }
-function modLabel(v) { return {corrida:'🏃 Corrida',ciclismo:'🚴 Ciclismo',natacao:'🏊 Natação',hibrido:'🔥 Híbrido/Triatlo'}[v] || '—'; }
+function modLabel(v) { return '🏃 Corrida'; }
 function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[],lead:null}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
 
 // INIT
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-03-6';
+const APP_VERSION = '2026-09-09-base-do-corre-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([

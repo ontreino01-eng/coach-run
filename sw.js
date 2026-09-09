@@ -1,9 +1,9 @@
-// PersonalCoach — Service Worker
+// Base do Corre — Service Worker
 // v2: HTML/JS sempre busca a versão mais nova da rede primeiro (network-first) —
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'personalcoach-v1';
+const CACHE = 'base-do-corre-v2';
 const APP_SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {

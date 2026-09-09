@@ -1,7 +1,7 @@
 {
-  "name": "PersonalCoach — Treino Baseado em Ciência",
-  "short_name": "PersonalCoach",
-  "description": "Fortalecimento para corrida, ciclismo, natação e híbridos, com IA de acompanhamento mensal.",
+  "name": "Base do Corre — Fortalecimento para Corrida",
+  "short_name": "Base do Corre",
+  "description": "Fortalecimento especializado para corredores, com avaliação funcional, ciclos mensais e acompanhamento por IA.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
