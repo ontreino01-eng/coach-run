@@ -7,7 +7,7 @@
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#09090E"/>
+<meta name="theme-color" content="#1C1C1A"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -22,10 +22,10 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#09090E;--s1:#0E0F18;--s2:#13141F;--card:#181925;
-  --b1:#22253A;--b2:#2C3050;
-  --acc:#C8F135;--acc2:#5B8EFF;--warn:#FF6B35;--red:#FF3B5C;
-  --txt:#EEF0FF;--muted:#7B82A8;--sub:#40456B;
+  --bg:#1C1C1A;--s1:#211F1C;--s2:#262420;--card:#221F1B;
+  --b1:#332F27;--b2:#5C6B3A;
+  --acc:#2A4A35;--acc2:#5C6B3A;--warn:#FF6B35;--red:#FF3B5C;
+  --txt:#F2EDE6;--muted:#A69C8C;--sub:#6E675A;--accTxt:#F2EDE6;--title:#C4A882;
   --ff:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
 }
 html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:14px}
@@ -36,7 +36,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 
 /* ── HEADER ── */
 .hdr{background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:10}
-.logo{font-family:var(--ff);font-weight:800;font-size:17px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo{font-family:var(--ff);font-weight:800;font-size:17px;background:linear-gradient(135deg,var(--title),var(--accTxt));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hdr-sub{font-size:10px;color:var(--muted);font-family:var(--fm);letter-spacing:.06em}
 .hdr-right{display:flex;gap:8px;align-items:center}
 
@@ -47,12 +47,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 
 /* ── BOTTOM NAV ── */
 .bnav{position:sticky;bottom:0;flex-shrink:0;width:100%;background:rgba(9,9,14,.97);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:#000;border:none;font-size:22px;box-shadow:0 4px 16px rgba(200,241,53,.35);z-index:60;display:none;align-items:center;justify-content:center;cursor:pointer}
+.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:var(--accTxt);border:none;font-size:22px;box-shadow:0 4px 16px rgba(42,74,53,.35);z-index:60;display:none;align-items:center;justify-content:center;cursor:pointer}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 0;transition:all .15s}
 .bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
 .bnav-lbl{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ff);transition:all .15s}
 .bnav-btn.active .bnav-icon{filter:none}
-.bnav-btn.active .bnav-lbl{color:var(--acc)}
+.bnav-btn.active .bnav-lbl{color:var(--title)}
 .bnav-dot{width:4px;height:4px;border-radius:50%;background:var(--acc);display:none}
 .bnav-btn.active .bnav-dot{display:block}
 
@@ -69,8 +69,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--ff);font-weight:700;font-size:13px;border:none;border-radius:10px;cursor:pointer;padding:11px 20px;transition:all .15s;user-select:none}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.4;cursor:default}
-.btn-acc{background:var(--acc);color:#000}
-.btn-acc:hover:not(:disabled){box-shadow:0 6px 20px rgba(200,241,53,.3);transform:translateY(-1px)}
+.btn-acc{background:var(--acc);color:var(--accTxt)}
+.btn-acc:hover:not(:disabled){box-shadow:0 6px 20px rgba(42,74,53,.3);transform:translateY(-1px)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--b1)}
 .btn-ghost:hover{border-color:var(--b2);color:var(--txt)}
 .btn-warn{background:rgba(255,107,53,.12);color:var(--warn);border:1px solid rgba(255,107,53,.25)}
@@ -78,8 +78,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 .btn-sm{padding:7px 14px;font-size:12px}
 
 .tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--ff);flex-shrink:0}
-.tag-green{background:rgba(200,241,53,.1);color:var(--acc);border:1px solid rgba(200,241,53,.2)}
-.tag-blue{background:rgba(91,142,255,.1);color:var(--acc2);border:1px solid rgba(91,142,255,.2)}
+.tag-green{background:rgba(42,74,53,.1);color:var(--title);border:1px solid rgba(42,74,53,.2)}
+.tag-blue{background:rgba(92,107,58,.1);color:var(--acc2);border:1px solid rgba(92,107,58,.2)}
 .tag-orange{background:rgba(255,107,53,.1);color:var(--warn);border:1px solid rgba(255,107,53,.2)}
 .tag-red{background:rgba(255,59,92,.1);color:var(--red);border:1px solid rgba(255,59,92,.2)}
 .tag-muted{background:var(--b1);color:var(--muted)}
@@ -87,7 +87,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 .input-group{margin-bottom:14px}
 .input-label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-family:var(--ff)}
 input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:10px 13px;color:var(--txt);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .15s}
-input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+input:focus,select:focus,textarea:focus{border-color:var(--title)}
 input::placeholder,textarea::placeholder{color:var(--sub)}
 select option{background:var(--s1)}
 textarea{resize:vertical;min-height:70px}
@@ -98,14 +98,14 @@ textarea{resize:vertical;min-height:70px}
 .divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 
 /* ── HOME SCREEN ── */
-.hero{background:linear-gradient(160deg,rgba(200,241,53,.06),rgba(91,142,255,.04));border-bottom:1px solid var(--b1);padding:28px 18px 24px}
-.hero-eyebrow{font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;font-family:var(--fm)}
+.hero{background:linear-gradient(160deg,rgba(42,74,53,.06),rgba(92,107,58,.04));border-bottom:1px solid var(--b1);padding:28px 18px 24px}
+.hero-eyebrow{font-size:10px;font-weight:700;color:var(--title);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;font-family:var(--fm)}
 .hero-title{font-family:var(--ff);font-weight:800;font-size:26px;line-height:1.15;margin-bottom:8px}
 .hero-title span{background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
 .hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .hero-stat{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:12px 10px;text-align:center}
-.hero-stat-val{font-family:var(--ff);font-weight:800;font-size:20px;color:var(--acc);line-height:1}
+.hero-stat-val{font-family:var(--ff);font-weight:800;font-size:20px;color:var(--title);line-height:1}
 .hero-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:4px;font-family:var(--ff)}
 
 .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -119,7 +119,7 @@ textarea{resize:vertical;min-height:70px}
 .av-step{display:none}
 .av-step.active{display:block;animation:fadeUp .2s ease}
 .step-head{background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 18px}
-.step-num{font-size:10px;font-weight:700;color:var(--acc);font-family:var(--fm);margin-bottom:2px}
+.step-num{font-size:10px;font-weight:700;color:var(--title);font-family:var(--fm);margin-bottom:2px}
 .step-title{font-family:var(--ff);font-weight:700;font-size:16px}
 .step-dots{display:flex;gap:5px;margin-top:10px}
 .step-dot{height:3px;flex:1;background:var(--b1);border-radius:3px;transition:background .3s}
@@ -128,39 +128,39 @@ textarea{resize:vertical;min-height:70px}
 
 .scale-btns{display:flex;gap:6px;flex-wrap:wrap}
 .scale-btn{flex:1;min-width:36px;padding:9px 6px;border-radius:9px;border:1px solid var(--b1);background:var(--s2);color:var(--muted);font-family:var(--ff);font-weight:700;font-size:13px;cursor:pointer;text-align:center;transition:all .15s}
-.scale-btn:hover,.scale-btn.sel{border-color:var(--acc);background:rgba(200,241,53,.1);color:var(--acc)}
+.scale-btn:hover,.scale-btn.sel{border-color:var(--title);background:rgba(42,74,53,.1);color:var(--title)}
 
 .radio-group{display:flex;flex-direction:column;gap:8px}
 .radio-card{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b1);border-radius:11px;padding:13px 14px;cursor:pointer;transition:all .15s}
-.radio-card.sel{border-color:var(--acc);background:rgba(200,241,53,.05)}
+.radio-card.sel{border-color:var(--title);background:rgba(42,74,53,.05)}
 .radio-card:hover:not(.sel){border-color:var(--b2)}
 .radio-card-icon{font-size:22px;flex-shrink:0}
 .radio-card-text{flex:1}
 .radio-card-title{font-family:var(--ff);font-weight:600;font-size:13px;margin-bottom:2px}
 .radio-card-sub{font-size:11px;color:var(--muted)}
 .radio-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.radio-card.sel .radio-check{border-color:var(--acc);background:var(--acc)}
+.radio-card.sel .radio-check{border-color:var(--title);background:var(--acc)}
 .radio-check-inner{width:8px;height:8px;border-radius:50%;background:#000;display:none}
 .radio-card.sel .radio-check-inner{display:block}
 
 .check-group{display:flex;flex-direction:column;gap:8px}
 .check-item{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:11px 13px;cursor:pointer;transition:all .15s}
-.check-item.sel{border-color:var(--acc2);background:rgba(91,142,255,.06)}
+.check-item.sel{border-color:var(--acc2);background:rgba(92,107,58,.06)}
 .check-box{width:18px;height:18px;border-radius:5px;border:2px solid var(--b1);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:11px}
-.check-item.sel .check-box{border-color:var(--acc2);background:var(--acc2);color:#000}
+.check-item.sel .check-box{border-color:var(--acc2);background:var(--acc2);color:var(--accTxt)}
 
 /* ── PLANO SCREEN ── */
-.plan-hero{background:linear-gradient(160deg,rgba(200,241,53,.08),rgba(91,142,255,.05));border-bottom:1px solid var(--b1);padding:20px 18px}
+.plan-hero{background:linear-gradient(160deg,rgba(42,74,53,.08),rgba(92,107,58,.05));border-bottom:1px solid var(--b1);padding:20px 18px}
 .phase-tabs{display:flex;gap:6px;overflow-x:auto;padding:16px 18px 0;scrollbar-width:none}
 .phase-tab{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1px solid var(--b1);background:var(--s2);color:var(--muted);font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.phase-tab.active{border-color:var(--acc);background:rgba(200,241,53,.1);color:var(--acc)}
+.phase-tab.active{border-color:var(--title);background:rgba(42,74,53,.1);color:var(--title)}
 
 .week-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px}
 .week-card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:13px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
 .week-card:hover{border-color:var(--b2);transform:scale(1.01)}
-.week-card.current{border-color:var(--acc)}
+.week-card.current{border-color:var(--title)}
 .week-card.done{opacity:.6}
-.week-card.done::after{content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:800}
+.week-card.done::after{content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--accTxt);font-weight:800}
 .week-num{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;font-family:var(--fm)}
 .week-name{font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:6px;line-height:1.2}
 .week-focus{font-size:11px;color:var(--muted)}
@@ -177,7 +177,7 @@ textarea{resize:vertical;min-height:70px}
 
 .day-tabs{display:flex;gap:0;border-bottom:1px solid var(--b1);padding:0 18px;overflow-x:auto;scrollbar-width:none}
 .day-tab{flex-shrink:0;padding:10px 14px;border:none;border-bottom:2px solid transparent;background:none;color:var(--muted);font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.day-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.day-tab.active{color:var(--title);border-bottom-color:var(--title)}
 
 .ex-block{background:var(--card);border:1px solid var(--b1);border-radius:12px;margin:0 18px 10px;overflow:hidden}
 .ex-block-header{padding:13px 14px;display:flex;align-items:center;gap:10px}
@@ -188,10 +188,10 @@ textarea{resize:vertical;min-height:70px}
 .ex-expand{background:var(--s2);border-top:1px solid var(--b1);padding:12px 14px;display:none}
 .ex-expand.open{display:block}
 .ex-cue{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px}
-.ex-cue-num{width:18px;height:18px;border-radius:5px;background:rgba(200,241,53,.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--acc);flex-shrink:0;font-family:var(--ff)}
+.ex-cue-num{width:18px;height:18px;border-radius:5px;background:rgba(42,74,53,.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--title);flex-shrink:0;font-family:var(--ff)}
 .ex-cue-text{font-size:12px;color:var(--muted);line-height:1.5}
-.ex-science{background:rgba(91,142,255,.06);border:1px solid rgba(91,142,255,.15);border-radius:8px;padding:10px 12px;margin-top:8px}
-.ex-science-label{font-size:9px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;font-family:var(--ff)}
+.ex-science{background:rgba(92,107,58,.06);border:1px solid rgba(92,107,58,.15);border-radius:8px;padding:10px 12px;margin-top:8px}
+.ex-science-label{font-size:9px;font-weight:700;color:var(--title);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;font-family:var(--ff)}
 .ex-science-text{font-size:11px;color:var(--muted);line-height:1.5}
 
 /* ── EXERCÍCIOS SCREEN ── */
@@ -207,14 +207,14 @@ textarea{resize:vertical;min-height:70px}
 .exl-params{font-size:10px;color:var(--muted);font-family:var(--fm);white-space:nowrap}
 
 /* ── PERFIL SCREEN ── */
-.profile-hero{height:140px;background:linear-gradient(160deg,rgba(200,241,53,.08),rgba(91,142,255,.05));display:flex;align-items:flex-end;padding:0 18px 18px;border-bottom:1px solid var(--b1);position:relative}
-.profile-avatar{width:60px;height:60px;border-radius:18px;background:rgba(200,241,53,.12);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:26px;margin-right:14px}
+.profile-hero{height:140px;background:linear-gradient(160deg,rgba(42,74,53,.08),rgba(92,107,58,.05));display:flex;align-items:flex-end;padding:0 18px 18px;border-bottom:1px solid var(--b1);position:relative}
+.profile-avatar{width:60px;height:60px;border-radius:18px;background:rgba(42,74,53,.12);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:26px;margin-right:14px}
 .profile-name{font-family:var(--ff);font-weight:800;font-size:18px}
 .profile-role{font-size:12px;color:var(--muted);margin-top:2px}
 
 .score-ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
 .score-ring svg{transform:rotate(-90deg)}
-.score-ring-val{position:absolute;font-family:var(--ff);font-weight:800;font-size:22px;color:var(--acc)}
+.score-ring-val{position:absolute;font-family:var(--ff);font-weight:800;font-size:22px;color:var(--title)}
 .score-ring-lbl{font-size:9px;color:var(--muted);font-family:var(--ff);text-align:center;margin-top:4px}
 
 .result-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--b1)}
@@ -231,7 +231,7 @@ textarea{resize:vertical;min-height:70px}
 .modal-handle{width:36px;height:4px;background:var(--b2);border-radius:4px;margin:0 auto 18px}
 
 /* ── TIMER ── */
-.timer-display{font-family:var(--fm);font-size:48px;font-weight:500;color:var(--acc);text-align:center;letter-spacing:.02em}
+.timer-display{font-family:var(--fm);font-size:48px;font-weight:500;color:var(--title);text-align:center;letter-spacing:.02em}
 .timer-label{text-align:center;font-size:12px;color:var(--muted);margin-top:4px}
 
 /* ── TOAST ── */
@@ -239,7 +239,7 @@ textarea{resize:vertical;min-height:70px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ── RESULTADO SCREEN ── */
-.result-hero{background:linear-gradient(160deg,rgba(200,241,53,.1),rgba(91,142,255,.06));border-bottom:1px solid var(--b1);padding:28px 18px 24px;text-align:center}
+.result-hero{background:linear-gradient(160deg,rgba(42,74,53,.1),rgba(92,107,58,.06));border-bottom:1px solid var(--b1);padding:28px 18px 24px;text-align:center}
 .result-icon{font-size:60px;margin-bottom:12px}
 .risk-bar-outer{height:10px;background:var(--b1);border-radius:10px;overflow:hidden;margin:8px 0}
 .risk-bar-fill{height:100%;border-radius:10px;transition:width .6s ease}
@@ -286,7 +286,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="input-group"><label class="input-label">E-mail</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
     <div class="input-group"><label class="input-label">Senha</label><input type="password" id="gate-login-senha" placeholder="Sua senha"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateLogin()">Entrar</button>
-    <p style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="gateForgotPassword()" style="color:var(--acc);font-size:12px">Esqueci minha senha</a></p>
+    <p style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="gateForgotPassword()" style="color:var(--title);font-size:12px">Esqueci minha senha</a></p>
     <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('licenca')">← Ainda não tenho conta</button>
   </div>
 
@@ -391,7 +391,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="lead-nome" placeholder="Ex: Jonadabe"/></div>
     <div class="input-group"><label class="input-label">Seu WhatsApp</label><input type="tel" id="lead-telefone" placeholder="(00) 00000-0000"/></div>
     <button class="btn btn-acc btn-full" style="margin-top:8px" onclick="submitLead()">Começar avaliação gratuita →</button>
-    <p style="font-size:11px;color:var(--sub);margin-top:16px;text-align:center;line-height:1.5">Já comprou? <a href="javascript:void(0)" onclick="showGate('licenca')" style="color:var(--acc)">Ativar meu acesso</a></p>
+    <p style="font-size:11px;color:var(--sub);margin-top:16px;text-align:center;line-height:1.5">Já comprou? <a href="javascript:void(0)" onclick="showGate('licenca')" style="color:var(--title)">Ativar meu acesso</a></p>
   </div>
 </div>
 
@@ -720,7 +720,7 @@ textarea{resize:vertical;min-height:70px}
   <div id="chat-messages" style="flex:1;min-height:0;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px"></div>
   <div style="flex-shrink:0;padding:10px 12px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--b1);display:flex;gap:8px;background:var(--s1)">
     <input type="text" id="chat-input" placeholder="Pergunte sobre seu treino..." onkeydown="if(event.key==='Enter')sendChatMsg()" style="flex:1;padding:12px 14px;border-radius:20px;border:1px solid var(--b1);background:var(--s2);color:var(--txt);font-size:14px"/>
-    <button onclick="sendChatMsg()" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:var(--acc);color:#000;border:none;font-size:18px;cursor:pointer">➤</button>
+    <button onclick="sendChatMsg()" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:var(--acc);color:var(--accTxt);border:none;font-size:18px;cursor:pointer">➤</button>
   </div>
 </div>
 
@@ -1017,7 +1017,7 @@ function addChatBubble(role, text) {
   const bubble = document.createElement('div');
   bubble.style.cssText = `max-width:82%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;white-space:pre-wrap;font-family:var(--fb);` +
     (role === 'user'
-      ? 'align-self:flex-end;background:var(--acc);color:#000;border-bottom-right-radius:4px'
+      ? 'align-self:flex-end;background:var(--acc);color:var(--accTxt);border-bottom-right-radius:4px'
       : 'align-self:flex-start;background:var(--s2);color:var(--txt);border-bottom-left-radius:4px');
   bubble.textContent = text;
   el.appendChild(bubble);
@@ -1348,7 +1348,7 @@ function renderPaywall() {
         <div style="font-size:13px;color:var(--txt)">✅ 1º ciclo de treino pronto pra liberar</div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:18px;border-color:var(--acc)">
+    <div class="card" style="margin-bottom:18px;border-color:var(--title)">
       <div class="card-title" style="margin-bottom:6px">Com o acesso completo você tem</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted)">
         <div>🔁 Ciclos mensais que se ajustam sozinhos ao seu progresso</div>
@@ -1556,9 +1556,9 @@ function summarizeLogs(cycleNum) {
 
 
 const FOCUS_DEFS = {
-  base: { key:'base', num:1, name:'Bloco Base', focus:'Ativação neural + mobilidade + isometria', color:'var(--acc2)', icon:'🌱',
+  base: { key:'base', num:1, name:'Bloco Base', focus:'Ativação neural + mobilidade + isometria', color:'var(--title)', icon:'🌱',
     desc:'Construir base de força sem fadiga excessiva. Exercícios com peso corporal e isometria.', intensity:'Leve–Moderada', load:'60–70% RM' },
-  forca: { key:'forca', num:2, name:'Bloco Força', focus:'Carga alta + excêntrica + pliometria base', color:'var(--acc)', icon:'💪',
+  forca: { key:'forca', num:2, name:'Bloco Força', focus:'Carga alta + excêntrica + pliometria base', color:'var(--accTxt)', icon:'💪',
     desc:'Força com cargas altas, aplicada com técnica e progressão, pode melhorar a economia e o desempenho de corredores; a dose depende do nível e da recuperação.', intensity:'Alta', load:'aprox. 80–85% RM quando apropriado' },
   potencia: { key:'potencia', num:3, name:'Bloco Potência', focus:'Velocidade de execução + pliometria avançada', color:'var(--warn)', icon:'⚡',
     desc:'Potência com baixa dose de pliometria e força complementar, somente após construir técnica e tolerância.', intensity:'Alta', load:'carga individualizada + plio progressiva' },
@@ -1736,7 +1736,7 @@ function renderPlan() {
   const vp = getViewedPlan();
   const focus = vp.focus;
   hero.innerHTML = `
-    <div style="font-size:10px;font-weight:700;color:var(--acc);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Ciclo ${vp.cycleNum} · ${p.nivel || 'Iniciante'}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--title);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Ciclo ${vp.cycleNum} · ${p.nivel || 'Iniciante'}</div>
     <div style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:6px">${focus.icon} ${focus.name}</div>
     <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">${focus.desc}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1814,7 +1814,7 @@ function openWeek(cycleNum, weekNum) {
     </div>`;
 
   html += `<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;margin-bottom:14px">
-    ${w.sessions.map((s,i) => `<button style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--b1);background:${i===0?'rgba(200,241,53,.1)':'var(--s2)'};color:${i===0?'var(--acc)':'var(--muted)'};font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap" onclick="showModalDay(${cycleNum},${weekNum},${i},this)">${s.emoji} ${s.day}</button>`).join('')}
+    ${w.sessions.map((s,i) => `<button style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--b1);background:${i===0?'rgba(42,74,53,.1)':'var(--s2)'};color:${i===0?'var(--acc)':'var(--muted)'};font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap" onclick="showModalDay(${cycleNum},${weekNum},${i},this)">${s.emoji} ${s.day}</button>`).join('')}
   </div>`;
 
   html += `<div id="modal-day-content">${renderDayContent(cycleNum, weekNum, 0, w.sessions[0], isCurrentCycle)}</div>`;
@@ -1832,7 +1832,7 @@ function openWeek(cycleNum, weekNum) {
 
 function showModalDay(cycleNum, weekNum, idx, btn) {
   btn.parentElement.querySelectorAll('button').forEach((b,i) => {
-    b.style.background = i === idx ? 'rgba(200,241,53,.1)' : 'var(--s2)';
+    b.style.background = i === idx ? 'rgba(42,74,53,.1)' : 'var(--s2)';
     b.style.color = i === idx ? 'var(--acc)' : 'var(--muted)';
   });
   const vp = cycleNum === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === cycleNum) || {}).plan;
@@ -1856,9 +1856,9 @@ function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
       return `
       <div style="padding:9px 0;border-bottom:1px solid var(--b1)">
         <div style="display:flex;gap:10px;align-items:flex-start">
-          <div style="width:22px;height:22px;border-radius:6px;background:rgba(200,241,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--acc);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
+          <div style="width:22px;height:22px;border-radius:6px;background:rgba(42,74,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--title);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
           <div style="font-size:13px;color:${loggable?'var(--txt)':'var(--muted)'};line-height:1.5;flex:1;${ex.startsWith('Encaixe')?'font-style:italic':''}">${ex}</div>
-          ${match ? `<button onclick="openExModal('${match.id}')" style="flex-shrink:0;width:26px;height:26px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--acc);font-size:11px;cursor:pointer">▶</button>` : ''}
+          ${match ? `<button onclick="openExModal('${match.id}')" style="flex-shrink:0;width:26px;height:26px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--title);font-size:11px;cursor:pointer">▶</button>` : ''}
         </div>
         ${loggable ? `
         <div style="display:flex;gap:6px;margin-top:6px;margin-left:32px;flex-wrap:wrap;align-items:center">
@@ -1910,32 +1910,32 @@ function markWeekDone(weekNum) {
 // ══════════════════════════════════════════════════════
 const EXERCISES = [
   // TENDÕES
-  {id:'t1',name:'Nordic Hamstring Curl',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'2-3×/sem · 2×5-8 exc. 3-5s',level:'Intermédio',equipment:'Solo',video:'',
+  {id:'t1',name:'Nordic Hamstring Curl',cat:'tendão',icon:'🦵',bg:'rgba(92,107,58,.12)',params:'2-3×/sem · 2×5-8 exc. 3-5s',level:'Intermédio',equipment:'Solo',video:'',
    science:'Fortalece os isquiotibiais em ação excêntrica; use progressão assistida e não trate o exercício como obrigatório para todos os corredores.',
    cues:['Foco na descida lenta — 4-6 segundos','Use elástico no início (assisted NHE)','Não faça perto de provas — DOMS intenso','Progrida: assistido → bodyweight → loaded']},
-  {id:'t2',name:'Alfredson Heel Drop (Aquiles)',cat:'tendão',icon:'🦶',bg:'rgba(91,142,255,.12)',params:'2-3×10-15 · progressão individual',level:'Iniciante',equipment:'Degrau',video:'',
+  {id:'t2',name:'Alfredson Heel Drop (Aquiles)',cat:'tendão',icon:'🦶',bg:'rgba(92,107,58,.12)',params:'2-3×10-15 · progressão individual',level:'Iniciante',equipment:'Degrau',video:'',
    science:'Fortalecimento de panturrilha pode ser usado de forma progressiva; dor persistente ou suspeita de tendinopatia exige avaliação profissional.',
    cues:['Perna reta e perna dobrada podem ser treinadas com controle','Use amplitude e carga toleráveis','Calcanhar desce somente até onde houver controle e conforto','Dor persistente ou piora exige interromper e buscar avaliação']},
-  {id:'t3',name:'Spanish Squat Isométrico',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'5×45-90s · descanso 2min',level:'Iniciante',equipment:'Elástico/parede',video:'',
+  {id:'t3',name:'Spanish Squat Isométrico',cat:'tendão',icon:'🦵',bg:'rgba(92,107,58,.12)',params:'5×45-90s · descanso 2min',level:'Iniciante',equipment:'Elástico/parede',video:'',
    science:'Isometria pode ser uma opção de fortalecimento em determinados contextos; não é tratamento universal nem diagnóstico de tendinopatia.',
    cues:['Ângulo de 60-70° de flexão de joelho','Joelhos avançam via elástico','Dor > 5/10 = reduzir ângulo de flexão','Versão avançada: single-leg wall sit']},
-  {id:'t4',name:'Isometria de Patela (Wall Sit)',cat:'tendão',icon:'🧱',bg:'rgba(91,142,255,.12)',params:'4×30s · descanso 45s',level:'Iniciante',equipment:'Parede',video:'',
+  {id:'t4',name:'Isometria de Patela (Wall Sit)',cat:'tendão',icon:'🧱',bg:'rgba(92,107,58,.12)',params:'4×30s · descanso 45s',level:'Iniciante',equipment:'Parede',video:'',
    science:'Isometria permite treinar força com amplitude limitada; selecione a posição conforme tolerância e objetivo.',
    cues:['Costas planas na parede durante todo o exercício','Joelhos a 70° — nunca ultrapasse 90°','Progressão: bilateral → unilateral','Quadríceps em máxima tensão']},
   // MÚSCULOS
-  {id:'m1',name:'Bulgarian Split Squat',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×6-10 · carga progressiva',level:'Intermediário',equipment:'Halteres',video:'',
+  {id:'m1',name:'Bulgarian Split Squat',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×6-10 · carga progressiva',level:'Intermediário',equipment:'Halteres',video:'',
    science:'Exercício unilateral que pode desenvolver força e controle no membro inferior; escolha conforme nível e tolerância.',
    cues:['Torso 30-45° inclinado para frente — foca no glúteo','Pé traseiro no banco — não force amplitude','Carga progressiva semana a semana','Nunca deixe joelho cair para dentro']},
-  {id:'m2',name:'Back Squat / Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'4×4-6 · 80-90% RM',level:'Intermediário',equipment:'Barra',video:'',
+  {id:'m2',name:'Back Squat / Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'4×4-6 · 80-90% RM',level:'Intermediário',equipment:'Barra',video:'',
    science:'A força com carga alta foi associada a melhora de economia de corrida em estudos com corredores treinados; a carga deve ser individualizada e não garante um percentual fixo de melhora.',
    cues:['Back Squat: barra alta (high bar) simula postura de corrida','Trap Bar: menos compressão lombar — ideal para iniciantes','Empurre o chão com os pés, não "puxe" a barra','Descanso longo: 2-3min entre séries para qualidade máxima']},
-  {id:'m3',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(200,241,53,.1)',params:'3-4×8-12 · pico iso 1-2s',level:'Iniciante',equipment:'Banco',video:'',
+  {id:'m3',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(42,74,53,.1)',params:'3-4×8-12 · pico iso 1-2s',level:'Iniciante',equipment:'Banco',video:'',
    science:'Exercício de extensão de quadril que pode compor o fortalecimento do corredor; não é superior para todas as pessoas.',
    cues:['Ombros no banco — não no chão','Quadril sobe até linha ombro-joelho','SQUEEZE glúteo no topo — pause 1-2 segundos','Não hiperestenda a lombar — movimento vem do quadril']},
-  {id:'m4',name:'Romanian Deadlift (RDL)',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×8-10 · 70-80% RM',level:'Intermediário',equipment:'Barra/halteres',video:'',
+  {id:'m4',name:'Romanian Deadlift (RDL)',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×8-10 · 70-80% RM',level:'Intermediário',equipment:'Barra/halteres',video:'',
    science:'Fortalece cadeia posterior completa — isquiotibiais, glúteo e eretor. Padrão de extensão de quadril da corrida.',
    cues:['Joelhos levemente dobrados — movimento vem do quadril','Barra desliza perto da perna (canela)','Para quando sentir tensão nos isquiotibiais — não force','Coluna NEUTRA durante todo o movimento']},
-  {id:'m5',name:'Eccentric Leg Press',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'1×8-10 · 5-6s excêntrico',level:'Intermediário',equipment:'Leg Press',video:'',
+  {id:'m5',name:'Eccentric Leg Press',cat:'músculo',icon:'🦵',bg:'rgba(42,74,53,.1)',params:'1×8-10 · 5-6s excêntrico',level:'Intermediário',equipment:'Leg Press',video:'',
    science:'Variação com ênfase excêntrica; a amplitude, carga e velocidade devem ser ajustadas à técnica e à tolerância.',
    cues:['Sobe bilateral — desce unilateral em 5-6 segundos','Carga 60-70% do concêntrico','DOMS intenso nas primeiras semanas — normal','Cadência: 5s descida · 1s pausa · 2s subida']},
   // CORE
@@ -1955,26 +1955,26 @@ const EXERCISES = [
    science:'Anti-extensão lombar — ensina manter lombar estável enquanto move as extremidades (padrão da passada).',
    cues:['Lombar COLADA ao chão durante todo o movimento','Se descolar, reduza amplitude do movimento','Respire — não prenda o ar','Progressão: adicionar elástico ou carga']},
   // CINTURA ESCAPULAR E POSTURA
-  {id:'o1',name:'Rotação Externa com Elástico',cat:'ombro',icon:'🏊',bg:'rgba(91,142,255,.1)',params:'2-3×15/lado',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'o1',name:'Rotação Externa com Elástico',cat:'ombro',icon:'🏊',bg:'rgba(92,107,58,.1)',params:'2-3×15/lado',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Fortalece rotadores externos e pode complementar o controle da cintura escapular; não promete prevenir lesões.',
    cues:['Cotovelo colado ao corpo, 90° de flexão','Movimento lento e controlado, sem impulso','Não deixe o ombro subir em direção à orelha','Progrida a resistência do elástico gradualmente']},
-  {id:'o2',name:'Face Pull com Elástico',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×15',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'o2',name:'Face Pull com Elástico',cat:'ombro',icon:'🎯',bg:'rgba(92,107,58,.1)',params:'3×15',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Treina retração e controle escapular; use carga leve e movimento sem dor.',
    cues:['Puxe até a altura do rosto, cotovelos altos','Aperte as escápulas no final do movimento','Controle a volta — não solte de forma brusca']},
-  {id:'o3',name:'Serrátil Anterior (Wall Slide)',cat:'ombro',icon:'🧱',bg:'rgba(91,142,255,.1)',params:'3×12',level:'Iniciante',equipment:'Parede',video:'',
+  {id:'o3',name:'Serrátil Anterior (Wall Slide)',cat:'ombro',icon:'🧱',bg:'rgba(92,107,58,.1)',params:'3×12',level:'Iniciante',equipment:'Parede',video:'',
    science:'Treina controle da escápula e do ombro; pode complementar a postura geral do corredor.',
    cues:['Antebraços e mãos sempre em contato com a parede','Empurre a parede no topo do movimento (protração)','Evite compensar elevando os ombros']},
   // PLIOMETRIA
-  {id:'p1',name:'Pogo Jumps',cat:'pliometria',icon:'🦘',bg:'rgba(200,241,53,.08)',params:'3×15-20 · mín. contato solo',level:'Iniciante',equipment:'Solo',video:'',
+  {id:'p1',name:'Pogo Jumps',cat:'pliometria',icon:'🦘',bg:'rgba(42,74,53,.08)',params:'3×15-20 · mín. contato solo',level:'Iniciante',equipment:'Solo',video:'',
    science:'Exercício pliométrico de baixa complexidade para introduzir contatos rápidos; não é obrigatório e deve progredir gradualmente.',
    cues:['Contato curto e silencioso, sem buscar velocidade máxima','Mantenha alinhamento e aterrissagem controlada','Comece com poucas séries e aumente somente se recuperar bem','Progrida para unilateral apenas quando houver controle e ausência de dor']},
-  {id:'p2',name:'Box Jumps',cat:'pliometria',icon:'📦',bg:'rgba(200,241,53,.08)',params:'3×5 · altura máx',level:'Intermediário',equipment:'Box/step',video:'',
+  {id:'p2',name:'Box Jumps',cat:'pliometria',icon:'📦',bg:'rgba(42,74,53,.08)',params:'3×5 · altura máx',level:'Intermediário',equipment:'Box/step',video:'',
    science:'Potência horizontal e concêntrica — melhora impulsão da passada.',
    cues:['Foco na ALTURA máxima, não na caixa mais alta','Aterrissagem silenciosa — joelhos flexionados absorvem','NUNCA trave os joelhos na aterrissagem','Conta como 1 salto por repetição — controle o volume']},
-  {id:'p3',name:'Broad Jumps',cat:'pliometria',icon:'⬅️',bg:'rgba(200,241,53,.08)',params:'3×5 · distância máx',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'p3',name:'Broad Jumps',cat:'pliometria',icon:'⬅️',bg:'rgba(42,74,53,.08)',params:'3×5 · distância máx',level:'Intermediário',equipment:'Solo',video:'',
    science:'Potência horizontal — o mesmo padrão de força usado em cada passada na corrida.',
    cues:['Empurra o chão para FRENTE — não para cima','Aterrissa com absorção de impacto (joelhos dobrados)','Mede a distância semana a semana — métrica de progresso','Progressão: Broad Jumps com mochila']},
-  {id:'p4',name:'Drop Jumps',cat:'pliometria',icon:'⬇️',bg:'rgba(200,241,53,.08)',params:'3×5 · tempo contato <0.2s',level:'Avançado',equipment:'Box 30-50cm',video:'',
+  {id:'p4',name:'Drop Jumps',cat:'pliometria',icon:'⬇️',bg:'rgba(42,74,53,.08)',params:'3×5 · tempo contato <0.2s',level:'Avançado',equipment:'Box 30-50cm',video:'',
    science:'Exercício avançado de reatividade; só deve ser usado com base de força, técnica e tolerância aos impactos.',
    cues:['Avançado: só prescrever com base de força e plio estabelecida','Cai da caixa e pula IMEDIATAMENTE — tempo contato mínimo','Nunca aterrissar com joelhos em valgo','Risco de lesão se mal executado']},
   // MOBILIDADE
@@ -1994,39 +1994,39 @@ const EXERCISES = [
    science:'Mobilidade dinâmica da cadeia posterior; a escolha depende da sensação, objetivo e resposta individual.',
    cues:['Perna reta — eleva até sentir tensão suave (5-6/10)','Retorna antes de forçar — é dinâmico, não estático','Não deve superar 5-6/10 de tensão','Progressão: adicionar elástico ou peso no tornozelo']},
   // KIT ANTI-LESÃO
-  {id:'kit1',name:'Tibialis Raises',cat:'kit',icon:'🦴',bg:'rgba(91,142,255,.08)',params:'3×15 · cada lado',level:'Iniciante',equipment:'Parede',video:'',
+  {id:'kit1',name:'Tibialis Raises',cat:'kit',icon:'🦴',bg:'rgba(92,107,58,.08)',params:'3×15 · cada lado',level:'Iniciante',equipment:'Parede',video:'',
    science:'Fortalece a dorsiflexão do tornozelo; pode ser útil quando compatível com o objetivo e a tolerância do corredor.',
    cues:['Apoie a perna na parede ou banco','Puxa o pé para cima — só o movimento de dorsiflexão','Pode causar câimbra na canela nas primeiras semanas — hidrate bem','Faça antes de correr como ativação']},
-  {id:'kit2',name:'Peroneal Raises (Eversão)',cat:'kit',icon:'🦶',bg:'rgba(91,142,255,.08)',params:'3×15 · com elástico',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'kit2',name:'Peroneal Raises (Eversão)',cat:'kit',icon:'🦶',bg:'rgba(92,107,58,.08)',params:'3×15 · com elástico',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Fortalece eversores do tornozelo; use progressão de carga e controle, sem prometer prevenir entorses.',
    cues:['Elástico no dorso do pé','Pé em inversão forçada (ponta para dentro)','Eleva para eversão — pé vai para fora','Muito seguro — raramente causa problemas']},
-  {id:'kit3',name:'Calf Raise Excêntrico (degrau)',cat:'kit',icon:'💪',bg:'rgba(91,142,255,.08)',params:'3×12/lado · 4s descida',level:'Iniciante',equipment:'Degrau',video:'',
+  {id:'kit3',name:'Calf Raise Excêntrico (degrau)',cat:'kit',icon:'💪',bg:'rgba(92,107,58,.08)',params:'3×12/lado · 4s descida',level:'Iniciante',equipment:'Degrau',video:'',
    science:'Fortalece panturrilha com ênfase excêntrica; pode compor o programa do corredor, sem prometer prevenir tendinopatia.',
    cues:['Sobe bilateral — desce unilateral em 4 segundos','Calcanhar desce abaixo do nível do degrau (amplitude completa)','DOMS intenso nas primeiras semanas — normal e esperado','Foco no lado mais fraco para corrigir assimetria']},
-  {id:'kit4',name:'Clamshells com Banda',cat:'kit',icon:'🦀',bg:'rgba(91,142,255,.08)',params:'3×15/lado · banda na coxa',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'kit4',name:'Clamshells com Banda',cat:'kit',icon:'🦀',bg:'rgba(92,107,58,.08)',params:'3×15/lado · banda na coxa',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Treina abdutores do quadril e controle da pelve; use como complemento individualizado, sem prometer prevenir valgo ou lesão.',
    cues:['Banda ACIMA dos joelhos — na coxa','Abre o joelho de cima — quadril NÃO rola para trás','Quadril 100% estável durante o exercício','Progressão: standing hip abduction com banda em pé']},
-  {id:'kit5',name:'Single Leg RDL',cat:'kit',icon:'⚖️',bg:'rgba(91,142,255,.08)',params:'3×8-10/perna',level:'Intermediário',equipment:'Solo/haltere',video:'',
+  {id:'kit5',name:'Single Leg RDL',cat:'kit',icon:'⚖️',bg:'rgba(92,107,58,.08)',params:'3×8-10/perna',level:'Intermediário',equipment:'Solo/haltere',video:'',
    science:'Combina força de glúteo com equilíbrio dinâmico e controle de tornozelo. Simula fase de apoio da corrida.',
    cues:['Coluna neutra — não arredonda','Quadril da perna de apoio paralelo ao chão — não inclina','Olha para baixo no início para não cair','Progressão: descalço (mais propriocepção) → com halteres']},
   // TENDÃO (mais)
-  {id:'t5',name:'Copenhagen Plank (Adutor)',cat:'tendão',icon:'🔗',bg:'rgba(91,142,255,.12)',params:'3×20-30s/lado',level:'Intermediário',equipment:'Banco',video:'',
+  {id:'t5',name:'Copenhagen Plank (Adutor)',cat:'tendão',icon:'🔗',bg:'rgba(92,107,58,.12)',params:'3×20-30s/lado',level:'Intermediário',equipment:'Banco',video:'',
    science:'Fortalece adutores e controle do quadril; inclua apenas quando for compatível com o nível, objetivo e tolerância do corredor.',
    cues:['Perna de cima apoiada no banco, perna de baixo livre','Quadril alinhado, sem rotação de tronco','Versão fácil: joelho de baixo apoiado no chão','Progressão: perna de baixo estendida e sem apoio']},
   // MÚSCULO (mais)
-  {id:'m6',name:'Leg Press Unilateral',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'3×8-10/lado',level:'Intermediário',equipment:'Leg Press',video:'',
+  {id:'m6',name:'Leg Press Unilateral',cat:'músculo',icon:'🦵',bg:'rgba(42,74,53,.1)',params:'3×8-10/lado',level:'Intermediário',equipment:'Leg Press',video:'',
    science:'Exercício unilateral que pode desenvolver força do membro inferior e ser adaptado ao fortalecimento do corredor.',
    cues:['Pé todo apoiado na plataforma — não só a ponta','Amplitude completa, sem travar o joelho no topo','Controle a descida — não solte o peso','Foco em empurrar com o calcanhar']},
-  {id:'m7',name:'Remada Curvada / Pull-up',cat:'músculo',icon:'💪',bg:'rgba(200,241,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/anilha',video:'',
+  {id:'m7',name:'Remada Curvada / Pull-up',cat:'músculo',icon:'💪',bg:'rgba(42,74,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/anilha',video:'',
    science:'Equilibra a musculatura de tração (costas) com o volume de empurrar do treino de perna — postura e saúde de ombro no longo prazo.',
    cues:['Escápulas retraem antes do braço puxar','Cotovelos próximos ao corpo na remada','Pull-up: amplitude completa, sem balançar o corpo','Progressão: remada com anilha → barra → pull-up assistido → livre']},
-  {id:'m8',name:'Desenvolvimento de Ombro (Shoulder Press)',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3×10',level:'Intermediário',equipment:'Halteres',video:'',
+  {id:'m8',name:'Desenvolvimento de Ombro (Shoulder Press)',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3×10',level:'Intermediário',equipment:'Halteres',video:'',
    science:'Força de ombro e estabilidade de tronco em pé — complemento para postura e controle corporal do corredor.',
    cues:['Core ativado — sem hiperextensão lombar','Cotovelos levemente à frente do corpo, não travados atrás','Desce até 90° de flexão de cotovelo','Não trave os cotovelos com força no topo']},
-  {id:'m9',name:'Walking Lunge',cat:'músculo',icon:'🚶',bg:'rgba(200,241,53,.1)',params:'3×10/perna',level:'Intermediário',equipment:'Halteres',video:'',
+  {id:'m9',name:'Walking Lunge',cat:'músculo',icon:'🚶',bg:'rgba(42,74,53,.1)',params:'3×10/perna',level:'Intermediário',equipment:'Halteres',video:'',
    science:'Força unilateral dinâmica com componente de equilíbrio e propriocepção — mais próximo do padrão real de deslocamento que o agachamento bilateral.',
    cues:['Passada longa o suficiente para 90° nos dois joelhos','Torso ereto, sem inclinar para frente','Joelho de trás quase toca o chão, sem bater','Empurra com o pé da frente para o próximo passo']},
-  {id:'m10',name:'Good Morning',cat:'músculo',icon:'🙇',bg:'rgba(200,241,53,.1)',params:'3×8-10 · carga leve-moderada',level:'Avançado',equipment:'Barra',video:'',
+  {id:'m10',name:'Good Morning',cat:'músculo',icon:'🙇',bg:'rgba(42,74,53,.1)',params:'3×8-10 · carga leve-moderada',level:'Avançado',equipment:'Barra',video:'',
    science:'Fortalece a cadeia posterior (eretores + isquiotibiais) com maior exigência de estabilidade lombar que o RDL — ótima progressão avançada.',
    cues:['Comece com carga muito leve — exercício técnico','Joelhos levemente flexionados, fixos durante o movimento','Quadril "abre" para trás, tronco quase paralelo ao chão','Pare se sentir qualquer desconforto lombar']},
   // CORE (mais)
@@ -2037,17 +2037,17 @@ const EXERCISES = [
    science:'Exercício de controle de tronco; use como complemento quando houver objetivo e tolerância para a posição.',
    cues:['Lombar colada ao chão o tempo todo','Pernas e ombros elevados do chão em leve "banana"','Se a lombar descolar, eleve menos as pernas','Respire normalmente — não prenda o ar']},
   // CINTURA ESCAPULAR — variações
-  {id:'o4',name:'Y-T-W em Prono',cat:'ombro',icon:'🦋',bg:'rgba(91,142,255,.1)',params:'3×10 cada posição',level:'Iniciante',equipment:'Halteres leves/solo',video:'',
+  {id:'o4',name:'Y-T-W em Prono',cat:'ombro',icon:'🦋',bg:'rgba(92,107,58,.1)',params:'3×10 cada posição',level:'Iniciante',equipment:'Halteres leves/solo',video:'',
    science:'Ativa trapézio inferior e estabilizadores escapulares; use cargas leves e movimento sem dor.',
    cues:['Deitado de bruços, testa apoiada','Movimento vem da escápula, não só do braço','Cargas bem leves — é um exercício de controle, não de força bruta','Y, depois T, depois W — sem pausa entre as letras']},
-  {id:'o5',name:'Scapular Pull-up',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×8-12',level:'Intermediário',equipment:'Barra',video:'',
+  {id:'o5',name:'Scapular Pull-up',cat:'ombro',icon:'🎯',bg:'rgba(92,107,58,.1)',params:'3×8-12',level:'Intermediário',equipment:'Barra',video:'',
    science:'Isola o controle escapular antes do movimento de cotovelo; use como complemento de postura e controle do ombro.',
    cues:['Pendurado na barra, braços retos','Só as escápulas se movem — cotovelos ficam travados','Sobe e desce só com a "encolhida" dos ombros','Se não tem força ainda, faça com os pés apoiados no chão']},
   // PLIOMETRIA (mais)
-  {id:'p5',name:'Single Leg Pogo Hops',cat:'pliometria',icon:'🦘',bg:'rgba(200,241,53,.08)',params:'3×10/lado · mín. contato',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'p5',name:'Single Leg Pogo Hops',cat:'pliometria',icon:'🦘',bg:'rgba(42,74,53,.08)',params:'3×10/lado · mín. contato',level:'Intermediário',equipment:'Solo',video:'',
    science:'Progressão natural do Pogo Jump bilateral — trabalha rigidez de tornozelo unilateralmente, o padrão real da corrida.',
    cues:['Só evolua pra cá depois de dominar o Pogo Jump bilateral','Tornozelo rígido, contato mínimo com o solo','Comece com volume bem baixo (10-15 por perna)','Pare se sentir instabilidade no tornozelo']},
-  {id:'p6',name:'Lateral Bounds (Saltos Laterais)',cat:'pliometria',icon:'↔️',bg:'rgba(200,241,53,.08)',params:'3×6/lado',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'p6',name:'Lateral Bounds (Saltos Laterais)',cat:'pliometria',icon:'↔️',bg:'rgba(42,74,53,.08)',params:'3×6/lado',level:'Intermediário',equipment:'Solo',video:'',
    science:'Potência no plano frontal e controle de aterrissagem; pode complementar a estabilidade do corredor em terrenos variados.',
    cues:['Empurra para o lado, aterrissa absorvendo com o joelho flexionado','Segura a aterrissagem 1 segundo antes do próximo salto','Distância progride semana a semana','Pare se o joelho de aterrissagem cair para dentro (valgo)']},
   // MOBILIDADE (mais)
@@ -2058,24 +2058,24 @@ const EXERCISES = [
    science:'Mobilidade de rotação de tronco; use para ampliar controle corporal quando for confortável para o corredor.',
    cues:['Deitado de lado, joelhos flexionados a 90°','Braço de cima "abre o livro" até tocar o chão do outro lado','Olhos acompanham a mão durante o giro','Quadril fica parado — só o tronco gira']},
   // KIT ANTI-LESÃO (mais)
-  {id:'kit6',name:'Abdução de Quadril em Pé (Banda)',cat:'kit',icon:'🦵',bg:'rgba(91,142,255,.08)',params:'3×15/lado',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'kit6',name:'Abdução de Quadril em Pé (Banda)',cat:'kit',icon:'🦵',bg:'rgba(92,107,58,.08)',params:'3×15/lado',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Progressão do Clamshell — treina abdutores do quadril em apoio, com demanda de controle compatível com a corrida.',
    cues:['Banda nos tornozelos, tronco ereto','Eleva a perna reto para o lado, sem inclinar o tronco','Controle a volta — não deixe a banda "puxar" a perna de volta','Pé de apoio bem plantado no chão']},
-  {id:'kit7',name:'Wall Sit Isométrico',cat:'kit',icon:'🪑',bg:'rgba(91,142,255,.08)',params:'3×30-45s',level:'Iniciante',equipment:'Parede',video:'',
+  {id:'kit7',name:'Wall Sit Isométrico',cat:'kit',icon:'🪑',bg:'rgba(92,107,58,.08)',params:'3×30-45s',level:'Iniciante',equipment:'Parede',video:'',
    science:'Isometria de quadríceps com amplitude ajustável; use para desenvolver tolerância e controle quando apropriado.',
    cues:['Joelhos a 90°, costas totalmente apoiadas na parede','Peso nos calcanhares, não na ponta do pé','Se tremer muito, é normal — sinal de fadiga isométrica','Mesmo protocolo do teste físico — dá pra comparar evolução']},
   // MÚSCULO (força máxima — Balsalobre-Fernández)
-  {id:'m11',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(200,241,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/banco',video:'',
+  {id:'m11',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(42,74,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/banco',video:'',
    science:'Exercício de extensão de quadril que pode compor o fortalecimento do corredor; a escolha depende do objetivo e da tolerância individual.',
    cues:['Escápulas apoiadas no banco, queixo levemente recolhido','Sobe até quadril e tronco alinhados — sem hiperestender a lombar','Contrai o glúteo com força no topo, 1-2s','Desce controlado, sem deixar o peso "cair"']},
-  {id:'m12',name:'Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×4-6',level:'Avançado',equipment:'Trap Bar',video:'',
+  {id:'m12',name:'Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×4-6',level:'Avançado',equipment:'Trap Bar',video:'',
    science:'Variação de levantamento com possibilidade de ajustar amplitude e carga; não é universalmente mais segura e deve ser ensinada com técnica.',
    cues:['Peito para cima, costas retas o tempo todo','Empurra o chão com os pés — não "puxa" com as costas','Barra sobe rente ao corpo','Trava o quadril no topo, sem hiperestender']},
   // PLIOMETRIA (Spurrs / Blagrove)
-  {id:'p7',name:'Depth Jump (Salto em Profundidade)',cat:'pliometria',icon:'📦',bg:'rgba(200,241,53,.08)',params:'3×5 · caixa de 20-30cm',level:'Avançado',equipment:'Caixa',video:'',
+  {id:'p7',name:'Depth Jump (Salto em Profundidade)',cat:'pliometria',icon:'📦',bg:'rgba(42,74,53,.08)',params:'3×5 · caixa de 20-30cm',level:'Avançado',equipment:'Caixa',video:'',
    science:'Maximiza o Ciclo Alongamento-Encurtamento sob carga de impacto controlada (Spurrs, 2003) — só entra depois de meses de base de pliometria mais simples.',
    cues:['Cai da caixa (não pula) e absorve, depois explode pra cima imediatamente','Tempo de contato com o solo deve ser mínimo — essa é a intenção do exercício','Não é indicado pra iniciantes nem em fase de dor/lesão ativa','Pare se a aterrissagem ficar barulhenta ou instável']},
-  {id:'p8',name:'Skipping Alto (A-Skip)',cat:'pliometria',icon:'🏃',bg:'rgba(200,241,53,.08)',params:'3×20m',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'p8',name:'Skipping Alto (A-Skip)',cat:'pliometria',icon:'🏃',bg:'rgba(42,74,53,.08)',params:'3×20m',level:'Intermediário',equipment:'Solo',video:'',
    science:'Drill de coordenação e controle do padrão de corrida; use como técnica complementar, sem transformar o app em uma planilha de corrida.',
    cues:['Joelho sobe até a altura do quadril','Contato do pé embaixo do centro de massa, não à frente','Braços acompanham o ritmo das pernas','Progrida a velocidade só depois de dominar a técnica devagar']},
   // CORE / TRONCO — controle de rotação
@@ -2091,27 +2091,27 @@ const EXERCISES = [
    science:'Mobilidade de tornozelo pode ser trabalhada junto com força de panturrilha; um resultado isolado não diagnostica causa de dor nem prevê lesão.',
    cues:['Perna de trás esticada, calcanhar sempre no chão','Empurra o quadril para frente até sentir alongar a panturrilha','Depois dobra o joelho de trás pra pegar a parte mais profunda (sóleo)','Sem "quicar" — alongamento estático, mantém a posição']},
   // CINTURA ESCAPULAR E POSTURA
-  {id:'o6',name:'Tríceps Testa com Halteres',cat:'ombro',icon:'💪',bg:'rgba(91,142,255,.1)',params:'3×10-12',level:'Intermediário',equipment:'Halteres',video:'',
+  {id:'o6',name:'Tríceps Testa com Halteres',cat:'ombro',icon:'💪',bg:'rgba(92,107,58,.1)',params:'3×10-12',level:'Intermediário',equipment:'Halteres',video:'',
    science:'Exercício de força de tríceps que pode complementar um programa geral; não é específico nem obrigatório para corredores.',
    cues:['Cotovelos apontam para o teto o tempo todo, fixos','Desce só o antebraço, não o braço inteiro','Controle a descida — não deixa o peso "cair" perto da testa','Cargas leves — é um exercício de isolamento, não de força máxima']},
   // TENDÃO (mais — corrida)
-  {id:'t6',name:'Isometria de Tibial Anterior',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'3×30-45s',level:'Iniciante',equipment:'Elástico/parede',video:'',
+  {id:'t6',name:'Isometria de Tibial Anterior',cat:'tendão',icon:'🦵',bg:'rgba(92,107,58,.12)',params:'3×30-45s',level:'Iniciante',equipment:'Elástico/parede',video:'',
    science:'Prevenção de canelite (dor na tíbia) — fortalece o músculo que desacelera o pé no toque do solo, sobrecarregado em aumento de volume de corrida.',
    cues:['Puxa a ponta do pé em sua direção contra a resistência','Segura a posição, sem deixar o pé "vencer"','Pode ser feito sentado com elástico ou em pé encostado na parede','Dor na canela que piora durante a corrida merece avaliação — isso é prevenção, não tratamento']},
-  {id:'t7',name:'Isometria de Isquiotibiais em Extensão',cat:'tendão',icon:'🦿',bg:'rgba(91,142,255,.12)',params:'3×30-45s',level:'Intermediário',equipment:'Banco/solo',video:'',
+  {id:'t7',name:'Isometria de Isquiotibiais em Extensão',cat:'tendão',icon:'🦿',bg:'rgba(92,107,58,.12)',params:'3×30-45s',level:'Intermediário',equipment:'Banco/solo',video:'',
    science:'Isometria em amplitude longa tem efeito analgésico em tendinopatias (mesmo princípio do Spanish Squat para joelho) — usado em tendinopatia proximal de isquiotibiais.',
    cues:['Perna esticada, leve inclinação de tronco à frente até sentir tensão atrás da coxa','Segura a posição sem "tremer" excessivamente','Reduza a amplitude se sentir dor aguda, não apenas tensão','Bom exercício pra fazer antes do treino em fase de dor']},
   // MÚSCULO (mais — corrida)
-  {id:'m13',name:'Front Squat',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3-4×6-8',level:'Avançado',equipment:'Barra',video:'',
+  {id:'m13',name:'Front Squat',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×6-8',level:'Avançado',equipment:'Barra',video:'',
    science:'Maior ativação de quadríceps e menor carga compressiva lombar que o back squat — boa opção pra atletas com histórico de dor lombar que ainda precisam de força máxima de perna.',
    cues:['Cotovelos altos, barra apoiada nos ombros (não nas mãos)','Tronco o mais vertical possível durante a descida','Amplitude completa sem perder a barra da posição','Exige mobilidade de punho/tornozelo — regride pra goblet squat se faltar']},
-  {id:'m14',name:'Step-Down Excêntrico',cat:'músculo',icon:'🪜',bg:'rgba(200,241,53,.1)',params:'3×8-10/lado',level:'Intermediário',equipment:'Step/degrau',video:'',
+  {id:'m14',name:'Step-Down Excêntrico',cat:'músculo',icon:'🪜',bg:'rgba(42,74,53,.1)',params:'3×8-10/lado',level:'Intermediário',equipment:'Step/degrau',video:'',
    science:'Controle excêntrico de quadríceps em cadeia fechada — um dos exercícios com melhor evidência para dor patelofemoral em corredores (joelho do corredor).',
    cues:['Desce bem devagar (3-4 segundos), sobe mais rápido','Joelho não pode "cair" para dentro (valgo) durante a descida','Toque o calcanhar no chão levemente e volta, sem transferir o peso','Reduza a altura do degrau se o joelho desalinhar']},
-  {id:'m15',name:'Leg Extension',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'3×12-15',level:'Iniciante',equipment:'Máquina',video:'',
+  {id:'m15',name:'Leg Extension',cat:'músculo',icon:'🦵',bg:'rgba(42,74,53,.1)',params:'3×12-15',level:'Iniciante',equipment:'Máquina',video:'',
    science:'Isolamento de quadríceps — útil para volume adicional de hipertrofia sem a fadiga sistêmica de um agachamento pesado, especialmente em semanas de alto volume de corrida.',
    cues:['Não trava o joelho com força no topo','Desce controlado, sem soltar o peso','Ajuste o encosto para o joelho alinhar com o eixo da máquina','Carga moderada — não é o exercício principal de força, é complementar']},
-  {id:'m16',name:'Mesa Flexora (Leg Curl)',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'3×12-15',level:'Iniciante',equipment:'Máquina',video:'',
+  {id:'m16',name:'Mesa Flexora (Leg Curl)',cat:'músculo',icon:'🦵',bg:'rgba(42,74,53,.1)',params:'3×12-15',level:'Iniciante',equipment:'Máquina',video:'',
    science:'Isolamento de isquiotibiais — complementa o Nordic Curl e o RDL com um estímulo de menor exigência técnica, bom para iniciantes destreinados.',
    cues:['Quadril colado no banco, sem elevar durante o movimento','Amplitude completa, sem "chicotear" o peso na subida','Controle a volta — a fase excêntrica é a mais importante aqui','Pode ser feito unilateral para corrigir assimetrias']},
   // CORE (mais — corrida)
@@ -2122,10 +2122,10 @@ const EXERCISES = [
    science:'Progressão do Deadbug — adiciona carga nas mãos ou tornozelos para aumentar a exigência de estabilidade lombar anti-extensão sob fadiga.',
    cues:['Lombar sempre colada ao chão — esse é o critério de progressão','Movimento lento e controlado, sem pressa','Se a lombar arquear, volte pra versão sem carga','Respire normalmente durante o movimento']},
   // PLIOMETRIA (mais — potência específica de corrida)
-  {id:'p9',name:'Bounding (Passada Amplificada)',cat:'pliometria',icon:'🦌',bg:'rgba(200,241,53,.08)',params:'4×20-30m',level:'Avançado',equipment:'Solo',video:'',
+  {id:'p9',name:'Bounding (Passada Amplificada)',cat:'pliometria',icon:'🦌',bg:'rgba(42,74,53,.08)',params:'4×20-30m',level:'Avançado',equipment:'Solo',video:'',
    science:'Potência horizontal específica do padrão de passada em alta velocidade — transferência direta pra economia de corrida em ritmos de prova (Saunders, 2004).',
    cues:['Passadas exageradamente longas e altas, tipo "salto de gazela"','Foco em tempo de voo, não em velocidade','Aterrissagem ativa, "pegando" o chão, não deixando o pé bater passivo','Reserve pra fase de Potência — não é exercício de fase Base']},
-  {id:'p10',name:'Skater Jumps (Salto do Patinador)',cat:'pliometria',icon:'⛸',bg:'rgba(200,241,53,.08)',params:'3×8/lado',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'p10',name:'Skater Jumps (Salto do Patinador)',cat:'pliometria',icon:'⛸',bg:'rgba(42,74,53,.08)',params:'3×8/lado',level:'Intermediário',equipment:'Solo',video:'',
    science:'Potência lateral com aterrissagem unipodal controlada — trabalha estabilidade de tornozelo/joelho no plano frontal, pouco estimulado no gesto sagital da corrida.',
    cues:['Salta para o lado e aterrissa na perna oposta, com controle','Segura a aterrissagem 1 segundo antes do próximo salto','Joelho de aterrissagem alinhado com o pé, sem cair para dentro','Comece com amplitude pequena e vá aumentando conforme ganha controle']},
   // MOBILIDADE (mais — aquecimento dinâmico)
@@ -2133,46 +2133,46 @@ const EXERCISES = [
    science:'Mobilidade dinâmica de quadril pré-treino — prepara amplitude de movimento sem o efeito de queda de força que alongamento estático prolongado pode causar antes de treinar.',
    cues:['Apoie numa parede ou objeto fixo para equilíbrio','Balanço controlado para frente/trás, depois de lado a lado','Amplitude aumenta gradualmente a cada repetição','Ideal como parte do aquecimento, antes da sessão de força ou corrida']},
   // KIT ANTI-LESÃO (mais — prevenção específica de corrida)
-  {id:'kit10',name:'Monster Walk com Banda',cat:'kit',icon:'👹',bg:'rgba(91,142,255,.08)',params:'3×10m/direção',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'kit10',name:'Monster Walk com Banda',cat:'kit',icon:'👹',bg:'rgba(92,107,58,.08)',params:'3×10m/direção',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Fortalece abdutores e controle lateral do quadril; use como parte de um programa individualizado, sem prometer prevenir dor ou lesão.',
    cues:['Banda acima dos joelhos ou nos tornozelos (mais difícil)','Passos largos, mantendo tensão constante na banda','Tronco ereto, sem inclinar para os lados','Ande para frente e depois para trás mantendo a tensão']},
-  {id:'kit11',name:'Prancha Lateral com Elevação de Perna',cat:'kit',icon:'🤸',bg:'rgba(91,142,255,.08)',params:'3×10/lado',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'kit11',name:'Prancha Lateral com Elevação de Perna',cat:'kit',icon:'🤸',bg:'rgba(92,107,58,.08)',params:'3×10/lado',level:'Intermediário',equipment:'Solo',video:'',
    science:'Combina estabilidade de core lateral com ativação de glúteo médio — dois dos principais fatores de risco de lesão em corredores num só exercício.',
    cues:['Prancha lateral com quadril alinhado, sem "cair"','Eleva a perna de cima mantendo o quadril estável','Não deixa o quadril rodar para trás ao levantar a perna','Reduza pra prancha lateral sem elevação se perder a forma']},
-  {id:'kit12',name:'Isometria de Adutor com Bola',cat:'kit',icon:'⚽',bg:'rgba(91,142,255,.08)',params:'3×20-30s',level:'Iniciante',equipment:'Bola pequena',video:'',
+  {id:'kit12',name:'Isometria de Adutor com Bola',cat:'kit',icon:'⚽',bg:'rgba(92,107,58,.08)',params:'3×20-30s',level:'Iniciante',equipment:'Bola pequena',video:'',
    science:'Complementa o Copenhagen Plank com uma versão de entrada mais acessível — fortalece adutores, reduzindo risco de lesão de virilha em volume alto de treino.',
    cues:['Bola entre os joelhos, deitado ou sentado','Aperta a bola com força controlada, sem "socar"','Segura a contração pelo tempo determinado','Progrida para o Copenhagen Plank conforme ganha força']},
-  {id:'t8',name:'Elevação de Panturrilha Unilateral',cat:'tendão',icon:'🦵',bg:'rgba(91,142,255,.12)',params:'3×12-15/lado',level:'Iniciante',equipment:'Degrau/solo',video:'',
+  {id:'t8',name:'Elevação de Panturrilha Unilateral',cat:'tendão',icon:'🦵',bg:'rgba(92,107,58,.12)',params:'3×12-15/lado',level:'Iniciante',equipment:'Degrau/solo',video:'',
    science:'Progressão natural do calf raise bilateral — a corrida é um gesto unipodal, então a força de panturrilha precisa ser testada e treinada perna por perna.',
    cues:['Apoia só a ponta do pé no degrau, calcanhar livre para descer','Sobe o mais alto possível, desce até alongar bem a panturrilha','Segure em um apoio para equilíbrio, sem ajudar com o outro pé','Progrida adicionando peso na mão quando ficar fácil']},
-  {id:'t9',name:'Isometria de Agachamento na Parede (Wall Sit Alto)',cat:'tendão',icon:'🧱',bg:'rgba(91,142,255,.12)',params:'3×30-40s',level:'Iniciante',equipment:'Parede',video:'',
+  {id:'t9',name:'Isometria de Agachamento na Parede (Wall Sit Alto)',cat:'tendão',icon:'🧱',bg:'rgba(92,107,58,.12)',params:'3×30-40s',level:'Iniciante',equipment:'Parede',video:'',
    science:'Isometria em ângulo mais aberto que o Spanish Squat — boa porta de entrada pra quem sente dor no ângulo mais fechado, com efeito analgésico similar em tendinopatia patelar.',
    cues:['Ângulo do joelho mais aberto que 90 graus (mais alto na parede)','Aumente a profundidade gradualmente ao longo das semanas','Pare se sentir dor aguda, não apenas cansaço muscular','Bom exercício de entrada antes de progredir pro Spanish Squat completo']},
-  {id:'t10',name:'Nordic Curl Assistido com Elástico',cat:'tendão',icon:'🎗',bg:'rgba(91,142,255,.12)',params:'3×6-8',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'t10',name:'Nordic Curl Assistido com Elástico',cat:'tendão',icon:'🎗',bg:'rgba(92,107,58,.12)',params:'3×6-8',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Versão de entrada do Nordic Hamstring Curl — o elástico reduz a carga na fase mais difícil, permitindo que iniciantes construam a força excêntrica sem precisar de assistência de outra pessoa.',
    cues:['Prenda o elástico numa estrutura fixa atrás do corpo','O elástico ajuda a puxar de volta na parte mais difícil do movimento','Desça o mais devagar que conseguir controlar','Reduza a assistência do elástico conforme ganha força']},
-  {id:'m17b',name:'Goblet Squat',cat:'músculo',icon:'🏺',bg:'rgba(200,241,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
+  {id:'m17b',name:'Goblet Squat',cat:'músculo',icon:'🏺',bg:'rgba(42,74,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
    science:'Agachamento carregado na frente do corpo — mais acessível tecnicamente que o back squat, ótimo ponto de entrada pra quem treina em casa sem barra.',
    cues:['Segura o peso junto ao peito, cotovelos apontando para baixo','Agachamento completo, cotovelos passam por dentro dos joelhos','Tronco ereto o tempo todo','Bom substituto do back squat quando não há acesso a barra ou rack']},
-  {id:'m18b',name:'Romanian Deadlift com Halteres',cat:'músculo',icon:'🏋️',bg:'rgba(200,241,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Halteres',video:'',
+  {id:'m18b',name:'Romanian Deadlift com Halteres',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Halteres',video:'',
    science:'Variação do RDL usando halteres em vez de barra — mesma exigência de cadeia posterior, mais acessível pra quem treina em casa.',
    cues:['Joelhos levemente flexionados, fixos durante o movimento','Halteres deslizam perto das pernas','Sente alongar atrás da coxa, para antes de perder a lombar neutra','Sobe contraindo o glúteo, sem puxar com a lombar']},
-  {id:'m19',name:'Afundo Búlgaro sem Peso',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'3×12/lado',level:'Iniciante',equipment:'Banco/cadeira',video:'',
+  {id:'m19',name:'Afundo Búlgaro sem Peso',cat:'músculo',icon:'🦵',bg:'rgba(42,74,53,.1)',params:'3×12/lado',level:'Iniciante',equipment:'Banco/cadeira',video:'',
    science:'Versão de peso corporal do Bulgarian Split Squat — porta de entrada acessível antes de progredir pra versão com halteres.',
    cues:['Pé de trás apoiado num banco ou cadeira firme','Desce até 90 graus no joelho da frente','Torso levemente inclinado à frente','Progrida pra versão com halteres quando ficar fácil']},
-  {id:'m20',name:'Elevação Pélvica Unilateral',cat:'músculo',icon:'🍑',bg:'rgba(200,241,53,.1)',params:'3×10/lado',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'m20',name:'Elevação Pélvica Unilateral',cat:'músculo',icon:'🍑',bg:'rgba(42,74,53,.1)',params:'3×10/lado',level:'Intermediário',equipment:'Solo',video:'',
    science:'Versão unilateral da ponte de glúteo — corrige assimetrias entre os dois lados e prepara o glúteo pra exigência unipodal da corrida.',
    cues:['Uma perna estendida ou dobrada no ar, a outra faz o trabalho','Quadril sobe alinhado, sem torcer para o lado','Contrai o glúteo no topo com força','Progrida elevando os ombros num banco para mais amplitude']},
-  {id:'m21',name:'Remada Unilateral com Halter',cat:'músculo',icon:'💪',bg:'rgba(200,241,53,.1)',params:'3×10-12/lado',level:'Iniciante',equipment:'Halter/banco',video:'',
+  {id:'m21',name:'Remada Unilateral com Halter',cat:'músculo',icon:'💪',bg:'rgba(42,74,53,.1)',params:'3×10-12/lado',level:'Iniciante',equipment:'Halter/banco',video:'',
    science:'Trabalho unilateral de costas — corrige assimetrias e trabalha estabilidade de tronco anti-rotação ao mesmo tempo que a força de puxada.',
    cues:['Apoia joelho e mão no banco, costas paralelas ao chão','Cotovelo passa rente ao corpo, puxa até a altura das costelas','Sem girar o tronco durante o movimento','Controle a descida do peso, não solta']},
-  {id:'m22',name:'Flexão de Braço (Push-up)',cat:'músculo',icon:'💪',bg:'rgba(200,241,53,.1)',params:'3×máximo controlado',level:'Iniciante',equipment:'Solo',video:'',
+  {id:'m22',name:'Flexão de Braço (Push-up)',cat:'músculo',icon:'💪',bg:'rgba(42,74,53,.1)',params:'3×máximo controlado',level:'Iniciante',equipment:'Solo',video:'',
    science:'Força de empurrar de peito/tríceps/ombro sem precisar de nenhum equipamento — mantém o equilíbrio push/pull do treino em qualquer contexto de treino em casa.',
    cues:['Corpo em linha reta da cabeça aos calcanhares','Desce até o peito quase tocar o chão','Cotovelos a 45 graus do corpo, não retos para os lados','Regride nos joelhos se não conseguir a versão completa']},
-  {id:'m23',name:'Elevação de Panturrilha em Pé (Bilateral)',cat:'músculo',icon:'🦵',bg:'rgba(200,241,53,.1)',params:'4×15-20',level:'Iniciante',equipment:'Degrau/solo',video:'',
+  {id:'m23',name:'Elevação de Panturrilha em Pé (Bilateral)',cat:'músculo',icon:'🦵',bg:'rgba(42,74,53,.1)',params:'4×15-20',level:'Iniciante',equipment:'Degrau/solo',video:'',
    science:'Volume alto de panturrilha bilateral — construção de base antes de progredir pra versão unilateral e pra versão excêntrica.',
    cues:['Amplitude completa — desce bem embaixo, sobe bem alto','Ritmo controlado, sem saltitar','Pode ser feito em qualquer superfície com um degrau','Progrida pra unilateral quando dominar essa versão']},
-  {id:'m24',name:'Agachamento Sumô',cat:'músculo',icon:'🤸',bg:'rgba(200,241,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
+  {id:'m24',name:'Agachamento Sumô',cat:'músculo',icon:'🤸',bg:'rgba(42,74,53,.1)',params:'3×10-12',level:'Iniciante',equipment:'Haltere/kettlebell',video:'',
    science:'Variação com pernas mais afastadas e pés rodados para fora — recruta mais adutor e glúteo, complementando o padrão do agachamento tradicional.',
    cues:['Pés bem mais afastados que a largura dos ombros, ponta rodada para fora','Joelhos seguem a direção dos pés durante a descida','Tronco ereto, peso segurado entre as pernas','Boa opção pra variar o estímulo sem trocar de exercício principal']},
   {id:'c12',name:'Prancha com Toque de Ombro',cat:'core',icon:'🤚',bg:'rgba(255,107,53,.1)',params:'3×20 toques',level:'Intermediário',equipment:'Solo',video:'',
@@ -2190,16 +2190,16 @@ const EXERCISES = [
   {id:'c16',name:'Bird-Dog com Carga',cat:'core',icon:'🐕',bg:'rgba(255,107,53,.1)',params:'3×8/lado',level:'Intermediário',equipment:'Halter leve/caneleira',video:'',
    science:'Progressão do Bird-Dog clássico — adiciona resistência no braço ou perna estendida para aumentar a exigência de estabilidade lombar anti-rotação.',
    cues:['Mesma execução do Bird-Dog, com peso leve no tornozelo ou pulso','Lombar não pode cair para nenhum lado durante o movimento','Movimento lento e controlado','Reduza o peso se perder a estabilidade']},
-  {id:'p11b',name:'Tuck Jump',cat:'pliometria',icon:'🤾',bg:'rgba(200,241,53,.08)',params:'3×8-10',level:'Avançado',equipment:'Solo',video:'',
+  {id:'p11b',name:'Tuck Jump',cat:'pliometria',icon:'🤾',bg:'rgba(42,74,53,.08)',params:'3×8-10',level:'Avançado',equipment:'Solo',video:'',
    science:'Potência vertical máxima com flexão de quadril no ar — desenvolve explosão de quadril/joelho que se soma à rigidez de tornozelo já trabalhada no Pogo Jump.',
    cues:['Salta o mais alto possível, joelhos sobem até o peito no ar','Aterrissagem suave, absorvendo com os joelhos','Descanso completo entre séries — é potência máxima, não resistência','Só para atletas sem dor articular ativa']},
-  {id:'p12',name:'Broad Jump Duplo (Salto Horizontal Repetido)',cat:'pliometria',icon:'🐸',bg:'rgba(200,241,53,.08)',params:'3×4-5 saltos seguidos',level:'Avançado',equipment:'Solo',video:'',
+  {id:'p12',name:'Broad Jump Duplo (Salto Horizontal Repetido)',cat:'pliometria',icon:'🐸',bg:'rgba(42,74,53,.08)',params:'3×4-5 saltos seguidos',level:'Avançado',equipment:'Solo',video:'',
    science:'Progressão do salto horizontal simples — a repetição sem pausa exige reatividade imediata na aterrissagem, simulando a demanda de choque repetido da corrida.',
    cues:['Aterrissa e já explode para o próximo salto, sem parar','Absorve cada aterrissagem com os joelhos flexionados','Comece com 2-3 saltos seguidos antes de progredir pra mais','Pare se a técnica degradar com a fadiga']},
-  {id:'p13',name:'Jump Squat',cat:'pliometria',icon:'⬆️',bg:'rgba(200,241,53,.08)',params:'3×8-10',level:'Intermediário',equipment:'Solo/halteres leves',video:'',
+  {id:'p13',name:'Jump Squat',cat:'pliometria',icon:'⬆️',bg:'rgba(42,74,53,.08)',params:'3×8-10',level:'Intermediário',equipment:'Solo/halteres leves',video:'',
    science:'Potência concêntrica de membro inferior a partir do agachamento — ponte entre força máxima e pliometria pura.',
    cues:['Agacha e explode para cima o mais rápido possível','Aterrissagem suave, joelhos absorvendo o impacto','Pode ser feito só com peso corporal ou halteres leves','Foco em altura e velocidade, não em quantidade']},
-  {id:'p14',name:'Split Jump (Afundo com Salto)',cat:'pliometria',icon:'🦘',bg:'rgba(200,241,53,.08)',params:'3×8/lado',level:'Avançado',equipment:'Solo',video:'',
+  {id:'p14',name:'Split Jump (Afundo com Salto)',cat:'pliometria',icon:'🦘',bg:'rgba(42,74,53,.08)',params:'3×8/lado',level:'Avançado',equipment:'Solo',video:'',
    science:'Potência unilateral em posição de afundo — transferência direta pra fase de impulsão da passada em corredores de médio/alto nível.',
    cues:['Posição de afundo, salta trocando a perna no ar','Aterrissagem controlada na posição de afundo oposta','Exige boa mobilidade de quadril — não force se faltar amplitude','Comece devagar antes de aumentar a velocidade dos saltos']},
   {id:'mob10b',name:'Alongamento de Isquiotibiais em Pé',cat:'mobilidade',icon:'🦵',bg:'rgba(255,235,59,.08)',params:'3×30s/lado',level:'Iniciante',equipment:'Solo',video:'',
@@ -2214,46 +2214,46 @@ const EXERCISES = [
   {id:'mob13',name:'Alongamento de Piriforme Deitado',cat:'mobilidade',icon:'🧘',bg:'rgba(255,235,59,.08)',params:'2×30-45s/lado',level:'Iniciante',equipment:'Solo',video:'',
    science:'Alívio de tensão no piriforme — relevante para corredores com desconforto glúteo profundo associado a encurtamento muscular.',
    cues:['Deitado de costas, tornozelo cruzado sobre o joelho oposto','Puxa a coxa de trás em sua direção, sentindo alongar o glúteo','Se sentir formigamento ou dor irradiando pela perna, pare e procure avaliação','Alongamento suave, sem forçar']},
-  {id:'kit13',name:'Ponte de Glúteo com Marcha',cat:'kit',icon:'🚶',bg:'rgba(91,142,255,.08)',params:'3×8/lado',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'kit13',name:'Ponte de Glúteo com Marcha',cat:'kit',icon:'🚶',bg:'rgba(92,107,58,.08)',params:'3×8/lado',level:'Intermediário',equipment:'Solo',video:'',
    science:'Progressão da ponte de glúteo bilateral — adiciona instabilidade unilateral controlada, preparando o quadril pra fase de apoio único da corrida.',
    cues:['Quadril elevado e estável, como na ponte normal','Eleva um joelho em direção ao peito sem deixar o quadril cair','Alterna as pernas mantendo o quadril sempre no alto','Se o quadril afundar de um lado, reduza a amplitude']},
-  {id:'kit14',name:'Caminhada Lateral com Banda (variação baixa)',cat:'kit',icon:'🦀',bg:'rgba(91,142,255,.08)',params:'3×10m/direção',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'kit14',name:'Caminhada Lateral com Banda (variação baixa)',cat:'kit',icon:'🦀',bg:'rgba(92,107,58,.08)',params:'3×10m/direção',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Variação do Monster Walk com banda mais abaixo e postura mais agachada — aumenta a exigência de glúteo médio em relação à versão padrão.',
    cues:['Banda nos tornozelos, leve flexão de joelhos e quadril','Passos largos para o lado, sem perder a postura agachada','Tronco ereto o tempo todo','Alterna a direção a cada série']},
-  {id:'kit15',name:'Wall Angels (Anjo na Parede)',cat:'kit',icon:'👼',bg:'rgba(91,142,255,.08)',params:'3×10-12',level:'Iniciante',equipment:'Parede',video:'',
+  {id:'kit15',name:'Wall Angels (Anjo na Parede)',cat:'kit',icon:'👼',bg:'rgba(92,107,58,.08)',params:'3×10-12',level:'Iniciante',equipment:'Parede',video:'',
    science:'Mobilidade e controle escapular contra a parede — melhora postura torácica, relevante para eficiência respiratória e postura geral de tronco.',
    cues:['Costas, cabeça e braços encostados na parede o tempo todo','Desliza os braços para cima e para baixo, imitando um anjo','Se a lombar arquear muito, afasta um pouco os pés da parede','Movimento lento e controlado']},
-  {id:'kit16',name:'Isometria de Glúteo Médio Deitado',cat:'kit',icon:'🐚',bg:'rgba(91,142,255,.08)',params:'3×20s/lado',level:'Iniciante',equipment:'Elástico',video:'',
+  {id:'kit16',name:'Isometria de Glúteo Médio Deitado',cat:'kit',icon:'🐚',bg:'rgba(92,107,58,.08)',params:'3×20s/lado',level:'Iniciante',equipment:'Elástico',video:'',
    science:'Versão isométrica do Clamshell — segurar a posição no topo aumenta o tempo sob tensão do glúteo médio, útil em fases iniciais de reabilitação/prevenção.',
    cues:['Mesma posição do Clamshell, mas segura no topo em vez de repetir','Quadril não pode rolar para trás durante a pausa','Sente o trabalho na lateral do glúteo, não na lombar','Bom para fases de dor onde repetições dinâmicas incomodam']},
-  {id:'o7',name:'Rotação Externa Deitado de Lado',cat:'ombro',icon:'🛌',bg:'rgba(91,142,255,.1)',params:'3×12-15/lado',level:'Iniciante',equipment:'Haltere leve',video:'',
+  {id:'o7',name:'Rotação Externa Deitado de Lado',cat:'ombro',icon:'🛌',bg:'rgba(92,107,58,.1)',params:'3×12-15/lado',level:'Iniciante',equipment:'Haltere leve',video:'',
    science:'Isolamento do manguito rotador; pode complementar o controle do ombro com carga leve e execução sem dor.',
    cues:['Deitado de lado, cotovelo colado ao corpo a 90 graus','Gira o antebraço para cima, sem mover o cotovelo do lugar','Carga bem leve — é um exercício de isolamento fino','Controle tanto a subida quanto a descida']},
-  {id:'o8',name:'Face Pull com Ponto Alto',cat:'ombro',icon:'🎯',bg:'rgba(91,142,255,.1)',params:'3×15',level:'Iniciante',equipment:'Cabo/elástico',video:'',
+  {id:'o8',name:'Face Pull com Ponto Alto',cat:'ombro',icon:'🎯',bg:'rgba(92,107,58,.1)',params:'3×15',level:'Iniciante',equipment:'Cabo/elástico',video:'',
    science:'Variação do Face Pull com ponto de ancoragem mais alto — muda o ângulo de trabalho dos estabilizadores escapulares e do deltoide posterior.',
    cues:['Elástico ou cabo preso num ponto alto, na altura da cabeça','Puxa em direção ao rosto, cotovelos abrem para os lados','Aperta as escápulas no final do movimento','Controle a volta, sem soltar de forma brusca']},
-  {id:'tec1',name:'Chute no Bumbum (Butt Kicks)',cat:'técnica',icon:'🔁',bg:'rgba(91,142,255,.15)',params:'3×20m',level:'Iniciante',equipment:'Solo',video:'',
+  {id:'tec1',name:'Chute no Bumbum (Butt Kicks)',cat:'técnica',icon:'🔁',bg:'rgba(92,107,58,.15)',params:'3×20m',level:'Iniciante',equipment:'Solo',video:'',
    science:'Drill de ativação de isquiotibiais e ritmo de recuperação da perna — parte do aquecimento dinâmico padrão pré-corrida, junto do A-Skip já presente na biblioteca.',
    cues:['Calcanhar toca o glúteo a cada passada, joelho aponta pro chão','Ritmo rápido e leve, sem se deslocar rápido demais','Braços acompanham o ritmo, relaxados','Use como aquecimento antes do treino de qualidade, não como treino em si']},
-  {id:'tec2',name:'High Knees (Joelho Alto)',cat:'técnica',icon:'🦵',bg:'rgba(91,142,255,.15)',params:'3×20m',level:'Iniciante',equipment:'Solo',video:'',
+  {id:'tec2',name:'High Knees (Joelho Alto)',cat:'técnica',icon:'🦵',bg:'rgba(92,107,58,.15)',params:'3×20m',level:'Iniciante',equipment:'Solo',video:'',
    science:'Drill de frequência de passada e ativação de flexores de quadril — complementa o A-Skip trabalhando o ritmo em vez da amplitude.',
    cues:['Joelho sobe até a altura do quadril a cada passada','Passos rápidos e curtos, quase no lugar','Tronco ereto, sem inclinar para trás','Aumenta a cadência progressivamente ao longo dos 20m']},
-  {id:'tec3',name:'Carioca (Passada Cruzada Lateral)',cat:'técnica',icon:'↔️',bg:'rgba(91,142,255,.15)',params:'2×20m/direção',level:'Iniciante',equipment:'Solo',video:'',
+  {id:'tec3',name:'Carioca (Passada Cruzada Lateral)',cat:'técnica',icon:'↔️',bg:'rgba(92,107,58,.15)',params:'2×20m/direção',level:'Iniciante',equipment:'Solo',video:'',
    science:'Drill de coordenação e mobilidade de quadril no plano lateral/rotacional — ativa musculatura pouco usada no gesto puramente sagital da corrida.',
    cues:['Desloca de lado, cruzando uma perna na frente e depois atrás da outra','Quadril gira suavemente a cada passo','Braços ajudam o equilíbrio, relaxados','Faz nos dois sentidos, indo e voltando']},
-  {id:'tec4',name:'Tiros Progressivos (Strides)',cat:'técnica',icon:'🏃',bg:'rgba(91,142,255,.15)',params:'4-6×80-100m',level:'Intermediário',equipment:'Espaço aberto',video:'',
+  {id:'tec4',name:'Tiros Progressivos (Strides)',cat:'técnica',icon:'🏃',bg:'rgba(92,107,58,.15)',params:'4-6×80-100m',level:'Intermediário',equipment:'Espaço aberto',video:'',
    science:'Ativação neuromuscular de alta velocidade em volume baixíssimo — prepara o sistema nervoso pra correr rápido sem o desgaste de um treino intervalado completo (Saunders, 2004).',
    cues:['Acelera progressivamente nos primeiros 30m até quase a velocidade máxima','Mantém 2-3 segundos na velocidade alta, depois desacelera','Caminha de volta pro início — recuperação completa entre tiros','Foco em relaxamento e técnica, não em cronômetro']},
-  {id:'tec5',name:'Ankling (Drill de Tornozelo)',cat:'técnica',icon:'🦶',bg:'rgba(91,142,255,.15)',params:'3×15m',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'tec5',name:'Ankling (Drill de Tornozelo)',cat:'técnica',icon:'🦶',bg:'rgba(92,107,58,.15)',params:'3×15m',level:'Intermediário',equipment:'Solo',video:'',
    science:'Isola o trabalho do complexo tornozelo-pé no toque do solo — reforça o padrão de rigidez que a pliometria (Pogo Jumps) já desenvolve, aplicado diretamente ao gesto da passada.',
    cues:['Pequenos saltos no lugar, quicando só com o tornozelo (sem dobrar muito o joelho)','Contato mínimo com o solo, como pisando em brasa','Avança lentamente pra frente enquanto quica','Mantém o corpo ereto, olhando pra frente']},
-  {id:'tec6',name:'Skip Lateral com Elevação de Joelho',cat:'técnica',icon:'🤾',bg:'rgba(91,142,255,.15)',params:'2×20m/direção',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'tec6',name:'Skip Lateral com Elevação de Joelho',cat:'técnica',icon:'🤾',bg:'rgba(92,107,58,.15)',params:'2×20m/direção',level:'Intermediário',equipment:'Solo',video:'',
    science:'Combina deslocamento lateral com elevação de joelho — trabalha estabilidade de quadril em múltiplos planos, útil pra corredores de trilha ou terreno irregular.',
    cues:['Desloca de lado alternando elevação de joelho a cada passo','Ritmo controlado, sem pressa','Mantém o quadril estável, sem balançar demais','Faz nos dois sentidos']},
-  {id:'tec7',name:'Rotina de Aquecimento Dinâmico Pré-Corrida',cat:'técnica',icon:'🔥',bg:'rgba(91,142,255,.15)',params:'5-8min',level:'Iniciante',equipment:'Solo',video:'',
+  {id:'tec7',name:'Rotina de Aquecimento Dinâmico Pré-Corrida',cat:'técnica',icon:'🔥',bg:'rgba(92,107,58,.15)',params:'5-8min',level:'Iniciante',equipment:'Solo',video:'',
    science:'Sequência curta de mobilidade dinâmica (não estática) antes de correr — prepara amplitude de movimento sem o efeito de queda de força que alongamento estático prolongado pode causar pré-treino.',
    cues:['Leg swings (frente/trás e lateral) — 10 cada direção por perna','Circular de quadril — 10 cada direção','Agachamento com rotação de tronco — 10 repetições','Finaliza com 3-4 acelerações curtas e leves antes do treino de qualidade']},
-  {id:'tec8',name:'Corrida de Costas (Backward Running)',cat:'técnica',icon:'⏪',bg:'rgba(91,142,255,.15)',params:'3×15m',level:'Intermediário',equipment:'Solo',video:'',
+  {id:'tec8',name:'Corrida de Costas (Backward Running)',cat:'técnica',icon:'⏪',bg:'rgba(92,107,58,.15)',params:'3×15m',level:'Intermediário',equipment:'Solo',video:'',
    science:'Ativa a cadeia posterior e o quadríceps de forma diferente da corrida convencional — usado como variação de baixo impacto pra reforçar controle de joelho em fases de retorno de lesão.',
    cues:['Espaço livre e visível — sem obstáculos atrás','Passos curtos e controlados, olhando por cima do ombro periodicamente','Foco em técnica, não em velocidade','Bom substituto de impacto reduzido em semanas de retorno pós-lesão']},
 ];
@@ -2343,7 +2343,7 @@ function openExModal(id) {
       <div style="font-size:12px;color:var(--muted)">Vídeo ainda não cadastrado pra este exercício</div>
     </div>`}
     <div style="background:var(--s2);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
-      <span style="font-family:var(--fm);font-size:13px;color:var(--acc);font-weight:500">${ex.params}</span>
+      <span style="font-family:var(--fm);font-size:13px;color:var(--title);font-weight:500">${ex.params}</span>
     </div>
     <div class="ex-science" style="margin-bottom:14px">
       <div class="ex-science-label">Base científica</div>
@@ -2352,7 +2352,7 @@ function openExModal(id) {
     <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-family:var(--ff)">Pontos-chave de execução</div>
     ${ex.cues.map((c,i) => `
       <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:9px">
-        <div style="width:20px;height:20px;border-radius:6px;background:rgba(200,241,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--acc);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
+        <div style="width:20px;height:20px;border-radius:6px;background:rgba(42,74,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--title);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
         <div style="font-size:13px;color:var(--muted);line-height:1.5">${c}</div>
       </div>`).join('')}
     <button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="closeModal('modal-treino')">Fechar</button>`;
@@ -2379,7 +2379,7 @@ function renderProfile() {
       <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
       <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${escapeHtml(p.nome) || '—'}</div></div>
       <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
-      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--acc)">💳 R$ 9,90/mês · preço fundador</div></div>
+      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--title)">💳 R$ 9,90/mês · preço fundador</div></div>
       ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
       <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="requestPasswordReset()">Trocar senha</button>
@@ -2389,7 +2389,7 @@ function renderProfile() {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <div class="card-title">Score Funcional</div>
         <div style="text-align:center">
-          <div style="font-family:var(--ff);font-weight:800;font-size:30px;color:var(--acc)">${funcScore}<span style="font-size:16px;color:var(--muted)">/10</span></div>
+          <div style="font-family:var(--ff);font-weight:800;font-size:30px;color:var(--title)">${funcScore}<span style="font-size:16px;color:var(--muted)">/10</span></div>
           <div style="font-size:10px;color:var(--muted)">Capacidade geral</div>
         </div>
       </div>
@@ -2435,11 +2435,11 @@ function renderProfile() {
       <div class="card-title" style="margin-bottom:12px">Progresso — Ciclo ${state.cycleNum}</div>
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:12px;color:var(--muted)">Semanas concluídas</span>
-        <span style="font-size:12px;font-weight:700;color:var(--acc)">${state.completedWeeks.length} / 4</span>
+        <span style="font-size:12px;font-weight:700;color:var(--title)">${state.completedWeeks.length} / 4</span>
       </div>
       <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${(state.completedWeeks.length/4)*100}%"></div></div>
       <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-        ${[...Array(4)].map((_,i) => `<div style="width:28px;height:28px;border-radius:7px;background:${state.completedWeeks.includes(i+1)?'var(--acc)':state.currentWeek===i+1?'rgba(200,241,53,.15)':'var(--b1)'};border:1px solid ${state.completedWeeks.includes(i+1)?'var(--acc)':state.currentWeek===i+1?'var(--acc)':'var(--b1)'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${state.completedWeeks.includes(i+1)?'#000':state.currentWeek===i+1?'var(--acc)':'var(--sub)'};font-family:var(--ff)">${state.completedWeeks.includes(i+1)?'✓':i+1}</div>`).join('')}
+        ${[...Array(4)].map((_,i) => `<div style="width:28px;height:28px;border-radius:7px;background:${state.completedWeeks.includes(i+1)?'var(--acc)':state.currentWeek===i+1?'rgba(42,74,53,.15)':'var(--b1)'};border:1px solid ${state.completedWeeks.includes(i+1)?'var(--acc)':state.currentWeek===i+1?'var(--acc)':'var(--b1)'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${state.completedWeeks.includes(i+1)?'#000':state.currentWeek===i+1?'var(--acc)':'var(--sub)'};font-family:var(--ff)">${state.completedWeeks.includes(i+1)?'✓':i+1}</div>`).join('')}
       </div>
       ${state.completedWeeks.length === 4 ? `<button class="btn btn-acc btn-full" style="margin-top:14px" onclick="startCloseCycle()">📋 Fechar ciclo e reavaliar</button>` : ''}
     </div>
@@ -2457,7 +2457,7 @@ function renderProfile() {
             ${Object.entries(h.deltas).map(([k,d]) => `<span class="tag tag-muted" style="font-size:10px">${k}: ${d.before}→${d.after} (${d.pct>=0?'+':''}${d.pct}%)</span>`).join('')}
           </div>
           <div style="font-size:11px;color:var(--muted)">Aderência aos treinos registrados: ${h.logsSummary.loggedEx}/${h.logsSummary.totalEx} exercícios logados${h.logsSummary.avgDificuldade!=null?` · dificuldade média ${h.logsSummary.avgDificuldade}/10`:''}${h.feedback.dorNova?' · ⚠️ dor nova relatada':''}</div>
-          ${h.aiReasoning ? `<div style="font-size:11px;color:var(--acc2);margin-top:4px;font-style:italic">🤖 ${h.aiReasoning}</div>` : ''}
+          ${h.aiReasoning ? `<div style="font-size:11px;color:var(--title);margin-top:4px;font-style:italic">🤖 ${h.aiReasoning}</div>` : ''}
         </div>`).join('')}
     </div>` : ''}
 
