@@ -1211,7 +1211,7 @@ function nextStep(current) {
 
 function prevStep(current) { showStep(current - 1); }
 
-function finishAssessment() {
+async function finishAssessment() {
   if (!avData['av-dias']) { showToast('⚠️ Selecione a disponibilidade'); return; }
   avData['av-prova'] = document.getElementById('av-prova').value || '';
 
@@ -1235,8 +1235,7 @@ function finishAssessment() {
   state.parqAlert = !!(avChecks['parq-risco'] || avChecks['parq-sintoma'] || avChecks['parq-lesao']);
   state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && !k.startsWith('parq-'));
   saveState();
-  syncAssessmentToCloud();
-
+    await syncAssessmentToCloud();
   // Antes de ver a periodização sugerida, o aluno faz o teste físico —
   // isso vira a referência de comparação para a reavaliação do mês 1.
   testMode = 'inicial';
@@ -1275,7 +1274,7 @@ function renderTesteInputs(containerId, idPrefix, prefill) {
     </div>`).join('');
 }
 
-function submitTeste() {
+async function submitTeste() {
   const prefix = testMode === 'inicial' ? 'teste-' : 'cc-teste-';
   const sport = 'corrida';
   const tests = getTests('corrida');
@@ -1288,7 +1287,7 @@ function submitTeste() {
   if (testMode === 'inicial') {
     state.tests[0] = result;
     saveState();
-    syncAssessmentToCloud();
+    await syncAssessmentToCloud();
     renderPaywall();
     goToScreen('paywall');
   } else {
@@ -1328,7 +1327,31 @@ state.lead = { nome, telefone };
 // ══════════════════════════════════════════════════════
 // TELA DE RESULTADO / PAYWALL (pré-pagamento)
 // ══════════════════════════════════════════════════════
-const KIWIFY_CHECKOUT_URL = 'https://pay.kiwify.com.br/hh7lhJH'; // TODO: cole o link real do seu produto no Kiwify
+const INFINITEPAY_CHECKOUT_FALLBACK = 'https://checkout.infinitepay.io/jonadabepersonaltr/aPkRR6ftM5';
+
+async function startInfinitePayCheckout() {
+  const email = (document.getElementById('pay-email')?.value || '').trim().toLowerCase();
+  const cpf = (document.getElementById('pay-cpf')?.value || '').replace(/\D/g, '');
+  const lead = state.lead || {};
+  if (!lead.id || !lead.telefone) { showToast('⚠️ Não encontrei sua avaliação. Recarregue e tente novamente.'); return; }
+  if (!email || !email.includes('@')) { showToast('⚠️ Informe um e-mail válido para receber o código.'); return; }
+  if (cpf.length !== 11) { showToast('⚠️ Informe um CPF válido para vincular o pagamento.'); return; }
+  const button = document.getElementById('pay-button');
+  if (button) { button.disabled = true; button.textContent = 'Preparando pagamento…'; }
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/criar-checkout-infinitepay`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ leadId: lead.id, nome: lead.nome || state.profile?.nome || '', telefone: lead.telefone, email, cpf })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || 'checkout indisponível');
+    window.location.href = data.url;
+  } catch (error) {
+    console.error(error);
+    showToast('⚠️ Não foi possível preparar o checkout agora. Tente novamente.');
+    if (button) { button.disabled = false; button.textContent = 'Quero meu plano →'; }
+  }
+}
 
 function renderPaywall() {
   const p = state.profile;
@@ -1357,8 +1380,10 @@ function renderPaywall() {
         <div>📊 Comparação de teste físico a cada mês</div>
       </div>
     </div>
-    <button class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="window.open(KIWIFY_CHECKOUT_URL,'_blank')">Quero meu plano →</button>
-    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 9,90/mês · preço fundador · cancele quando quiser</p>
+    <div class="input-group" style="margin-top:14px"><label class="input-label">E-mail para receber seu código</label><input type="email" id="pay-email" placeholder="voce@email.com" autocomplete="email"/></div>
+    <div class="input-group"><label class="input-label">CPF do comprador</label><input type="tel" id="pay-cpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off"/></div>
+    <button id="pay-button" class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="startInfinitePayCheckout()">Quero meu plano →</button>
+    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 9,90/mês · preço fundador · pagamento seguro pela InfinitePay</p>
     <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
   `;
 }
