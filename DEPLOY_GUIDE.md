@@ -1,132 +1,162 @@
-# PersonalCoach — Guia de Deploy e Lançamento
+# Base do Corre — Guia de Deploy e Operação
 
-Atualizado para o fluxo real: tudo pelo painel do Supabase (sem CLI/terminal),
-com assinatura mensal via Kiwify.
+Este guia descreve o fluxo atual do produto: **Supabase + InfinitePay + Resend + Groq**, com assinatura recorrente e ativação por e-mail, telefone/CPF e código.
 
----
+## 1. Banco de dados
 
-## 1. Banco de dados (uma vez só, ou sempre que atualizar o schema)
+1. Abra **Supabase → SQL Editor → New query**.
+2. Cole o conteúdo de `backend/supabase_schema.sql`.
+3. Execute a consulta.
+4. Confirme que existem as tabelas `licenses`, `profiles`, `leads` e `payment_orders`.
+5. Não exponha dados de licença, CPF ou pedidos no frontend. O acesso administrativo é feito pelas Edge Functions com `service_role`.
 
-1. Supabase → **SQL Editor** → **New query**
-2. Cole o conteúdo de `backend/supabase_schema.sql` (arquivo único, atualizado —
-   substitui qualquer versão anterior que você tenha rodado)
-3. **Run**
-4. ✅ Pronto quando: a consulta devolve uma linha com `tabela_licenses`,
-   `tabela_profiles`, `tabela_leads` todos = 1
+O schema é idempotente para as estruturas principais e deve ser mantido sincronizado com as colunas existentes no projeto de produção.
 
-Esse arquivo é **idempotente** — pode rodar de novo a qualquer momento sem
-quebrar nada, é a única fonte da verdade do schema.
+## 2. Autenticação e URLs
 
----
+Em **Authentication → Providers → Email**:
 
-## 2. Autenticação
+- deixe o provedor de e-mail habilitado;
+- mantenha a confirmação de e-mail ativada;
+- habilite a proteção contra senhas vazadas.
 
-1. **Authentication → Providers** → confirme "Email" habilitado e
-   "Confirm email" ligado.
-2. **Authentication → URL Configuration**:
-   - **Site URL**: `https://ontreino01-eng.github.io/coach-run/` (com a barra
-     `/coach-run/` no final — sem isso o link de confirmação de e-mail quebra)
-   - **Redirect URLs**: mesma URL
-3. **Authentication → Providers → Email → Leaked Password Protection** →
-   liga essa opção (impede senha já vazada em outros vazamentos de dados —
-   recomendação de segurança, sem custo).
+Em **Authentication → URL Configuration**:
 
----
+- **Site URL:** `https://ontreino01-eng.github.io/coach-run/`
+- **Redirect URL:** `https://ontreino01-eng.github.io/coach-run/`
 
-## 3. Secrets (Edge Functions → Secrets)
+A barra final `/coach-run/` é necessária para que o retorno de confirmação funcione corretamente no GitHub Pages.
 
-Adicione exatamente estes dois (nomes em maiúsculo, com underline):
+## 3. Secrets das Edge Functions
 
-| Nome | Valor |
+Em **Edge Functions → Secrets**, configure os nomes abaixo:
+
+| Secret | Finalidade |
 |---|---|
-| `GROQ_API_KEY` | sua chave da Groq (começa com `gsk_...`) |
-| `KIWIFY_WEBHOOK_TOKEN` | uma senha aleatória forte, inventada por você |
+| `INFINITEPAY_WEBHOOK_TOKEN` | Protege a URL pública que recebe o webhook da InfinitePay. |
+| `RESEND_API_KEY` | Autoriza o envio do e-mail de ativação. |
+| `EMAIL_FROM` | Remetente verificado para o e-mail de ativação, quando suportado pela implementação implantada. |
+| `GROQ_API_KEY` | Chave privada usada pelo backend para gerar os ciclos e responder ao chat. |
 
-A `SUPABASE_SERVICE_ROLE_KEY` e `SUPABASE_URL` já vêm automáticas em toda
-Edge Function — não precisa configurar.
+`SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` são disponibilizados automaticamente pelo Supabase nas Edge Functions. Nunca coloque `GROQ_API_KEY`, `RESEND_API_KEY`, `INFINITEPAY_WEBHOOK_TOKEN` ou a service role key no `index.html`.
 
----
+### Remetente do Resend
 
-## 4. As 6 Edge Functions
+O domínio/remetente usado no campo `from` precisa estar autorizado no Resend. Se a função implantada ainda utilizar um remetente fixo, como `Base do Corre <onboarding@resend.dev>`, faça um teste inicial com ele e depois atualize a função para usar `EMAIL_FROM` com um domínio verificado.
 
-Pra cada uma: **Edge Functions → Deploy a new function → Via Editor** →
-nome exato → cola o código de `backend/supabase/functions/<nome>/index.ts` →
-confere o **Verify JWT** → **Deploy**.
+## 4. Edge Functions implantadas
 
-| Nome exato | Verify JWT | O que faz |
-|---|---|---|
-| `validar-licenca` | **Desligado** | Confere CPF+código no cadastro |
-| `ativar-licenca` | **Ligado** | Trava o código depois do 1º uso |
-| `kiwify-webhook` | **Desligado** | Recebe eventos do Kiwify (compra, renovação, atraso, cancelamento) |
-| `verificar-assinatura` | **Ligado** | Confere se a assinatura está em dia a cada login |
-| `groq-proxy` | **Ligado** | Decide o próximo ciclo via IA (só pra quem já pagou) |
-| `chat-duvidas` | **Ligado** | Chat de dúvidas com IA (só pra quem já pagou) |
+| Função | Verify JWT | Responsabilidade |
+|---|---:|---|
+| `registrar-lead` | Desligado | Registra nome, telefone e lead inicial antes do pagamento. |
+| `salvar-avaliacao` | Desligado | Salva a avaliação no lead, exigindo o mesmo `leadId` e telefone. |
+| `criar-checkout-infinitepay` | Desligado | Valida o lead, cria `payment_orders` e gera o checkout individualizado. |
+| `webhook-infinitepay` | Desligado | Confirma o pedido, cria a licença, registra os dados da transação e dispara o e-mail via Resend. |
+| `validar-licenca` | Desligado | Valida credenciais de licença quando necessário pelo fluxo do frontend. |
+| `ativar-licenca` | Ligado | Exige usuário autenticado, valida telefone/código, vincula a avaliação e gera o ciclo de quatro semanas. |
+| `verificar-assinatura` | Ligado | Confere se a assinatura e o período de acesso continuam válidos. |
+| `groq-proxy` | Ligado | Encaminha operações autorizadas de geração de plano para a IA. |
+| `chat-duvidas` | Ligado | Responde dúvidas do aluno autenticado sem expor a chave da Groq. |
 
-⚠️ `groq-proxy` e `chat-duvidas` mudaram de "Desligado" para **"Ligado"** —
-se você já tinha essas duas deployadas de antes com Verify JWT desligado,
-precisa reconfigurar isso (normalmente não dá pra mudar só o toggle depois
-do deploy — redeploye a função e confirme a opção na hora).
+## 5. InfinitePay
 
----
+A função `criar-checkout-infinitepay` usa o handle configurado no backend, gera um `order_nsu` único e envia à InfinitePay:
 
-## 5. Conectar o app ao Supabase
+- o valor do plano fundador;
+- a descrição do ciclo de fortalecimento de quatro semanas;
+- o nome, e-mail e telefone do cliente;
+- a URL de retorno do app;
+- a URL do webhook protegida por token.
 
-No `index.html`, confirme estas duas linhas com os valores do SEU projeto
-(Project Settings → API):
+A URL pública do webhook é:
 
-```js
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'sua_anon_key_aqui';
+```text
+https://ywfiartxnsviosqjfhkp.supabase.co/functions/v1/webhook-infinitepay?token=SEU_INFINITEPAY_WEBHOOK_TOKEN
 ```
 
-A anon key é pública por design (protegida pelas regras RLS do schema) —
-pode ficar no código. A `GROQ_API_KEY` é a única que NUNCA vai aqui.
+Use no painel da InfinitePay a URL com o token real configurado no Secret. Não publique o token em repositórios, posts, screenshots ou no frontend.
 
----
+O vínculo do pagamento é feito por `order_nsu`, que conecta o checkout a `payment_orders`, ao lead e, após a confirmação, à licença.
 
-## 6. Hospedar (GitHub Pages — já configurado)
+## 6. Resend e e-mail de ativação
 
-O app já está publicado automaticamente em
-**https://ontreino01-eng.github.io/coach-run/** — todo push no branch
-`main` do repositório atualiza o site sozinho em ~1 minuto.
+Quando o webhook recebe uma confirmação válida:
 
----
+1. localiza o `payment_orders.order_nsu`;
+2. impede processamento duplicado de pedidos já pagos;
+3. valida o valor recebido;
+4. cria ou atualiza a licença;
+5. salva a transação na tabela de pedidos;
+6. envia ao e-mail do pedido o código de ativação e o link do app.
 
-## 7. Kiwify
+O e-mail deve orientar o aluno a:
 
-1. Configure seu produto como **assinatura mensal**.
-2. **Configurações → Webhooks** → adiciona a URL:
-   ```
-   https://SEU-PROJETO.supabase.co/functions/v1/kiwify-webhook?token=SEU_KIWIFY_WEBHOOK_TOKEN
-   ```
-3. Marca **todos** estes eventos: Compra Aprovada, Assinatura Renovada,
-   Assinatura Atrasada, Assinatura Cancelada, Reembolso, Chargeback.
-4. Use o botão **"Testar Webhook"** e confira em **Ver logs** se o payload
-   bate com o que a função espera (campo `Customer.CPF` maiúsculo).
-5. Confirme que o link de checkout do produto está funcionando (teste
-   abrindo ele — "Produto Indisponível" significa que o produto não está
-   publicado/ativo no Kiwify).
+1. abrir o app;
+2. confirmar o e-mail e fazer login;
+3. informar telefone/CPF e código de ativação;
+4. concluir a ativação;
+5. acessar o ciclo personalizado de quatro semanas.
 
----
+Antes de vender em escala, confirme nos logs do Resend e do Supabase que o envio foi aceito. A geração da licença não deve ser considerada prova de entrega do e-mail: valide também a caixa de entrada e spam.
 
-## 8. Vídeos dos exercícios
+## 7. Fluxo do aluno
 
-YouTube com visibilidade **"Não listado"** (Privado não funciona
-incorporado). Pega o ID do vídeo e preenche o campo `video:''` do
-exercício correspondente em `const EXERCISES = [...]` no `index.html`.
+O fluxo operacional esperado é:
 
----
+```text
+Avaliação
+  → registrar lead
+  → salvar avaliação
+  → gerar checkout individualizado
+  → pagamento InfinitePay
+  → webhook confirmado
+  → licença criada
+  → e-mail Resend com código
+  → confirmação de e-mail/login
+  → ativação por telefone/CPF + código
+  → plano IA de 4 semanas
+```
 
-## Checklist antes de vender de verdade
+O telefone usado na ativação deve ser o mesmo telefone normalizado que foi usado na avaliação e associado à licença. O código é de uso único para a primeira ativação.
 
-- [ ] `backend/supabase_schema.sql` rodado (schema consolidado)
-- [ ] Site URL / Redirect URLs configurados com `/coach-run/` no final
-- [ ] Leaked Password Protection ligado
-- [ ] `GROQ_API_KEY` e `KIWIFY_WEBHOOK_TOKEN` nos secrets
-- [ ] As 6 funções deployadas com o Verify JWT certo (tabela acima)
-- [ ] `SUPABASE_URL`/`ANON_KEY` corretos no `index.html`
-- [ ] Webhook do Kiwify configurado com TODOS os 6 eventos de assinatura
-- [ ] Link de checkout do Kiwify testado e funcionando (sem "Produto Indisponível")
-- [ ] Testei o fluxo completo: lead → avaliação → teste → paywall → Kiwify →
-      código por e-mail → cadastro → confirmação → login → Ciclo 1 gerado →
-      chat responde → assinatura aparece certa no Perfil
+## 8. Frontend e publicação
+
+No `index.html`, confirme apenas os valores públicos do projeto:
+
+```js
+const SUPABASE_URL = 'https://ywfiartxnsviosqjfhkp.supabase.co';
+const SUPABASE_ANON_KEY = 'sua_chave_publica_do_projeto';
+```
+
+A aplicação está publicada em:
+
+`https://ontreino01-eng.github.io/coach-run/`
+
+Todo push para `main` atualiza o GitHub Pages. O service worker deve ser versionado quando houver alteração importante no fluxo de checkout ou autenticação.
+
+## 9. Checklist antes das vendas
+
+- [ ] Projeto Supabase está ativo e saudável.
+- [ ] Tabelas `licenses`, `profiles`, `leads` e `payment_orders` existem.
+- [ ] RLS está habilitado e não há leitura pública de licenças ou pedidos.
+- [ ] E-mail do Supabase está habilitado e a URL de redirecionamento termina em `/coach-run/`.
+- [ ] `INFINITEPAY_WEBHOOK_TOKEN` está configurado.
+- [ ] `RESEND_API_KEY` está configurada.
+- [ ] Remetente do Resend está autorizado.
+- [ ] `GROQ_API_KEY` está configurada.
+- [ ] `criar-checkout-infinitepay` está ativa.
+- [ ] `webhook-infinitepay` está ativa e sem Verify JWT.
+- [ ] A URL do webhook está cadastrada na InfinitePay com o token correto.
+- [ ] `ativar-licenca`, `verificar-assinatura`, `groq-proxy` e `chat-duvidas` exigem JWT.
+- [ ] O checkout individualizado é criado com `order_nsu` único.
+- [ ] O webhook é idempotente para pedidos já pagos.
+- [ ] O e-mail chega com código e instruções de ativação.
+- [ ] O telefone vincula corretamente avaliação, licença e perfil.
+- [ ] O plano gerado tem exatamente quatro semanas.
+- [ ] O plano não prescreve corrida, pace, quilometragem, tiros ou longão.
+- [ ] O chat responde somente para usuário autorizado.
+- [ ] Foi realizado um teste completo do início ao fim antes de anunciar o produto.
+
+## 10. Vídeos dos exercícios
+
+Use vídeos do YouTube como **Não listado**, nunca como Privado, caso sejam incorporados no app. Preencha o ID do vídeo no campo `video` do exercício correspondente em `index.html`. Os vídeos devem demonstrar execução, pontos de controle, erros comuns e regressões sem transformar o produto em uma planilha de corrida.
