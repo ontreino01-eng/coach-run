@@ -1,9 +1,9 @@
 // Base do Corre — Service Worker
-// v3: invalida o cache anterior após a publicação do checkout InfinitePay —
+// v4: invalida o cache anterior após a remoção dos drills de corrida —
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'base-do-corre-v3';
+const CACHE = 'base-do-corre-v4';
 const APP_SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
