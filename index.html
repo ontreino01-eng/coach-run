@@ -1077,15 +1077,33 @@ let closeData = {}; // dados temporários do fechamento de ciclo em andamento
 
 function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); syncStateToCloud(); }
 
-async function syncAssessmentToCloud() {
-  if (!sb || !state.lead || !state.lead.id || !state.lead.telefone || !state.profile || !state.profile['av-modalidade']) return;
+async function syncAssessmentToCloud(email = '') {
+  if (!sb || !state.lead || !state.lead.id || !state.lead.telefone || !state.profile || !state.profile['av-modalidade']) return false;
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/salvar-avaliacao`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-      body: JSON.stringify({ leadId: state.lead.id, telefone: state.lead.telefone, assessment: { profile: state.profile, scores: state.scores, lesoes: state.lesoes, parqAlert: state.parqAlert, tests: state.tests[0] || null } }),
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/salvar-avaliacao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({
+        leadId: state.lead.id,
+        telefone: state.lead.telefone,
+        email: String(email || state.lead.email || '').trim().toLowerCase(),
+        assessment: { profile: state.profile, scores: state.scores, lesoes: state.lesoes, parqAlert: state.parqAlert, tests: state.tests[0] || null }
+      }),
     });
-  } catch (e) { console.warn('Não consegui salvar a avaliação na nuvem', e); }
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data.emailSaved && email) {
+      state.lead.email = String(email).trim().toLowerCase();
+      localStorage.setItem('cr_state', JSON.stringify(state));
+    }
+    return !!data.ok;
+  } catch (e) {
+    console.warn('Não consegui salvar a avaliação na nuvem', e);
+    return false;
+  }
 }
+
+// ══════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════
 // NAV
@@ -1274,7 +1292,7 @@ function renderTesteInputs(containerId, idPrefix, prefill) {
     </div>`).join('');
 }
 
-async function submitTeste() {
+async async function submitTeste() {
   const prefix = testMode === 'inicial' ? 'teste-' : 'cc-teste-';
   const sport = 'corrida';
   const tests = getTests('corrida');
@@ -1331,19 +1349,41 @@ const KIWIFY_CHECKOUT_URL = 'https://pay.kiwify.com.br/HuBZRN0';
 
 async function startKiwifyCheckout() {
   const lead = state.lead || {};
+  const email = String(document.getElementById('pay-email')?.value || '').trim().toLowerCase();
+
   if (!lead.id || !lead.telefone) {
     showToast('⚠️ Não encontrei sua avaliação. Recarregue e tente novamente.');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('⚠️ Informe um e-mail válido para receber seu acesso.');
     return;
   }
 
   const button = document.getElementById('pay-button');
   if (button) {
     button.disabled = true;
-    button.textContent = 'Abrindo checkout…';
+    button.textContent = 'Preparando checkout…';
   }
 
-  window.location.href = KIWIFY_CHECKOUT_URL;
+  const saved = await syncAssessmentToCloud(email);
+  if (!saved) {
+    if (button) { button.disabled = false; button.textContent = 'Quero meu plano →'; }
+    showToast('⚠️ Não consegui salvar sua avaliação. Tente novamente.');
+    return;
+  }
+
+  const params = new URLSearchParams({
+    name: lead.nome || '',
+    email,
+    phone: lead.telefone,
+    region: 'br'
+  });
+  window.location.href = `${KIWIFY_CHECKOUT_URL}?${params.toString()}`;
 }
+
+// ══════════════════════════════════════════════════════
+
 function renderPaywall() {
   const p = state.profile;
   const focus = FOCUS_DEFS.base;
@@ -1371,8 +1411,7 @@ function renderPaywall() {
         <div>📊 Comparação de teste físico a cada mês</div>
       </div>
     </div>
-    <div class="input-group" style="margin-top:14px"><label class="input-label">E-mail para receber seu código</label><input type="email" id="pay-email" placeholder="voce@email.com" autocomplete="email"/></div>
-    <div class="input-group"><label class="input-label">CPF do comprador</label><input type="tel" id="pay-cpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off"/></div>
+    <div class="input-group" style="margin-top:14px"><label class="input-label">E-mail para receber seu código</label><input type="email" id="pay-email" placeholder="voce@email.com" autocomplete="email" required/></div>
     <button id="pay-button" class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="startKiwifyCheckout()">Quero meu plano →</button>
     <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 9,90/mês · preço fundador · pagamento seguro pela Kiwify</p>
     <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
@@ -2593,7 +2632,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-09-base-do-corre-1';
+const APP_VERSION = '2026-09-20-base-do-corre-2';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
