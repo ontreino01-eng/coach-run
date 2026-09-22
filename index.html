@@ -7,10 +7,10 @@
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#1C1C1A"/>
+<meta name="theme-color" content="#F6F7F5"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Base do Corre"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <link rel="icon" href="icons/icon-192.png"/>
@@ -22,16 +22,18 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#1C1C1A;--s1:#211F1C;--s2:#262420;--card:#221F1B;
-  --b1:#332F27;--b2:#5C6B3A;
-  --acc:#2A4A35;--acc2:#5C6B3A;--warn:#FF6B35;--red:#FF3B5C;
-  --txt:#F2EDE6;--muted:#A69C8C;--sub:#6E675A;--accTxt:#F2EDE6;--title:#C4A882;
+  --bg:#F6F7F5;--s1:#FFFFFF;--s2:#F0F2EF;--card:#FFFFFF;
+  --b1:#E1E6E1;--b2:#AFC3B4;
+  --acc:#FF5A1F;--acc2:#2E7D5B;--warn:#E85D04;--red:#D92D20;
+  --txt:#171A17;--muted:#667066;--sub:#8A948B;--accTxt:#FFFFFF;--title:#D94B16;
   --ff:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
 }
 html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:14px}
 #app{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
 
 /* scrollbar */
+body{background:var(--bg)}
+button,input,select,textarea{color-scheme:light}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
 
 /* ── HEADER ── */
@@ -46,8 +48,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── BOTTOM NAV ── */
-.bnav{position:sticky;bottom:0;flex-shrink:0;width:100%;background:rgba(9,9,14,.97);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:var(--accTxt);border:none;font-size:22px;box-shadow:0 4px 16px rgba(42,74,53,.35);z-index:60;display:none;align-items:center;justify-content:center;cursor:pointer}
+.bnav{position:sticky;bottom:0;flex-shrink:0;width:100%;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.chat-fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--acc);color:var(--accTxt);border:none;font-size:22px;box-shadow:0 4px 16px rgba(255,90,31,.22);z-index:60;display:none;align-items:center;justify-content:center;cursor:pointer}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 0;transition:all .15s}
 .bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
 .bnav-lbl{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ff);transition:all .15s}
