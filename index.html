@@ -1324,20 +1324,33 @@ function cancelTeste() {
 // ══════════════════════════════════════════════════════
 // CAPTURA DE LEAD (antes de qualquer cadastro/pagamento)
 // ══════════════════════════════════════════════════════
-async function submitLead() {
+async async function submitLead() {
   const nome = document.getElementById('lead-nome').value.trim();
   const telefoneRaw = document.getElementById('lead-telefone').value.trim();
   const telefone = telefoneRaw.replace(/\D/g, '');
   if (!nome || telefone.length < 10) { showToast('⚠️ Preencha nome e um telefone válido (com DDD)'); return; }
-state.lead = { nome, telefone };
-  saveState();
+
+  state.lead = { nome, telefone };
+  localStorage.setItem('cr_state', JSON.stringify(state));
+
   if (sb) {
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/registrar-lead`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ nome, telefone }) });
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/registrar-lead`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ nome, telefone })
+      });
       const data = await res.json();
-      if (res.ok && data.leadId) state.lead.id = data.leadId;
-    } catch (e) { console.warn('Não consegui registrar o lead na nuvem (offline?)', e); }
+      if (!res.ok || !data.leadId) throw new Error(data.error || 'Lead não registrado');
+      state.lead.id = data.leadId;
+      localStorage.setItem('cr_state', JSON.stringify(state));
+    } catch (e) {
+      console.warn('Não consegui registrar o lead na nuvem', e);
+      showToast('⚠️ Não consegui conectar sua avaliação. Verifique a internet e tente novamente.');
+      return;
+    }
   }
+
   goToScreen('avaliacao');
   showStep(1);
   const nomeInput = document.getElementById('av-nome');
