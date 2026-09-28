@@ -1079,26 +1079,49 @@ let closeData = {}; // dados temporários do fechamento de ciclo em andamento
 
 function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); syncStateToCloud(); }
 
-async function syncAssessmentToCloud(email = '') {
-  if (!sb || !state.lead || !state.lead.id || !state.lead.telefone || !state.profile || !state.profile['av-modalidade']) return false;
+async function ensureLeadId() {
+  if (!sb || !state.lead || !state.lead.nome || !state.lead.telefone) return false;
+  if (state.lead.id) return true;
   try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/registrar-lead`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ nome: state.lead.nome, telefone: state.lead.telefone })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.leadId) return false;
+    state.lead.id = data.leadId;
+    if (data.email && !state.lead.email) state.lead.email = data.email;
+    localStorage.setItem('cr_state', JSON.stringify(state));
+    return true;
+  } catch (e) {
+    console.warn('Não consegui recuperar o vínculo da avaliação', e);
+    return false;
+  }
+}
+
+async function syncAssessmentToCloud(email = '') {
+  if (!sb || !state.lead || !state.lead.telefone || !state.profile || !state.profile['av-modalidade']) return false;
+  if (!state.lead.id && !(await ensureLeadId())) return false;
+  try {
+    const cleanEmail = String(email || state.lead.email || '').trim().toLowerCase();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/salvar-avaliacao`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
       body: JSON.stringify({
         leadId: state.lead.id,
+        nome: state.lead.nome || state.profile.nome || '',
         telefone: state.lead.telefone,
-        email: String(email || state.lead.email || '').trim().toLowerCase(),
+        email: cleanEmail,
         assessment: { profile: state.profile, scores: state.scores, lesoes: state.lesoes, parqAlert: state.parqAlert, tests: state.tests[0] || null }
       }),
     });
-    if (!res.ok) return false;
     const data = await res.json();
-    if (data.emailSaved && email) {
-      state.lead.email = String(email).trim().toLowerCase();
-      localStorage.setItem('cr_state', JSON.stringify(state));
-    }
-    return !!data.ok;
+    if (!res.ok || !data.ok) return false;
+    if (data.leadId) state.lead.id = data.leadId;
+    if (cleanEmail) state.lead.email = cleanEmail;
+    localStorage.setItem('cr_state', JSON.stringify(state));
+    return true;
   } catch (e) {
     console.warn('Não consegui salvar a avaliação na nuvem', e);
     return false;
@@ -1363,13 +1386,8 @@ async function submitLead() {
 const KIWIFY_CHECKOUT_URL = 'https://pay.kiwify.com.br/HuBZRN0';
 
 async function startKiwifyCheckout() {
-  const lead = state.lead || {};
   const email = String(document.getElementById('pay-email')?.value || '').trim().toLowerCase();
 
-  if (!lead.id || !lead.telefone) {
-    showToast('⚠️ Não encontrei sua avaliação. Recarregue e tente novamente.');
-    return;
-  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     showToast('⚠️ Informe um e-mail válido para receber seu acesso.');
     return;
@@ -1381,6 +1399,18 @@ async function startKiwifyCheckout() {
     button.textContent = 'Preparando checkout…';
   }
 
+  if (!state.lead || !state.lead.telefone || !state.lead.nome) {
+    if (button) { button.disabled = false; button.textContent = 'Quero meu plano →'; }
+    showToast('⚠️ Não encontrei seus dados de contato. Refaça o início da avaliação.');
+    return;
+  }
+
+  if (!state.lead.id && !(await ensureLeadId())) {
+    if (button) { button.disabled = false; button.textContent = 'Quero meu plano →'; }
+    showToast('⚠️ Não consegui conectar sua avaliação. Tente novamente.');
+    return;
+  }
+
   const saved = await syncAssessmentToCloud(email);
   if (!saved) {
     if (button) { button.disabled = false; button.textContent = 'Quero meu plano →'; }
@@ -1388,6 +1418,7 @@ async function startKiwifyCheckout() {
     return;
   }
 
+  const lead = state.lead;
   const params = new URLSearchParams({
     name: lead.nome || '',
     email,
