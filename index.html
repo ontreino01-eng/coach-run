@@ -1324,7 +1324,7 @@ function cancelTeste() {
 // ══════════════════════════════════════════════════════
 // CAPTURA DE LEAD (antes de qualquer cadastro/pagamento)
 // ══════════════════════════════════════════════════════
-async async function submitLead() {
+async function submitLead() {
   const nome = document.getElementById('lead-nome').value.trim();
   const telefoneRaw = document.getElementById('lead-telefone').value.trim();
   const telefone = telefoneRaw.replace(/\D/g, '');
