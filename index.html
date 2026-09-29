@@ -2529,7 +2529,8 @@ function renderProfile() {
         </div>`).join('')}
     </div>` : ''}
 
-    <button class="btn btn-warn btn-full" style="margin-top:4px" onclick="resetData()">Refazer avaliação</button>
+    <button class="btn btn-acc btn-full" style="margin-top:4px" onclick="startCloseCycle()">📊 Reavaliar e preparar próximo ciclo</button>
+    <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;text-align:center">Mantém seu histórico, compara os novos resultados com o ciclo atual e usa a evolução para ajustar o próximo plano.</div>
     ${sb ? `<button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="gateLogout()">Sair da conta</button>` : ''}`;
 
   if (sb) {
