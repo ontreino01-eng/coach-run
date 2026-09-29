@@ -343,9 +343,8 @@ textarea{resize:vertical;min-height:70px}
         <div class="progress-bar" style="margin-bottom:14px"><div class="progress-fill" id="home-progress" style="width:0%"></div></div>
         <button class="btn btn-acc btn-full" onclick="goToScreen('plano')">Ver plano completo →</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+      <div style="margin-top:4px">
         <button class="btn btn-ghost btn-full" onclick="goToScreen('exercicios')">📚 Exercícios</button>
-        <button class="btn btn-ghost btn-full" onclick="openTimer()">⏱ Timer</button>
       </div>
     </div>
 
@@ -1947,47 +1946,97 @@ function matchExercise(line) { return EXERCISES.find(e => line.startsWith(e.name
 
 function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
   return `
-    <div style="font-family:var(--ff);font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+    <div style="font-family:var(--ff);font-weight:700;font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
       ${session.emoji} ${session.name}
     </div>
-    ${session.exercises.map((ex,i) => {
-      const loggable = isLoggableEx(ex);
-      const log = getLog(cycleNum, weekNum, sessionIdx, i);
-      const match = loggable ? matchExercise(ex) : null;
-      return `
-      <div style="padding:9px 0;border-bottom:1px solid var(--b1)">
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div style="width:22px;height:22px;border-radius:6px;background:rgba(42,74,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--title);flex-shrink:0;font-family:var(--ff)">${i+1}</div>
-          <div style="font-size:13px;color:${loggable?'var(--txt)':'var(--muted)'};line-height:1.5;flex:1;${ex.startsWith('Encaixe')?'font-style:italic':''}">${ex}</div>
-          ${match ? `<button onclick="openExModal('${match.id}')" style="flex-shrink:0;width:26px;height:26px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--title);font-size:11px;cursor:pointer">▶</button>` : ''}
-        </div>
-        ${loggable ? `
-        <div style="display:flex;gap:6px;margin-top:6px;margin-left:32px;flex-wrap:wrap;align-items:center">
-          <input type="number" step="0.5" placeholder="Carga (kg)" value="${log.carga||''}" ${editable?'':'disabled'}
-            style="width:88px;padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
-            onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'carga',this.value)"/>
-          <select ${editable?'':'disabled'} style="padding:6px 6px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
-            onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'dificuldade',this.value)">
-            <option value="">Dificuldade</option>
-            ${[...Array(11).keys()].map(n=>`<option value="${n}" ${String(log.dificuldade)===String(n)?'selected':''}>${n}/10</option>`).join('')}
-          </select>
-          <input type="text" placeholder="Conseguiu fazer? ex: sim / fiz só 6" value="${escapeHtml(log.obs||'')}" ${editable?'':'disabled'}
-            style="flex:1;min-width:140px;padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--txt)"
-            onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${i},'obs',this.value)"/>
-        </div>` : ''}
-      </div>`;
-    }).join('')}`;
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Toque em um exercício para abrir o modo de execução, ver vídeo e instruções e registrar como foi.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${session.exercises.map((ex,i) => {
+        const loggable = isLoggableEx(ex);
+        const log = getLog(cycleNum, weekNum, sessionIdx, i);
+        const match = loggable ? matchExercise(ex) : null;
+        const done = !!(log.status || log.obs || log.carga || log.dificuldade);
+        return `<button ${loggable ? `onclick="openWorkoutExercise(${cycleNum},${weekNum},${sessionIdx},${i})"` : ''} style="width:100%;text-align:left;padding:12px;border-radius:12px;border:1px solid ${done?'var(--acc)':'var(--b1)'};background:var(--s2);color:var(--txt);cursor:${loggable?'pointer':'default'}">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div style="width:25px;height:25px;border-radius:7px;background:rgba(42,74,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--title);flex-shrink:0">${done?'✓':i+1}</div>
+            <div style="flex:1">
+              <div style="font-family:var(--ff);font-weight:700;font-size:13px;line-height:1.35">${match ? match.name : ex.split(' — ')[0]}</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:3px">${ex.includes(' — ') ? ex.split(' — ').slice(1).join(' · ') : ex}</div>
+              ${done ? `<div style="font-size:10px;color:var(--title);margin-top:5px">Registro salvo${log.carga?' · '+log.carga+' kg':''}${log.dificuldade!==''?' · dificuldade '+log.dificuldade+'/10':''}</div>` : ''}
+            </div>
+            ${loggable ? '<div style="font-size:18px;color:var(--title)">›</div>' : ''}
+          </div>
+        </button>`;
+      }).join('')}
+    </div>`;
+}
+
+function openWorkoutExercise(cycleNum, weekNum, sessionIdx, exerciseIdx) {
+  const vp = cycleNum === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === cycleNum) || {}).plan;
+  const w = vp.weeks[weekNum - 1];
+  const session = w.sessions[sessionIdx];
+  const line = session.exercises[exerciseIdx];
+  const ex = matchExercise(line);
+  const editable = cycleNum === state.cycleNum;
+  const log = getLog(cycleNum, weekNum, sessionIdx, exerciseIdx);
+  const content = document.getElementById('modal-day-content');
+  const total = session.exercises.length;
+  const prev = exerciseIdx > 0 ? exerciseIdx - 1 : null;
+  const next = exerciseIdx < total - 1 ? exerciseIdx + 1 : null;
+
+  content.innerHTML = `
+    <button onclick="showWorkoutList(${cycleNum},${weekNum},${sessionIdx})" style="border:none;background:none;color:var(--title);font-family:var(--ff);font-weight:700;font-size:12px;padding:0 0 14px;cursor:pointer">← Ver todos os exercícios</button>
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px">
+      <div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Exercício ${exerciseIdx+1} de ${total}</div>
+        <div style="font-family:var(--ff);font-weight:800;font-size:20px;margin-top:3px">${ex ? ex.icon+' '+ex.name : line.split(' — ')[0]}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:5px">${line.includes(' — ') ? line.split(' — ').slice(1).join(' · ') : ''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openTimer()">⏱ Descanso</button>
+    </div>
+
+    ${ex && ex.video ? `<div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#111;margin-bottom:14px"><iframe src="https://www.youtube-nocookie.com/embed/${ex.video}?rel=0" title="${escapeHtml(ex.name)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>` : `<div style="padding:18px;border-radius:12px;background:var(--s2);color:var(--muted);font-size:12px;text-align:center;margin-bottom:14px">Vídeo ainda não cadastrado para este exercício.</div>`}
+
+    ${ex ? `<div class="card" style="margin-bottom:12px">
+      <div style="font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:8px">Como fazer</div>
+      ${ex.cues.map((c,i)=>`<div style="display:flex;gap:8px;margin:7px 0;font-size:12px;line-height:1.45;color:var(--muted)"><b style="color:var(--title)">${i+1}.</b><span>${c}</span></div>`).join('')}
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:6px">Base científica</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5">${ex.science}</div>
+    </div>` : ''}
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:10px">Seu registro</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="input-label">Carga (kg)</label><input type="number" step="0.5" value="${log.carga||''}" ${editable?'':'disabled'} placeholder="Ex: 20" onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'carga',this.value)" style="width:100%"/></div>
+        <div><label class="input-label">Dificuldade</label><select ${editable?'':'disabled'} onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'dificuldade',this.value)" style="width:100%"><option value="">0–10</option>${[...Array(11).keys()].map(n=>`<option value="${n}" ${String(log.dificuldade)===String(n)?'selected':''}>${n}/10</option>`).join('')}</select></div>
+      </div>
+      <div style="margin-top:9px"><label class="input-label">Nível realizado</label><select ${editable?'':'disabled'} onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'status',this.value)" style="width:100%"><option value="">Selecione</option><option value="completo" ${log.status==='completo'?'selected':''}>Completei como prescrito</option><option value="parcial" ${log.status==='parcial'?'selected':''}>Completei parcialmente</option><option value="adaptado" ${log.status==='adaptado'?'selected':''}>Fiz uma adaptação</option><option value="nao" ${log.status==='nao'?'selected':''}>Não consegui realizar</option></select></div>
+      <div style="margin-top:9px"><label class="input-label">Feedback</label><textarea ${editable?'':'disabled'} placeholder="Ex: fiz 8 repetições, senti a perna esquerda mais cansada..." onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'obs',this.value)" style="width:100%;min-height:72px;padding:10px;border-radius:10px;border:1px solid var(--b1);background:var(--s2);color:var(--txt);font-family:var(--fb)">${escapeHtml(log.obs||'')}</textarea></div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      ${prev!==null ? `<button class="btn btn-ghost" style="flex:1" onclick="openWorkoutExercise(${cycleNum},${weekNum},${sessionIdx},${prev})">← Anterior</button>` : ''}
+      ${next!==null ? `<button class="btn btn-acc" style="flex:1" onclick="openWorkoutExercise(${cycleNum},${weekNum},${sessionIdx},${next})">Próximo →</button>` : `<button class="btn btn-acc" style="flex:1" onclick="showWorkoutList(${cycleNum},${weekNum},${sessionIdx})">✓ Voltar à lista</button>`}
+    </div>`;
+}
+
+function showWorkoutList(cycleNum, weekNum, sessionIdx) {
+  const vp = cycleNum === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === cycleNum) || {}).plan;
+  const w = vp.weeks[weekNum - 1];
+  document.getElementById('modal-day-content').innerHTML = renderDayContent(cycleNum, weekNum, sessionIdx, w.sessions[sessionIdx], cycleNum === state.cycleNum);
 }
 
 function getLog(c, w, s, e) {
-  return (((state.logs[c]||{})[w]||{})[s]||{})[e] || { carga:'', dificuldade:'', obs:'' };
+  return (((state.logs[c]||{})[w]||{})[s]||{})[e] || { carga:'', dificuldade:'', status:'', obs:'' };
 }
 
 function updateLog(c, w, s, e, field, val) {
   state.logs[c] = state.logs[c] || {};
   state.logs[c][w] = state.logs[c][w] || {};
   state.logs[c][w][s] = state.logs[c][w][s] || {};
-  state.logs[c][w][s][e] = state.logs[c][w][s][e] || { carga:'', dificuldade:'', obs:'' };
+  state.logs[c][w][s][e] = state.logs[c][w][s][e] || { carga:'', dificuldade:'', status:'', obs:'' };
   state.logs[c][w][s][e][field] = val;
   saveState();
 }
@@ -2679,7 +2728,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-28-reavaliacao-1';
+const APP_VERSION = '2026-09-28-workout-player-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
