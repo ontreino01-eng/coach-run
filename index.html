@@ -540,7 +540,7 @@ textarea{resize:vertical;min-height:70px}
         </div>
       </div>
       <div class="input-group" style="margin-top:16px"><label class="input-label">Nível de estresse atual</label>
-        <div class="scale-btns" id="scale-av-estresse">${[...Array(11).keys()].map(i => `<div class="scale-btn" onclick="selectScale('av-estresse',${i},this)">${i}</div>`).join('')}</div>
+        <div class="scale-btns" id="scale-av-estresse"><div class="scale-btn" onclick="selectScale('av-estresse',0,this)">0</div><div class="scale-btn" onclick="selectScale('av-estresse',1,this)">1</div><div class="scale-btn" onclick="selectScale('av-estresse',2,this)">2</div><div class="scale-btn" onclick="selectScale('av-estresse',3,this)">3</div><div class="scale-btn" onclick="selectScale('av-estresse',4,this)">4</div><div class="scale-btn" onclick="selectScale('av-estresse',5,this)">5</div><div class="scale-btn" onclick="selectScale('av-estresse',6,this)">6</div><div class="scale-btn" onclick="selectScale('av-estresse',7,this)">7</div><div class="scale-btn" onclick="selectScale('av-estresse',8,this)">8</div><div class="scale-btn" onclick="selectScale('av-estresse',9,this)">9</div><div class="scale-btn" onclick="selectScale('av-estresse',10,this)">10</div></div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px">0 = muito baixo · 10 = muito alto</div>
       </div>
       <div class="input-group" style="margin-top:16px"><label class="input-label">Meta / prova-alvo (opcional)</label>
@@ -1567,10 +1567,13 @@ async function closeTheCycle() {
   if (btn) btn.textContent = 'Consultando IA...';
   try {
     if (!sb) throw new Error('Backend não configurado');
+    const { data: { session: aiSession } } = await sb.auth.getSession();
+    if (!aiSession) throw new Error('Sessão não autenticada');
     const res = await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${aiSession.access_token}` },
       body: JSON.stringify({
         prevFocus, sport: 'corrida', nivel: state.profile.nivel,
+        profile: state.profile, lesoes: state.lesoes, parqAlert: state.parqAlert,
         testDeltas: deltas, overallPct, reassess: closeData.reassess, feedback: closeData.feedback, logsSummary,
       }),
     });
@@ -1601,10 +1604,45 @@ async function closeTheCycle() {
   const muscuExp = state.profile['av-exp-muscu'];
   state.profile.nivel = rf.forca < 4 && muscuExp === 'nenhuma' ? 'Iniciante' : rf.forca > 6 && muscuExp === 'avancada' ? 'Avançado' : 'Intermediário';
 
-  // Gera o próximo ciclo
+  // Gera o próximo ciclo completo pela IA usando avaliação + evolução + registros.
+  // A função backend limita a IA à biblioteca validada e à base científica oficial.
   const nextCycleNum = c + 1;
+  let nextPlan = null;
+  try {
+    if (!sb) throw new Error('Backend não configurado');
+    const { data: { session: planSession } } = await sb.auth.getSession();
+    if (!planSession) throw new Error('Sessão não autenticada');
+    if (btn) btn.textContent = 'Montando prescrição individual…';
+    const planRes = await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${planSession.access_token}` },
+      body: JSON.stringify({
+        action:'generate_plan',
+        cycleNum: nextCycleNum,
+        requestedFocus: nextFocusKey,
+        profile: state.profile,
+        scores: state.scores,
+        lesoes: state.lesoes,
+        parqAlert: state.parqAlert,
+        tests: { before:testBefore, after:testAfter, deltas, overallPct },
+        feedback: closeData.feedback,
+        reassess: closeData.reassess,
+        logsSummary,
+        previousPlan: state.history[state.history.length - 1]?.plan || null,
+        previousLogs: state.logs[c] || {}
+      })
+    });
+    const planData = await planRes.json();
+    if (!planRes.ok || !planData.plan || !Array.isArray(planData.plan.weeks)) throw new Error(planData.error || 'Plano inválido');
+    nextPlan = planData.plan;
+    nextPlan.cycleNum = nextCycleNum;
+    nextPlan.weeks.forEach((w, i) => { w.num = i + 1; w.cycleNum = nextCycleNum; });
+  } catch (e) {
+    console.warn('Prescrição completa por IA indisponível; usando motor local seguro:', e);
+    nextPlan = generateCycle(nextCycleNum, state.profile, state.lesoes, nextFocusKey);
+  }
   state.cycleNum = nextCycleNum;
-  state.plan = generateCycle(nextCycleNum, state.profile, state.lesoes, nextFocusKey);
+  state.plan = nextPlan;
   state.currentWeek = 1;
   state.completedWeeks = [];
   viewedCycle = null;
@@ -2728,7 +2766,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-29-placeholders-1';
+const APP_VERSION = '2026-09-30-prescription-engine-2';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
