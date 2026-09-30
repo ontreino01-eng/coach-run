@@ -413,9 +413,9 @@ textarea{resize:vertical;min-height:70px}
       <p class="section-sub">Vamos montar seu perfil de corredor para personalizar seus ciclos mensais de fortalecimento.</p>
       <input type="hidden" id="av-modalidade" value="corrida"/>
       <div class="card" style="border-color:var(--b2);margin-bottom:16px"><div class="card-title">🏃 Base do Corre</div><div class="card-sub">Fortalecimento especializado para corredores de rua, pista e trail. O app organiza força, estabilidade, mobilidade e potência sem substituir sua planilha de corrida.</div></div>
-      <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="av-nome" placeholder="Ex: Jonadabe"/></div>
-      <div class="input-group"><label class="input-label">Idade</label><input type="number" id="av-idade" placeholder="Ex: 32" min="16" max="80"/></div>
-      <div class="input-group"><label class="input-label">Peso (kg)</label><input type="number" id="av-peso" placeholder="Ex: 75" min="40" max="150"/></div>
+      <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="av-nome" placeholder="Nome"/></div>
+      <div class="input-group"><label class="input-label">Idade</label><input type="number" id="av-idade" placeholder="Idade" min="16" max="80"/></div>
+      <div class="input-group"><label class="input-label">Peso (kg)</label><input type="number" id="av-peso" placeholder="Peso" min="40" max="150"/></div>
       <div class="input-group"><label class="input-label">Gênero</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-genero','M',this)"><span class="radio-card-icon">👨</span><div class="radio-card-text"><div class="radio-card-title">Masculino</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
@@ -2728,7 +2728,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-29-light-contrast-1';
+const APP_VERSION = '2026-09-29-placeholders-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
