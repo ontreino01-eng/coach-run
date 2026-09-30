@@ -2107,11 +2107,11 @@ const EXERCISES = [
   {id:'t3',name:'Spanish Squat Isométrico',cat:'tendão',icon:'🦵',bg:'rgba(92,107,58,.12)',params:'5×45-90s · descanso 2min',level:'Iniciante',equipment:'Elástico/parede',video:'',
    science:'Isometria pode ser uma opção de fortalecimento em determinados contextos; não é tratamento universal nem diagnóstico de tendinopatia.',
    cues:['Ângulo de 60-70° de flexão de joelho','Joelhos avançam via elástico','Dor > 5/10 = reduzir ângulo de flexão','Versão avançada: single-leg wall sit']},
-  {id:'t4',name:'Isometria de Patela (Wall Sit)',cat:'tendão',icon:'🧱',bg:'rgba(92,107,58,.12)',params:'4×30s · descanso 45s',level:'Iniciante',equipment:'Parede',video:'EQLQqcvIHQ',
+  {id:'t4',name:'Isometria de Patela (Wall Sit)',cat:'tendão',icon:'🧱',bg:'rgba(92,107,58,.12)',params:'4×30s · descanso 45s',level:'Iniciante',equipment:'Parede',video:'_EQLQqcvIHQ',
    science:'Isometria permite treinar força com amplitude limitada; selecione a posição conforme tolerância e objetivo.',
    cues:['Costas planas na parede durante todo o exercício','Joelhos a 70° — nunca ultrapasse 90°','Progressão: bilateral → unilateral','Quadríceps em máxima tensão']},
   // MÚSCULOS
-  {id:'m1',name:'Bulgarian Split Squat',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×6-10 · carga progressiva',level:'Intermediário',equipment:'Halteres',video:'IV7_ubtUPOKqN_jO',
+  {id:'m1',name:'Bulgarian Split Squat',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×6-10 · carga progressiva',level:'Intermediário',equipment:'Halteres',video:'DxwboLph9cM',
    science:'Exercício unilateral que pode desenvolver força e controle no membro inferior; escolha conforme nível e tolerância.',
    cues:['Torso 30-45° inclinado para frente — foca no glúteo','Pé traseiro no banco — não force amplitude','Carga progressiva semana a semana','Nunca deixe joelho cair para dentro']},
   {id:'m2',name:'Back Squat',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'4×4-6 · 80-90% RM',level:'Intermediário',equipment:'Barra',video:'ab0MefHMes8',
@@ -2130,7 +2130,7 @@ const EXERCISES = [
   {id:'c1',name:'McGill Big 3: Modified Curl-up',cat:'core',icon:'🔗',bg:'rgba(255,107,53,.1)',params:'3×10 · segurar 10s cada',level:'Iniciante',equipment:'Solo',video:'rgMg8jRsWGI',
    science:'Exercícios de resistência do tronco podem contribuir para controle e tolerância à carga; não são tratamento ou garantia de proteção lombar.',
    cues:['Mãos embaixo da lombar para manter curvatura natural','NÃO faça abdominal normal (flexão de coluna) — ineficaz para corrida','Cotovelos podem tocar o chão (menos alavanca)','Adicionar peso no peito — progressão avançada']},
-  {id:'c2',name:'McGill Big 3: Bird-Dog',cat:'core',icon:'🦅',bg:'rgba(255,107,53,.1)',params:'3×8-10 · segurar 8-10s',level:'Iniciante',equipment:'Solo',video:'zicIAZy5iJSrNZyN',
+  {id:'c2',name:'McGill Big 3: Bird-Dog',cat:'core',icon:'🦅',bg:'rgba(255,107,53,.1)',params:'3×8-10 · segurar 8-10s',level:'Iniciante',equipment:'Solo',video:'D6QnX54rrK0',
    science:'Treina controle de tronco e coordenação cruzada; use como complemento, sem afirmar transferência direta garantida.',
    cues:['Braço e perna opostos — totalmente estendidos, paralelos ao chão','NUNCA arque a lombar ou gire o quadril','Qualidade > quantidade — prefira menos com controle total','Progressão: adicionar peso na mão ou tornozelo']},
   {id:'c3',name:'McGill Big 3: Side Plank',cat:'core',icon:'🧱',bg:'rgba(255,107,53,.1)',params:'3×30-45s · cada lado',level:'Iniciante',equipment:'Solo',video:'RlZqNdeyBE4',
@@ -2182,7 +2182,7 @@ const EXERCISES = [
    science:'Mobilidade dinâmica da cadeia posterior; a escolha depende da sensação, objetivo e resposta individual.',
    cues:['Perna reta — eleva até sentir tensão suave (5-6/10)','Retorna antes de forçar — é dinâmico, não estático','Não deve superar 5-6/10 de tensão','Progressão: adicionar elástico ou peso no tornozelo']},
   // KIT ANTI-LESÃO
-  {id:'kit1',name:'Tibialis Raises',cat:'kit',icon:'🦴',bg:'rgba(92,107,58,.08)',params:'3×15 · cada lado',level:'Iniciante',equipment:'Parede',video:'6ivxZtvnX37I',
+  {id:'kit1',name:'Tibialis Raises',cat:'kit',icon:'🦴',bg:'rgba(92,107,58,.08)',params:'3×15 · cada lado',level:'Iniciante',equipment:'Parede',video:'ivxZtvnX37I',
    science:'Fortalece a dorsiflexão do tornozelo; pode ser útil quando compatível com o objetivo e a tolerância do corredor.',
    cues:['Apoie a perna na parede ou banco','Puxa o pé para cima — só o movimento de dorsiflexão','Pode causar câimbra na canela nas primeiras semanas — hidrate bem','Faça antes de correr como ativação']},
   {id:'kit2',name:'Peroneal Raises (Eversão)',cat:'kit',icon:'🦶',bg:'rgba(92,107,58,.08)',params:'3×15 · com elástico',level:'Iniciante',equipment:'Elástico',video:'',
@@ -2766,7 +2766,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-09-30-video-fixes-3';
+const APP_VERSION = '2026-09-30-video-fixes-4';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
