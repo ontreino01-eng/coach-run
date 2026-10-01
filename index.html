@@ -49,7 +49,6 @@ button,input,select,textarea{color-scheme:light}
 
 /* ── BOTTOM NAV ── */
 .bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(100%,480px);height:calc(64px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);backdrop-filter:blur(16px);border-top:1px solid var(--b1);display:flex;align-items:flex-start;z-index:50;padding:7px 8px calc(7px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(17,23,17,.05)}
-.chat-fab{display:none!important}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:none;cursor:pointer;padding:3px 0;transition:all .15s}
 .bnav-icon{font-size:19px;filter:grayscale(1) opacity(.4);transition:all .15s}
 .bnav-lbl{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-family:var(--ff);transition:all .15s}
@@ -57,6 +56,13 @@ button,input,select,textarea{color-scheme:light}
 .bnav-btn.active .bnav-lbl{color:var(--title)}
 .bnav-dot{width:4px;height:4px;border-radius:50%;background:var(--acc);display:none}
 .bnav-btn.active .bnav-dot{display:block}
+@media (max-width:380px){
+  .hero-title{font-size:23px}
+  .pad{padding-left:14px;padding-right:14px}
+  .plan-hero{padding-left:14px;padding-right:14px}
+  .week-grid{padding-left:14px;padding-right:14px}
+  .bnav-lbl{font-size:8px}
+}
 
 /* ── COMMON ── */
 .pad{padding:20px 18px}
@@ -987,68 +993,6 @@ async function gateLogout() {
 }
 
 // ══════════════════════════════════════════════════════
-// CHAT DE DÚVIDAS
-// ══════════════════════════════════════════════════════
-let chatHistory = [];
-
-function openChat() {
-  if (!state.assessed) { showToast('🔒 O chat é liberado depois que você ativa seu acesso'); return; }
-  document.getElementById('screen-chat').style.display = 'flex';
-  if (!chatHistory.length) {
-    addChatBubble('assistant', 'Oi! Pode perguntar sobre técnica de exercício, sobre como o fortalecimento se encaixa no seu treino, ou dúvidas sobre o app. Não substituo seu treinador nem um profissional de saúde — pra dor ou lesão, sempre procure avaliação presencial.');
-  }
-  setTimeout(() => document.getElementById('chat-input')?.focus(), 200);
-}
-
-function closeChat() { document.getElementById('screen-chat').style.display = 'none'; }
-
-function addChatBubble(role, text) {
-  const el = document.getElementById('chat-messages');
-  const bubble = document.createElement('div');
-  bubble.style.cssText = `max-width:82%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;white-space:pre-wrap;font-family:var(--fb);` +
-    (role === 'user'
-      ? 'align-self:flex-end;background:var(--acc);color:var(--accTxt);border-bottom-right-radius:4px'
-      : 'align-self:flex-start;background:var(--s2);color:var(--txt);border-bottom-left-radius:4px');
-  bubble.textContent = text;
-  el.appendChild(bubble);
-  el.scrollTop = el.scrollHeight;
-  return bubble;
-}
-
-async function sendChatMsg() {
-  const input = document.getElementById('chat-input');
-  let msg = input.value.trim();
-  if (!msg) return;
-  if (msg.length > 1000) msg = msg.slice(0, 1000); // limite de tamanho — protege custo de IA
-  input.value = '';
-  addChatBubble('user', msg);
-  chatHistory.push({ role: 'user', content: msg });
-  const thinking = addChatBubble('assistant', '···');
-
-  try {
-    if (!sb) throw new Error('backend não configurado');
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) throw new Error('não autenticado');
-    const context = state.assessed ? {
-      sport: modLabel(state.profile['av-modalidade']),
-      nivel: state.profile.nivel,
-      focus: state.plan?.focus?.name,
-    } : null;
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/chat-duvidas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ message: msg, history: chatHistory.slice(-8, -1), context }),
-    });
-    const data = await res.json();
-    thinking.textContent = data.reply || 'Não consegui responder agora — tenta de novo em instantes.';
-    chatHistory.push({ role: 'assistant', content: data.reply || '' });
-  } catch (e) {
-    thinking.textContent = 'Chat ainda indisponível — o backend de IA deste app não foi configurado ainda (ver DEPLOY_GUIDE.md), ou você está sem internet.';
-    chatHistory.pop();
-  }
-}
-
-// ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
 let state = JSON.parse(localStorage.getItem('cr_state') || 'null') || {
@@ -1148,7 +1092,8 @@ function updateHdrSub() {
       ? `${modLabel(state.profile['av-modalidade'])} · Ciclo ${state.cycleNum}`
       : 'Fortalecimento inteligente para corredores';
   }
-
+  const nav = document.querySelector('.bnav');
+  if (nav) nav.style.display = state.assessed ? 'flex' : 'none';
 }
 
 // ══════════════════════════════════════════════════════
@@ -2771,7 +2716,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-01-mvp-onboarding-ui-1';
+const APP_VERSION = '2026-10-01-mvp-onboarding-ui-2';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
