@@ -1,0 +1,32 @@
+{
+  "name": "Base do Corre",
+  "short_name": "Base do Corre",
+  "id": "https://basedocorre.com.br/",
+  "description": "Fortalecimento complementar para corredores, com avaliação, ciclos de 4 semanas, registro de treino e reavaliação.",
+  "start_url": "/?source=pwa2",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F7F5",
+  "theme_color": "#FF5A1F",
+  "lang": "pt-BR",
+  "categories": [
+    "fitness",
+    "health",
+    "sports"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-bc.svg?v=2",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-bc.svg?v=2",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
