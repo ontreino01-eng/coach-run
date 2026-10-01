@@ -1,14 +1,20 @@
 {
   "name": "Base do Corre — Fortalecimento para Corrida",
   "short_name": "Base do Corre",
-  "description": "Fortalecimento especializado para corredores, com avaliação funcional, ciclos mensais e acompanhamento por IA.",
-  "start_url": "./",
-  "scope": "./",
+  "id": "/",
+  "description": "Fortalecimento complementar para corredores, com avaliação, ciclos de 4 semanas, registro de treino e reavaliação.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1C1C1A",
-  "theme_color": "#1C1C1A",
+  "background_color": "#F6F7F5",
+  "theme_color": "#FF5A1F",
   "lang": "pt-BR",
+  "categories": [
+    "fitness",
+    "health",
+    "sports"
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
