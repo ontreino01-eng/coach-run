@@ -3,7 +3,7 @@
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'base-do-corre-v4';
+const CACHE = 'base-do-corre-v5';
 const APP_SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
