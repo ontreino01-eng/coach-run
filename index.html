@@ -805,8 +805,22 @@ async function initAuth() {
   }
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) { await onAuthenticated(session); }
-    else { hideGate(); routeToEntryScreen(); }
+    if (session) {
+      localStorage.setItem('bc_has_account', '1');
+      await onAuthenticated(session);
+    } else {
+      // Nunca libera um plano autenticado apenas porque sobrou state no localStorage.
+      if (state && state.assessed) {
+        localStorage.removeItem('cr_state');
+        state = { assessed:false, cycleNum:0, currentWeek:1, completedWeeks:[], profile:{}, scores:{}, lesoes:[], plan:null, parqAlert:false, logs:{}, tests:{}, history:[], lead:null };
+      }
+      if (localStorage.getItem('bc_has_account') === '1') {
+        showGate('login');
+      } else {
+        hideGate();
+        routeToEntryScreen();
+      }
+    }
   } catch (e) {
     console.error(e);
     hideGate();
@@ -846,6 +860,7 @@ function hideGate() { document.getElementById('gate-overlay').style.display = 'n
 
 async function onAuthenticated(session) {
   currentUserId = session.user.id;
+  localStorage.setItem('bc_has_account', '1');
   try {
     const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
     if (profile && profile.state && Object.keys(profile.state).length) {
@@ -998,8 +1013,38 @@ async function gateSetNewPassword() {
 }
 
 async function gateLogout() {
-  if (sb) await sb.auth.signOut();
-  location.reload();
+  const buttons = [...document.querySelectorAll('button')].filter(b => b.textContent.trim() === 'Sair da conta');
+  buttons.forEach(b => { b.disabled = true; b.textContent = 'Saindo…'; });
+
+  try {
+    // Remove primeiro o acesso local, para o plano nunca continuar visível
+    // mesmo se a rede estiver lenta ou o logout remoto falhar.
+    currentUserId = null;
+    gateData = {};
+    localStorage.removeItem('cr_state');
+    localStorage.setItem('bc_has_account', '1');
+    state = {
+      assessed:false, cycleNum:0, currentWeek:1, completedWeeks:[],
+      profile:{}, scores:{}, lesoes:[], plan:null, parqAlert:false,
+      logs:{}, tests:{}, history:[], lead:null
+    };
+
+    if (sb) {
+      try {
+        const { error } = await sb.auth.signOut({ scope: 'local' });
+        if (error) console.warn('Logout remoto retornou erro:', error);
+      } catch (e) {
+        console.warn('Logout remoto falhou, sessão local já foi removida:', e);
+      }
+    }
+
+    document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+    updateHdrSub();
+    showGate('login');
+    showToast('✅ Você saiu da conta');
+  } finally {
+    buttons.forEach(b => { b.disabled = false; b.textContent = 'Sair da conta'; });
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -2769,7 +2814,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-01-pwa-manifest-v2';
+const APP_VERSION = '2026-10-01-logout-fix-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
