@@ -3,7 +3,7 @@
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'base-do-corre-v5';
+const CACHE = 'base-do-corre-v6';
 const APP_SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
@@ -25,8 +25,17 @@ self.addEventListener('fetch', (e) => {
   }
 
   const isHTML = e.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/');
+  const isManifest = url.endsWith('/manifest.json') || url.endsWith('manifest.json');
 
-  if (isHTML) {
+  if (isManifest) {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+  } else if (isHTML) {
     e.respondWith(
       fetch(e.request).then((res) => {
         const resClone = res.clone();
