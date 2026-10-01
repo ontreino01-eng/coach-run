@@ -7,7 +7,7 @@
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#F6F7F5"/>
+<meta name="theme-color" content="#FF5A1F"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -337,6 +337,16 @@ textarea{resize:vertical;min-height:70px}
         <div class="card-title">🎯 Começar avaliação</div>
         <div class="card-sub">Responda 6 blocos de perguntas + um teste físico, de graça, e veja um ciclo mensal de fortalecimento criado para o seu perfil de corredor — sua planilha de corrida continua sendo a do seu treinador.</div>
         <button class="btn btn-acc btn-full" style="margin-top:12px" onclick="startAssessment()">Fazer avaliação agora →</button>
+      </div>
+    </div>
+    <div id="pwa-install-card" class="card" style="display:none;border-color:var(--b2);background:linear-gradient(160deg,rgba(255,90,31,.05),rgba(46,125,91,.04));margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="font-size:28px;line-height:1">📲</div>
+        <div style="flex:1">
+          <div class="card-title">Instalar Base do Corre</div>
+          <div class="card-sub" style="margin-bottom:10px">Adicione o app à tela inicial para abrir em tela cheia, sem a barra do navegador.</div>
+          <button class="btn btn-acc btn-full" onclick="installBaseDoCorre()">Instalar aplicativo</button>
+        </div>
       </div>
     </div>
     <div id="home-plan-area" style="display:none">
@@ -990,6 +1000,48 @@ async function gateSetNewPassword() {
 async function gateLogout() {
   if (sb) await sb.auth.signOut();
   location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// INSTALAÇÃO PWA
+// ══════════════════════════════════════════════════════
+let deferredInstallPrompt = null;
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function updateInstallCard() {
+  const card = document.getElementById('pwa-install-card');
+  if (!card) return;
+  card.style.display = (!isStandaloneMode() && deferredInstallPrompt) ? 'block' : 'none';
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  updateInstallCard();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  updateInstallCard();
+  showToast('✅ Base do Corre instalado');
+});
+
+async function installBaseDoCorre() {
+  if (isStandaloneMode()) {
+    showToast('✅ O Base do Corre já está instalado');
+    return;
+  }
+  if (!deferredInstallPrompt) {
+    showToast('No Chrome, abra o menu ⋮ e toque em “Instalar app” ou “Adicionar à tela inicial”.');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  try { await deferredInstallPrompt.userChoice; } catch (e) {}
+  deferredInstallPrompt = null;
+  updateInstallCard();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1776,6 +1828,7 @@ function buildKitAntiLesao(sport) {
 // RENDER HOME
 // ══════════════════════════════════════════════════════
 function renderHome() {
+  updateInstallCard();
   if (state.assessed && state.plan) {
     document.getElementById('home-cta-area').style.display = 'none';
     document.getElementById('home-plan-area').style.display = 'block';
@@ -2716,7 +2769,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-01-mvp-onboarding-ui-2';
+const APP_VERSION = '2026-10-01-pwa-install-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
