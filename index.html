@@ -1770,8 +1770,8 @@ function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
   const deloadMod = isDeload ? ' (volume -40%)' : '';
   const encaixe = 'Encaixe: siga sua planilha de corrida. Evite colocar esta sessão pesada imediatamente antes do treino de corrida mais importante; quando ocorrer no mesmo dia, separe as sessões quando possível e priorize seu objetivo principal.';
 
-  const anti = ['McGill Modified Curl-up — 3×10 seg.10s','Bird-Dog — 3×8/lado seg.8s','Side Plank — 3×30s/lado'];
-  const core = [...anti, 'Pallof Press — 3×10/lado'];
+  const anti = ['McGill Big 3: Modified Curl-up — 3×8-10 · segurar 8-10s','McGill Big 3: Bird-Dog — 3×8/lado · segurar 6-8s','McGill Big 3: Side Plank — 3×20-30s/lado'];
+  const core = [...anti, 'Pallof Press (Anti-Rotação) — 3×8-10/lado · segurar 3-5s'];
   const shoulder = buildShoulder(isDeload, temOmbro);
   const impact = true;
 
@@ -1808,15 +1808,17 @@ function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
 function buildLower(phase, nivel, flags, isDeload, sport) {
   const { temJoelho, temAquiles, temIsquio } = flags;
   const s = isDeload ? '2' : phase.num <= 1 ? '3' : '4';
-  const load = phase.num === 1 ? '60-70% RM' : phase.num === 2 ? '80-85% RM' : '85-90% RM';
+  const reps = phase.num <= 1 ? '8-10' : '5-6';
+  const effort = phase.num <= 1 ? 'RPE 6-7 · 3-4 reps em reserva' : phase.num === 2 ? 'RPE 7-8 · 2-3 reps em reserva' : 'RPE 8 · cerca de 2 reps em reserva';
   const ex = [];
-  ex.push(`Back Squat / Trap Bar Deadlift — ${s}×${phase.num<=1?'8-10':'4-6'} (${load})`);
-  if (temAquiles) ex.push('Protocolo Alfredson — 3×15 (perna reta + dobrada em degrau)');
-  if (temJoelho) ex.push('Spanish Squat Isométrico — 3×45s (60° flexão, analgesia cortical)');
-  ex.push('Hip Thrust — 3×10-12 (pico iso 1-2s)');
-  if (temIsquio) ex.push('Nordic Hamstring Curl — 2×5-8 exc. lento 3-5s (assistido → livre)');
-  ex.push('Calf Raise Excêntrico — 3×12/lado (4s descida)');
-  ex.push('Kit Anti-Lesão: Tibialis Raises 3×15 · Peroneal 3×15 · Clamshells 3×15');
+  ex.push(`Back Squat — ${s}×${reps} · ${effort} · descanso 2-3 min`);
+  if (temAquiles) ex.push('Alfredson Heel Drop (Aquiles) — 3×12-15/lado · descida controlada · sem aumentar dor');
+  if (temJoelho) ex.push('Spanish Squat Isométrico — 3×30-45s · esforço confortável/moderado · interrompa se houver piora de dor');
+  ex.push('Hip Thrust — 3×8-12 · RPE 7 · pausa 1-2s no topo · descanso 90s');
+  if (temIsquio) ex.push('Nordic Hamstring Curl — 2×5-8 · excêntrico controlado · usar assistência se necessário');
+  ex.push('Calf Raise Excêntrico (degrau) — 3×10-12/lado · descida 3-4s · descanso 60-90s');
+  ex.push('Tibialis Raises — 2-3×12-15 · controle total');
+  ex.push('Peroneal Raises (Eversão) — 2-3×12-15/lado · controle total');
   return ex;
 }
 
@@ -1826,7 +1828,7 @@ function buildUnilateral(phase, nivel, isDeload, sport) {
   const ex = [
     `Bulgarian Split Squat — ${s}×8/lado (${load}, torso 30-45°)`,
     `Single Leg RDL — ${s}×8-10/lado (equilíbrio + controle tornozelo)`,
-    'Step-Up — 3×10/lado (banco 30cm, empurrar com perna da frente)',
+    'Walking Lunge — 3×8-10/lado · RPE 7 · controle da passada',
     'Deadbug — 3×10 (lombar colada ao chão)',
   ];
   return ex;
@@ -1842,31 +1844,30 @@ function buildPlio(phase, isDeload, sport) {
 function buildUpper(isDeload) {
   const s = isDeload ? '2' : '3';
   return [
-    `Pull-ups / Remada — ${s}×8-10`,
-    `Shoulder Press — ${s}×10`,
-    'Y-T-W em prono — 3×10 cada (estabilizadores escapulares)',
-    'Face Pull com elástico — 3×15',
+    `Remada Curvada — ${s}×8-10 · RPE 7 · descanso 90s`,
+    `Desenvolvimento de Ombro (Shoulder Press) — ${s}×8-10 · RPE 7 · descanso 90s`,
+    'Y-T-W em Prono — 2-3×8-10 cada posição · controle escapular',
+    'Face Pull com Elástico — 2-3×12-15 · controle escapular',
   ];
 }
 
 function buildShoulder(isDeload, temOmbro) {
   const s = isDeload ? '2' : '3';
   return [
-    `Rotação Externa com elástico — ${s}×15/lado (controle do ombro e postura de corrida)`,
-    'Face Pull com elástico — 3×15 (controle escapular)',
-    'Serrátil Anterior (Wall Slide) — 3×12',
-    temOmbro ? 'Reduza amplitude e carga em caso de dor >3/10 — priorize controle sobre volume' : 'Y-T-W em prono — 3×10 cada',
+    `Rotação Externa com Elástico — ${s}×12-15/lado · controle do ombro`,
+    'Face Pull com Elástico — 2-3×12-15 · controle escapular',
+    'Serrátil Anterior (Wall Slide) — 2-3×10-12 · movimento controlado',
+    temOmbro ? 'Orientação: reduza amplitude/carga se houver desconforto e procure avaliação se a dor persistir ou piorar' : 'Y-T-W em Prono — 2-3×8-10 cada posição',
   ];
 }
 
 function buildKitAntiLesao(sport) {
-  const ex = [
-    'Tibialis Raises — 3×15',
-    'Peroneal Raises — 3×15',
-    'Clamshells com Banda — 3×15/lado',
-    'Deep Squat Hold — 3-5min (mobilidade de quadril)',
+  return [
+    'Tibialis Raises — 2-3×12-15 · controle total',
+    'Peroneal Raises (Eversão) — 2-3×12-15/lado · controle total',
+    'Clamshells com Banda — 2-3×12-15/lado · controle de quadril',
+    'Deep Squat Hold — 2-3×30-45s · amplitude confortável',
   ];
-  return ex;
 }
 
 // ══════════════════════════════════════════════════════
@@ -2027,8 +2028,55 @@ function showModalDay(cycleNum, weekNum, idx, btn) {
   document.getElementById('modal-day-content').innerHTML = renderDayContent(cycleNum, weekNum, idx, w.sessions[idx], isCurrentCycle);
 }
 
-function isLoggableEx(ex) { return !(ex.startsWith('Kit')||ex.startsWith('<')||ex.startsWith('Encaixe')||ex.startsWith('Dose')); }
-function matchExercise(line) { return EXERCISES.find(e => line.startsWith(e.name)); }
+function isLoggableEx(ex) { return !(ex.startsWith('Kit')||ex.startsWith('<')||ex.startsWith('Encaixe')||ex.startsWith('Dose')||ex.startsWith('Orientação:')); }
+
+const EXERCISE_ALIASES = {
+  'agachamento com barra': 'Back Squat',
+  'back squat / trap bar deadlift': 'Back Squat',
+  'agachamento frontal': 'Front Squat',
+  'avanço com halteres': 'Walking Lunge',
+  'avanco com halteres': 'Walking Lunge',
+  'mcgill modified curl-up': 'McGill Big 3: Modified Curl-up',
+  'bird-dog': 'McGill Big 3: Bird-Dog',
+  'bird dog': 'McGill Big 3: Bird-Dog',
+  'side plank': 'McGill Big 3: Side Plank',
+  'prancha lateral': 'McGill Big 3: Side Plank',
+  'pallof press': 'Pallof Press (Anti-Rotação)',
+  'shoulder press': 'Desenvolvimento de Ombro (Shoulder Press)',
+  'face pull com elástico': 'Face Pull com Elástico',
+  'face pull com elastico': 'Face Pull com Elástico',
+  'rotação externa com elástico': 'Rotação Externa com Elástico',
+  'rotacao externa com elastico': 'Rotação Externa com Elástico',
+  'y-t-w em prono': 'Y-T-W em Prono',
+  'protocolo alfredson': 'Alfredson Heel Drop (Aquiles)',
+  'calf raise excêntrico': 'Calf Raise Excêntrico (degrau)',
+  'calf raise excentrico': 'Calf Raise Excêntrico (degrau)',
+  'peroneal raises': 'Peroneal Raises (Eversão)',
+  'pull-ups / remada': 'Remada Curvada'
+};
+
+function normalizeExerciseName(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+
+function prescribedExerciseName(line) {
+  return String(line || '').split(' — ')[0].trim();
+}
+
+function matchExercise(line) {
+  const prescribed = prescribedExerciseName(line);
+  const normalized = normalizeExerciseName(prescribed);
+
+  // Exact library name first; longer names first prevents prefix collisions.
+  const exact = [...EXERCISES].sort((a,b) => b.name.length - a.name.length)
+    .find(e => normalizeExerciseName(e.name) === normalized);
+  if (exact) return exact;
+
+  const canonical = EXERCISE_ALIASES[normalized];
+  if (canonical) return EXERCISES.find(e => e.name === canonical) || null;
+
+  return null;
+}
 
 function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
   return `
@@ -2301,7 +2349,7 @@ const EXERCISES = [
    science:'Isometria de quadríceps com amplitude ajustável; use para desenvolver tolerância e controle quando apropriado.',
    cues:['Joelhos a 90°, costas totalmente apoiadas na parede','Peso nos calcanhares, não na ponta do pé','Se tremer muito, é normal — sinal de fadiga isométrica','Mesmo protocolo do teste físico — dá pra comparar evolução']},
   // MÚSCULO (força máxima — Balsalobre-Fernández)
-  {id:'m11',name:'Hip Thrust',cat:'músculo',icon:'🍑',bg:'rgba(42,74,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/banco',video:'pXKuXiqf0UQ',
+  {id:'m11',name:'Hip Thrust com Barra',cat:'músculo',icon:'🍑',bg:'rgba(42,74,53,.1)',params:'3×8-10',level:'Intermediário',equipment:'Barra/banco',video:'pXKuXiqf0UQ',
    science:'Exercício de extensão de quadril que pode compor o fortalecimento do corredor; a escolha depende do objetivo e da tolerância individual.',
    cues:['Escápulas apoiadas no banco, queixo levemente recolhido','Sobe até quadril e tronco alinhados — sem hiperestender a lombar','Contrai o glúteo com força no topo, 1-2s','Desce controlado, sem deixar o peso "cair"']},
   {id:'m12',name:'Trap Bar Deadlift',cat:'músculo',icon:'🏋️',bg:'rgba(42,74,53,.1)',params:'3-4×4-6',level:'Avançado',equipment:'Trap Bar',video:'',
@@ -2814,7 +2862,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-01-logout-fix-1';
+const APP_VERSION = '2026-10-02-library-name-contract-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
