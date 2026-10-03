@@ -418,6 +418,10 @@ textarea{resize:vertical;min-height:70px}
     </div>
     <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="lead-nome" placeholder="Nome"/></div>
     <div class="input-group"><label class="input-label">Seu WhatsApp</label><input type="tel" id="lead-telefone" placeholder="(00) 00000-0000"/></div>
+    <label style="display:flex;gap:9px;align-items:flex-start;font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 12px">
+      <input type="checkbox" id="privacy-consent" style="margin-top:2px;accent-color:var(--acc)"/>
+      <span>Li a <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--title)">Política de Privacidade</a> e os <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--title)">Termos de Uso</a> e autorizo o tratamento dos dados fornecidos para avaliação e personalização do fortalecimento.</span>
+    </label>
     <button class="btn btn-acc btn-full" style="margin-top:8px" onclick="submitLead()">Começar avaliação gratuita →</button>
     <p style="font-size:11px;color:var(--sub);margin-top:16px;text-align:center;line-height:1.5">Já comprou? <a href="javascript:void(0)" onclick="showGate('licenca')" style="color:var(--title)">Ativar meu acesso</a></p>
   </div>
@@ -718,6 +722,12 @@ textarea{resize:vertical;min-height:70px}
       <button class="btn btn-acc btn-full" onclick="goToScreen('avaliacao');startAssessment()">Fazer avaliação agora</button>
     </div>
   </div>
+</div>
+
+<div id="legal-footer" style="text-align:center;padding:14px 18px 82px;font-size:10px;color:var(--sub)">
+  <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--sub)">Privacidade</a>
+  <span> · </span>
+  <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--sub)">Termos de Uso</a>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -1110,7 +1120,7 @@ function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); 
 
 async function ensureLeadId() {
   if (!sb || !state.lead || !state.lead.nome || !state.lead.telefone) return false;
-  if (state.lead.id) return true;
+  if (state.lead.id && state.lead.token) return true;
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/registrar-lead`, {
       method: 'POST',
@@ -1118,20 +1128,20 @@ async function ensureLeadId() {
       body: JSON.stringify({ nome: state.lead.nome, telefone: state.lead.telefone })
     });
     const data = await res.json();
-    if (!res.ok || !data.leadId) return false;
+    if (!res.ok || !data.leadId || !data.leadToken) return false;
     state.lead.id = data.leadId;
-    if (data.email && !state.lead.email) state.lead.email = data.email;
+    state.lead.token = data.leadToken;
     localStorage.setItem('cr_state', JSON.stringify(state));
     return true;
   } catch (e) {
-    console.warn('Não consegui recuperar o vínculo da avaliação', e);
+    console.warn('Não consegui criar o vínculo seguro da avaliação', e);
     return false;
   }
 }
 
 async function syncAssessmentToCloud(email = '') {
   if (!sb || !state.lead || !state.lead.telefone || !state.profile || !state.profile['av-modalidade']) return false;
-  if (!state.lead.id && !(await ensureLeadId())) return false;
+  if ((!state.lead.id || !state.lead.token) && !(await ensureLeadId())) return false;
   try {
     const cleanEmail = String(email || state.lead.email || '').trim().toLowerCase();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/salvar-avaliacao`, {
@@ -1139,6 +1149,7 @@ async function syncAssessmentToCloud(email = '') {
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
       body: JSON.stringify({
         leadId: state.lead.id,
+        leadToken: state.lead.token,
         nome: state.lead.nome || state.profile.nome || '',
         telefone: state.lead.telefone,
         email: cleanEmail,
@@ -1381,8 +1392,10 @@ async function submitLead() {
   const telefoneRaw = document.getElementById('lead-telefone').value.trim();
   const telefone = telefoneRaw.replace(/\D/g, '');
   if (!nome || telefone.length < 10) { showToast('⚠️ Preencha nome e um telefone válido (com DDD)'); return; }
+  const consent = document.getElementById('privacy-consent');
+  if (!consent || !consent.checked) { showToast('⚠️ Para continuar, leia e aceite a Política de Privacidade e os Termos de Uso.'); return; }
 
-  state.lead = { nome, telefone };
+  state.lead = { nome, telefone, consentAt: new Date().toISOString() };
   localStorage.setItem('cr_state', JSON.stringify(state));
 
   if (sb) {
@@ -1393,8 +1406,9 @@ async function submitLead() {
         body: JSON.stringify({ nome, telefone })
       });
       const data = await res.json();
-      if (!res.ok || !data.leadId) throw new Error(data.error || 'Lead não registrado');
+      if (!res.ok || !data.leadId || !data.leadToken) throw new Error(data.error || 'Lead não registrado');
       state.lead.id = data.leadId;
+      state.lead.token = data.leadToken;
       localStorage.setItem('cr_state', JSON.stringify(state));
     } catch (e) {
       console.warn('Não consegui registrar o lead na nuvem', e);
@@ -1434,7 +1448,7 @@ async function startKiwifyCheckout() {
     return;
   }
 
-  if (!state.lead.id && !(await ensureLeadId())) {
+  if ((!state.lead.id || !state.lead.token) && !(await ensureLeadId())) {
     if (button) { button.disabled = false; button.textContent = 'Quero meu plano →'; }
     showToast('⚠️ Não consegui conectar sua avaliação. Tente novamente.');
     return;
@@ -1481,14 +1495,14 @@ function renderPaywall() {
       <div class="card-title" style="margin-bottom:6px">Com o acesso completo você tem</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted)">
         <div>🔁 Ciclos mensais que se ajustam sozinhos ao seu progresso</div>
-        <div>📚 Biblioteca com mais de 100 exercícios, com vídeo</div>
-        <div>💬 Chat com IA pra tirar dúvida a qualquer hora</div>
+        <div>📚 Biblioteca de exercícios com vídeos e instruções técnicas</div>
         <div>📊 Comparação de teste físico a cada mês</div>
       </div>
     </div>
     <div class="input-group" style="margin-top:14px"><label class="input-label">E-mail para receber seu código</label><input type="email" id="pay-email" placeholder="voce@email.com" autocomplete="email" required/></div>
     <button id="pay-button" class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="startKiwifyCheckout()">Quero meu plano →</button>
-    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:12px">R$ 9,90/mês · preço fundador · pagamento seguro pela Kiwify</p>
+    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:6px">R$ 9,90/mês · preço fundador · pagamento seguro pela Kiwify</p>
+    <p style="text-align:center;font-size:10px;color:var(--sub);margin-bottom:12px">Ao continuar, aplicam-se os <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--title)">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--title)">Política de Privacidade</a>.</p>
     <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
   `;
 }
@@ -2908,7 +2922,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-03-structured-prescription-1';
+const APP_VERSION = '2026-10-03-privacy-security-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
