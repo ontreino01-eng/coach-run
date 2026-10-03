@@ -1764,6 +1764,25 @@ function generateCycle(cycleNum, data, lesoes, focusKey) {
 
 // Este app SÓ prescreve fortalecimento para corrida. As sessões abaixo nunca incluem
 // pace, quilometragem ou planilha de corrida — o treino de corrida é do seu treinador.
+
+function structureLocalSession(session) {
+  const notes = (session.exercises || []).filter(ex => !isLoggableEx(ex));
+  const real = (session.exercises || []).filter(ex => isLoggableEx(ex));
+  const mainCount = Math.min(2, real.length);
+  const structured = ['§ PREPARAÇÃO'];
+  if (real.length) structured.push(real[0] + ' · 1 série inicial leve/técnica antes das séries válidas quando aplicável');
+  structured.push('§ PARTE PRINCIPAL', ...real.slice(0, mainCount));
+  if (real.length > mainCount) structured.push('§ COMPLEMENTARES', ...real.slice(mainCount));
+  structured.push(...notes);
+  return {
+    ...session,
+    objective: session.objective || 'Executar a sessão com técnica estável e esforço compatível com o ciclo.',
+    method: session.method || 'Séries tradicionais; exercícios principais primeiro, complementares depois.',
+    durationMin: session.durationMin || 45,
+    progressionRule: session.progressionRule || 'Progredir carga ou repetições somente quando completar a faixa prescrita com técnica adequada e esforço dentro do alvo.',
+    exercises: structured
+  };
+}
 function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
   const { temJoelho, temAquiles, temIsquio, temLombar, temOmbro } = flags;
   const isDeload = week === 4;
@@ -1802,7 +1821,8 @@ function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
       exercises: [...buildKitAntiLesao(sport), encaixe] },
   ];
 
-  return dias <= 2 ? sessions2 : dias === 3 ? sessions3 : sessions4;
+  const selected = dias <= 2 ? sessions2 : dias === 3 ? sessions3 : sessions4;
+  return selected.map(structureLocalSession);
 }
 
 function buildLower(phase, nivel, flags, isDeload, sport) {
@@ -2028,7 +2048,16 @@ function showModalDay(cycleNum, weekNum, idx, btn) {
   document.getElementById('modal-day-content').innerHTML = renderDayContent(cycleNum, weekNum, idx, w.sessions[idx], isCurrentCycle);
 }
 
-function isLoggableEx(ex) { return !(ex.startsWith('Kit')||ex.startsWith('<')||ex.startsWith('Encaixe')||ex.startsWith('Dose')||ex.startsWith('Orientação:')); }
+function isSectionMarker(ex) { return String(ex || '').startsWith('§ '); }
+function isLoggableEx(ex) { return !(isSectionMarker(ex)||ex.startsWith('Kit')||ex.startsWith('<')||ex.startsWith('Encaixe')||ex.startsWith('Dose')||ex.startsWith('Orientação:')); }
+
+function loggableExerciseIndices(session) {
+  return (session.exercises || []).map((ex,i) => isLoggableEx(ex) ? i : null).filter(i => i !== null);
+}
+
+function sectionLabel(marker) {
+  return String(marker || '').replace(/^§\s*/, '').trim();
+}
 
 const EXERCISE_ALIASES = {
   'agachamento com barra': 'Back Squat',
@@ -2079,26 +2108,41 @@ function matchExercise(line) {
 }
 
 function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
+  const realIndices = loggableExerciseIndices(session);
   return `
     <div style="font-family:var(--ff);font-weight:700;font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
       ${session.emoji} ${session.name}
     </div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Toque em um exercício para abrir o modo de execução, ver vídeo e instruções e registrar como foi.</div>
+    ${session.objective || session.method || session.progressionRule ? `
+      <div class="card" style="padding:12px;margin-bottom:12px;background:var(--s2)">
+        ${session.objective ? `<div style="font-size:11px;line-height:1.45;margin-bottom:6px"><b>Objetivo:</b> ${escapeHtml(session.objective)}</div>` : ''}
+        ${session.method ? `<div style="font-size:11px;line-height:1.45;margin-bottom:6px"><b>Método:</b> ${escapeHtml(session.method)}</div>` : ''}
+        ${session.durationMin ? `<div style="font-size:11px;line-height:1.45;margin-bottom:6px"><b>Duração:</b> ~${escapeHtml(String(session.durationMin))} min</div>` : ''}
+        ${session.progressionRule ? `<div style="font-size:11px;line-height:1.45"><b>Progressão:</b> ${escapeHtml(session.progressionRule)}</div>` : ''}
+      </div>` : ''}
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px">Siga a ordem da sessão. Toque no exercício para ver vídeo, execução, base científica e registrar como foi.</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       ${session.exercises.map((ex,i) => {
+        if (isSectionMarker(ex)) {
+          return `<div style="margin-top:8px;padding:7px 2px 2px;font-family:var(--ff);font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--title);text-transform:uppercase">${escapeHtml(sectionLabel(ex))}</div>`;
+        }
         const loggable = isLoggableEx(ex);
+        if (!loggable) {
+          return `<div style="padding:10px 12px;border-radius:10px;background:rgba(46,125,91,.06);font-size:11px;color:var(--muted);line-height:1.45">${escapeHtml(ex)}</div>`;
+        }
         const log = getLog(cycleNum, weekNum, sessionIdx, i);
-        const match = loggable ? matchExercise(ex) : null;
+        const match = matchExercise(ex);
         const done = !!(log.status || log.obs || log.carga || log.dificuldade);
-        return `<button ${loggable ? `onclick="openWorkoutExercise(${cycleNum},${weekNum},${sessionIdx},${i})"` : ''} style="width:100%;text-align:left;padding:12px;border-radius:12px;border:1px solid ${done?'var(--acc)':'var(--b1)'};background:var(--s2);color:var(--txt);cursor:${loggable?'pointer':'default'}">
+        const displayNum = realIndices.indexOf(i) + 1;
+        return `<button onclick="openWorkoutExercise(${cycleNum},${weekNum},${sessionIdx},${i})" style="width:100%;text-align:left;padding:12px;border-radius:12px;border:1px solid ${done?'var(--acc)':'var(--b1)'};background:var(--s2);color:var(--txt);cursor:pointer">
           <div style="display:flex;align-items:flex-start;gap:10px">
-            <div style="width:25px;height:25px;border-radius:7px;background:rgba(42,74,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--title);flex-shrink:0">${done?'✓':i+1}</div>
+            <div style="width:25px;height:25px;border-radius:7px;background:rgba(42,74,53,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--title);flex-shrink:0">${done?'✓':displayNum}</div>
             <div style="flex:1">
               <div style="font-family:var(--ff);font-weight:700;font-size:13px;line-height:1.35">${match ? match.name : ex.split(' — ')[0]}</div>
               <div style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:3px">${ex.includes(' — ') ? ex.split(' — ').slice(1).join(' · ') : ex}</div>
               ${done ? `<div style="font-size:10px;color:var(--title);margin-top:5px">Registro salvo${log.carga?' · '+log.carga+' kg':''}${log.dificuldade!==''?' · dificuldade '+log.dificuldade+'/10':''}</div>` : ''}
             </div>
-            ${loggable ? '<div style="font-size:18px;color:var(--title)">›</div>' : ''}
+            <div style="font-size:18px;color:var(--title)">›</div>
           </div>
         </button>`;
       }).join('')}
@@ -2114,15 +2158,17 @@ function openWorkoutExercise(cycleNum, weekNum, sessionIdx, exerciseIdx) {
   const editable = cycleNum === state.cycleNum;
   const log = getLog(cycleNum, weekNum, sessionIdx, exerciseIdx);
   const content = document.getElementById('modal-day-content');
-  const total = session.exercises.length;
-  const prev = exerciseIdx > 0 ? exerciseIdx - 1 : null;
-  const next = exerciseIdx < total - 1 ? exerciseIdx + 1 : null;
+  const realIndices = loggableExerciseIndices(session);
+  const pos = realIndices.indexOf(exerciseIdx);
+  const total = realIndices.length;
+  const prev = pos > 0 ? realIndices[pos - 1] : null;
+  const next = pos >= 0 && pos < total - 1 ? realIndices[pos + 1] : null;
 
   content.innerHTML = `
     <button onclick="showWorkoutList(${cycleNum},${weekNum},${sessionIdx})" style="border:none;background:none;color:var(--title);font-family:var(--ff);font-weight:700;font-size:12px;padding:0 0 14px;cursor:pointer">← Ver todos os exercícios</button>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px">
       <div>
-        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Exercício ${exerciseIdx+1} de ${total}</div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Exercício ${pos+1} de ${total}</div>
         <div style="font-family:var(--ff);font-weight:800;font-size:20px;margin-top:3px">${ex ? ex.icon+' '+ex.name : line.split(' — ')[0]}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:5px">${line.includes(' — ') ? line.split(' — ').slice(1).join(' · ') : ''}</div>
       </div>
@@ -2862,7 +2908,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-02-library-name-contract-1';
+const APP_VERSION = '2026-10-03-structured-prescription-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
