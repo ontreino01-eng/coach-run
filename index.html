@@ -878,7 +878,14 @@ async function onAuthenticated(session) {
     const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
     if (profile && profile.state && Object.keys(profile.state).length) {
       state = profile.state;
+      const migratedLegacyExercises = migrateLegacyStateExercises(state);
       localStorage.setItem('cr_state', JSON.stringify(state));
+      if (migratedLegacyExercises) {
+        const { error: migrationError } = await sb.from('profiles')
+          .update({ state, updated_at: new Date().toISOString() })
+          .eq('id', session.user.id);
+        if (migrationError) console.warn('Não consegui persistir a migração dos nomes antigos.', migrationError);
+      }
     }
   } catch (e) { console.warn('Não consegui carregar da nuvem, usando dado local.', e); }
 
@@ -2107,22 +2114,61 @@ function normalizeExerciseName(value) {
 }
 
 function prescribedExerciseName(line) {
-  return String(line || '').split(' — ')[0].trim();
+  const raw = String(line || '').trim();
+  // Planos antigos podem ter usado travessão, hífen ou separadores diferentes.
+  return raw.split(/\s(?:—|–|-)\s/)[0].trim();
+}
+
+function canonicalExerciseName(name) {
+  const normalized = normalizeExerciseName(name);
+  const exact = [...EXERCISES].sort((a,b) => b.name.length - a.name.length)
+    .find(e => normalizeExerciseName(e.name) === normalized);
+  if (exact) return exact.name;
+  return EXERCISE_ALIASES[normalized] || '';
 }
 
 function matchExercise(line) {
   const prescribed = prescribedExerciseName(line);
-  const normalized = normalizeExerciseName(prescribed);
+  const canonical = canonicalExerciseName(prescribed);
+  return canonical ? (EXERCISES.find(e => e.name === canonical) || null) : null;
+}
 
-  // Exact library name first; longer names first prevents prefix collisions.
-  const exact = [...EXERCISES].sort((a,b) => b.name.length - a.name.length)
-    .find(e => normalizeExerciseName(e.name) === normalized);
-  if (exact) return exact;
+function migrateLegacyExerciseLine(line) {
+  if (typeof line !== 'string' || isSectionMarker(line) || line.startsWith('Encaixe:') || line.startsWith('Orientação:')) return line;
+  const raw = String(line).trim();
+  const match = raw.match(/^(.+?)(\s(?:—|–|-)\s)(.+)$/);
+  const oldName = match ? match[1].trim() : raw;
+  const separator = match ? match[2] : '';
+  const rest = match ? match[3] : '';
+  const canonical = canonicalExerciseName(oldName);
+  if (!canonical || canonical === oldName) return line;
+  return separator ? `${canonical}${separator}${rest}` : canonical;
+}
 
-  const canonical = EXERCISE_ALIASES[normalized];
-  if (canonical) return EXERCISES.find(e => e.name === canonical) || null;
+function migrateLegacyPlanExercises(plan) {
+  if (!plan || !Array.isArray(plan.weeks)) return false;
+  let changed = false;
+  for (const week of plan.weeks) {
+    for (const session of (week.sessions || [])) {
+      if (!Array.isArray(session.exercises)) continue;
+      session.exercises = session.exercises.map(line => {
+        const migrated = migrateLegacyExerciseLine(line);
+        if (migrated !== line) changed = true;
+        return migrated;
+      });
+    }
+  }
+  return changed;
+}
 
-  return null;
+function migrateLegacyStateExercises(targetState) {
+  if (!targetState) return false;
+  let changed = false;
+  if (targetState.plan) changed = migrateLegacyPlanExercises(targetState.plan) || changed;
+  for (const item of (targetState.history || [])) {
+    if (item && item.plan) changed = migrateLegacyPlanExercises(item.plan) || changed;
+  }
+  return changed;
 }
 
 function renderDayContent(cycleNum, weekNum, sessionIdx, session, editable) {
@@ -2927,7 +2973,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-05-whatsapp-support-1';
+const APP_VERSION = '2026-10-05-exercise-video-migration-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
