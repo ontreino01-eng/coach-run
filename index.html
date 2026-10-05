@@ -728,6 +728,8 @@ textarea{resize:vertical;min-height:70px}
   <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--sub)">Privacidade</a>
   <span> · </span>
   <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--sub)">Termos de Uso</a>
+  <span> · </span>
+  <a href="https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre." target="_blank" rel="noopener" style="color:var(--sub)">Suporte</a>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -792,6 +794,7 @@ textarea{resize:vertical;min-height:70px}
 // TODO antes de publicar: preencha com os dados do SEU projeto Supabase
 // (Dashboard > Project Settings > API). A ANON_KEY é pública por design —
 // pode ficar aqui no código. A chave da Groq NUNCA vai neste arquivo.
+const SUPPORT_WHATSAPP = 'https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.';
 const SUPABASE_URL = 'https://ywfiartxnsviosqjfhkp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZmlhcnR4bnN2aW9zcWpmaGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NTYwNDAsImV4cCI6MjEwMjMzMjA0MH0.LKmLBr5HlK8Do6bdP_snup7cXCr-FMgsDt-tm-Vrq68';
 const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
@@ -926,6 +929,7 @@ function renderRenewScreen(info) {
       <h1 style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:10px">Assinatura pausada</h1>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px">${msg} Seu histórico e progresso continuam salvos — assim que regularizar, tudo volta ao normal.</p>
       <button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
+      <button class="btn btn-ghost btn-full" style="margin-bottom:10px" onclick="window.open('https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.','_blank','noopener')">💬 Falar com o suporte</button>
       <button class="btn btn-ghost btn-full" onclick="gateLogout()">Sair da conta</button>
     </div>`;
 }
@@ -2694,6 +2698,7 @@ function renderProfile() {
       ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
       <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="requestPasswordReset()">Trocar senha</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="window.open('https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.','_blank','noopener')">💬 Falar com o suporte</button>
     </div>
 
     <div class="card">
@@ -2922,7 +2927,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-03-privacy-security-1';
+const APP_VERSION = '2026-10-05-whatsapp-support-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
