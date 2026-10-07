@@ -489,7 +489,7 @@ textarea{resize:vertical;min-height:70px}
       <p class="section-sub">Seu objetivo define a ênfase de cada ciclo mensal.</p>
       <div class="radio-group">
         <div class="radio-card" onclick="selectRadio('av-objetivo','corredor',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">Melhorar tempo de prova</div><div class="radio-card-sub">Foco em economia de corrida e força máxima (Støren, 2008)</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
-        <div class="radio-card" onclick="selectRadio('av-objetivo','lesao',this)"><span class="radio-card-icon">🛡</span><div class="radio-card-text"><div class="radio-card-title">Prevenir lesões e treinar sem dor</div><div class="radio-card-sub">Foco em força, controle, tolerância à carga e progressão individual</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
+        <div class="radio-card" onclick="selectRadio('av-objetivo','lesao',this)"><span class="radio-card-icon">🛡</span><div class="radio-card-text"><div class="radio-card-title">Melhorar controle e tolerância à carga</div><div class="radio-card-sub">Foco em força, controle, tolerância à carga e progressão individual</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         
       </div>
     </div>
@@ -1484,37 +1484,131 @@ async function startKiwifyCheckout() {
 
 // ══════════════════════════════════════════════════════
 
+function saleInsightData() {
+  const p = state.profile || {};
+  const scores = state.scores || {};
+  const labels = { forca:'Força', equil:'Equilíbrio', mobil:'Mobilidade', nordic:'Controle excêntrico' };
+  const ranked = Object.entries(labels)
+    .map(([k,label]) => ({ key:k, label, value:Number(scores[k] ?? 0) }))
+    .sort((a,b) => a.value - b.value);
+  const priorities = ranked.slice(0,2);
+  const injuries = (state.lesoes || []).map(lesaoLabel).filter(Boolean);
+  const days = p['av-dias'] || '2';
+  const time = p['av-tempo-sessao'] || '45';
+  const sleep = p['av-sono'] || 'regular';
+  const stress = Number(p['av-estresse'] ?? 5);
+  const equipment = String(p['av-equipamentos'] || '').trim();
+  const target = String(p['av-prova'] || '').trim();
+  const objective = p['av-objetivo'];
+
+  const priorityText = priorities.length
+    ? priorities.map(x => `${x.label} (${x.value}/10)`).join(' e ')
+    : 'força e controle do movimento';
+
+  let recoveryText = 'Sua recuperação foi considerada para definir volume e progressão.';
+  if (sleep === 'ruim' || stress >= 8) recoveryText = 'Sono/estresse pedem uma progressão mais conservadora, sem forçar carga só por calendário.';
+  else if (sleep === 'bom' && stress <= 5) recoveryText = 'Sua recuperação permite progredir quando técnica e esforço estiverem dentro do alvo.';
+
+  let objectiveText = objective === 'lesao'
+    ? 'aumentar força, controle e tolerância à carga para correr com mais consistência'
+    : 'melhorar sua base de força para apoiar economia e desempenho na corrida';
+
+  return {
+    days, time, equipment, target, injuries, priorities, priorityText, recoveryText, objectiveText
+  };
+}
+
+function saleAnalysisHtml() {
+  const p = state.profile || {};
+  const d = saleInsightData();
+  const items = [
+    `Seu nível atual foi classificado como <b>${escapeHtml(p.nivel || 'Intermediário')}</b> a partir da avaliação e da experiência com musculação.`,
+    `Os pontos que mais merecem atenção agora são <b>${escapeHtml(d.priorityText)}</b>.`,
+    d.injuries.length
+      ? `Você relatou histórico em <b>${escapeHtml(d.injuries.join(', '))}</b>; isso entra como critério para escolha, amplitude, volume e progressão — sem tratar isso como diagnóstico.`
+      : 'Você não marcou histórico relevante de dor/lesão nas regiões avaliadas, então o plano pode priorizar progressão sem criar limitações artificiais.',
+    `Sua rotina permite <b>${escapeHtml(String(d.days))} sessões/semana</b>, com cerca de <b>${escapeHtml(String(d.time))} min por sessão</b>.`,
+    d.recoveryText
+  ];
+  if (d.target) items.push(`Meta informada: <b>${escapeHtml(d.target)}</b>. O fortalecimento será organizado para apoiar esse objetivo sem substituir sua planilha de corrida.`);
+  if (d.equipment) items.push(`Equipamentos disponíveis: <b>${escapeHtml(d.equipment)}</b>. A prescrição fica limitada ao que você realmente tem acesso.`);
+
+  return items.map(t => `<div style="display:flex;gap:9px;align-items:flex-start;margin:9px 0"><span style="color:var(--acc2);font-weight:900">✓</span><div style="font-size:12px;line-height:1.5;color:var(--muted)">${t}</div></div>`).join('');
+}
+
+function salePlanHtml() {
+  const d = saleInsightData();
+  return [
+    ['1','Começa pelo que sua avaliação mostrou', `O primeiro ciclo prioriza ${escapeHtml(d.priorityText)} e organiza o volume dentro da sua rotina.`],
+    ['2','Treino com começo, meio e fim','Cada sessão vem em preparação, parte principal, complementares e finalização, com séries, repetições, RPE/RIR e descanso.'],
+    ['3','Vídeo dentro do próprio exercício','Você abre o exercício no treino e vê vídeo, como fazer e orientação técnica sem precisar procurar na biblioteca.'],
+    ['4','Progressão baseada na sua resposta','Carga e volume evoluem quando técnica, esforço, sono, estresse e registros permitem — não porque “virou a semana”.'],
+    ['5','Reavaliação a cada ciclo','No fim das 4 semanas, seus testes e registros entram na decisão do próximo ciclo para manter continuidade e ajustar o que precisa.']
+  ].map(([n,title,desc]) => `<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--b1)"><div style="width:28px;height:28px;border-radius:50%;background:rgba(255,90,31,.10);color:var(--title);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:800;font-size:12px;flex-shrink:0">${n}</div><div><div style="font-family:var(--ff);font-weight:700;font-size:12px;margin-bottom:3px">${title}</div><div style="font-size:11px;color:var(--muted);line-height:1.45">${desc}</div></div></div>`).join('');
+}
+
 function renderPaywall() {
-  const p = state.profile;
-  const focus = FOCUS_DEFS.base;
+  const p = state.profile || {};
+  const d = saleInsightData();
   const nome = escapeHtml(state.lead && state.lead.nome ? state.lead.nome.split(' ')[0] : (p.nome || 'atleta'));
+
   document.getElementById('paywall-content').innerHTML = `
-    <div style="text-align:center;padding:8px 0 20px">
-      <div style="font-size:40px;margin-bottom:10px">🎯</div>
-      <h1 style="font-family:var(--ff);font-weight:800;font-size:21px;margin-bottom:8px">${nome}, sua periodização está pronta</h1>
-      <p style="font-size:13px;color:var(--muted);line-height:1.6">Baseado na sua avaliação, montamos um ciclo de <b>4 semanas de fortalecimento</b> — foco em <b>${focus.name}</b> — pensado pro seu perfil de ${modLabel(p['av-modalidade'])}, nível ${p.nivel}, com o objetivo de ${goalLabel(p['av-objetivo'])}.</p>
+    <div style="padding:8px 0 12px">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(46,125,91,.09);color:var(--acc2);border:1px solid rgba(46,125,91,.16);border-radius:999px;padding:6px 10px;font-family:var(--ff);font-size:10px;font-weight:800;margin-bottom:13px">✓ AVALIAÇÃO CONCLUÍDA</div>
+      <h1 style="font-family:var(--ff);font-weight:800;font-size:24px;line-height:1.15;margin-bottom:10px">${nome}, agora dá para montar um fortalecimento que faça sentido para a sua corrida.</h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:4px">Você não precisa de uma lista genérica de exercícios. Sua avaliação mostrou <b>onde começar, quanto cabe na sua rotina e o que precisa ser acompanhado</b> para buscar ${escapeHtml(d.objectiveText)}.</p>
     </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title" style="margin-bottom:10px">O que você já garantiu com a avaliação</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:13px;color:var(--txt)">✅ Perfil de atleta calibrado (nível ${p.nivel})</div>
-        <div style="font-size:13px;color:var(--txt)">✅ Teste físico salvo como sua referência de evolução</div>
-        <div style="font-size:13px;color:var(--txt)">✅ 1º ciclo de treino pronto pra liberar</div>
+
+    <div class="card" style="margin-top:8px;margin-bottom:12px;border-color:var(--b2);background:linear-gradient(160deg,#fff,rgba(46,125,91,.035))">
+      <div style="font-family:var(--ff);font-weight:800;font-size:15px;margin-bottom:4px">O que analisamos no seu caso</div>
+      <div style="font-size:11px;color:var(--sub);line-height:1.45;margin-bottom:8px">Isto vem das respostas e testes que você acabou de preencher.</div>
+      ${saleAnalysisHtml()}
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-family:var(--ff);font-weight:800;font-size:15px;margin-bottom:4px">Como seu plano vai funcionar</div>
+      <div style="font-size:11px;color:var(--sub);line-height:1.45;margin-bottom:4px">A ideia é transformar sua avaliação em um processo contínuo, não em uma ficha que fica igual para sempre.</div>
+      ${salePlanHtml()}
+    </div>
+
+    <div class="card" style="margin-bottom:12px;background:rgba(255,90,31,.055);border-color:rgba(255,90,31,.25)">
+      <div style="font-family:var(--ff);font-weight:800;font-size:14px;margin-bottom:8px">O que você recebe ao liberar o acesso</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#fff;border:1px solid var(--b1);border-radius:11px;padding:10px"><div style="font-size:18px">🗓️</div><div style="font-size:11px;font-weight:700;margin-top:4px">Ciclo de 4 semanas</div></div>
+        <div style="background:#fff;border:1px solid var(--b1);border-radius:11px;padding:10px"><div style="font-size:18px">🎥</div><div style="font-size:11px;font-weight:700;margin-top:4px">Vídeos no treino</div></div>
+        <div style="background:#fff;border:1px solid var(--b1);border-radius:11px;padding:10px"><div style="font-size:18px">📈</div><div style="font-size:11px;font-weight:700;margin-top:4px">Progressão registrada</div></div>
+        <div style="background:#fff;border:1px solid var(--b1);border-radius:11px;padding:10px"><div style="font-size:18px">🔁</div><div style="font-size:11px;font-weight:700;margin-top:4px">Reavaliação mensal</div></div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:18px;border-color:var(--title)">
-      <div class="card-title" style="margin-bottom:6px">Com o acesso completo você tem</div>
-      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted)">
-        <div>🔁 Ciclos mensais que se ajustam sozinhos ao seu progresso</div>
-        <div>📚 Biblioteca de exercícios com vídeos e instruções técnicas</div>
-        <div>📊 Comparação de teste físico a cada mês</div>
+
+    <div class="card" style="margin-bottom:12px;border:2px solid var(--acc);box-shadow:0 10px 28px rgba(255,90,31,.10)">
+      <div style="text-align:center">
+        <div style="font-size:10px;font-family:var(--ff);font-weight:800;color:var(--title);letter-spacing:.08em">PREÇO FUNDADOR</div>
+        <div style="margin:5px 0 1px"><span style="font-family:var(--ff);font-size:16px;font-weight:700">R$</span> <span style="font-family:var(--ff);font-size:38px;font-weight:800;letter-spacing:-.04em">14,90</span><span style="font-size:12px;color:var(--muted)">/mês</span></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.45;margin-bottom:14px">Este valor permanece enquanto sua assinatura de fundador continuar ativa.</div>
+      </div>
+
+      <div class="input-group" style="margin-bottom:10px">
+        <label class="input-label">E-mail para receber seu código de acesso</label>
+        <input type="email" id="pay-email" placeholder="voce@email.com" autocomplete="email" required/>
+      </div>
+
+      <button id="pay-button" class="btn btn-acc btn-full" style="min-height:48px;font-size:14px;margin-bottom:8px" onclick="startKiwifyCheckout()">Liberar meu plano por R$ 14,90 →</button>
+      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--sub);text-align:center">
+        <span>🔒 Checkout pela Kiwify</span><span>•</span><span>Assinatura mensal</span><span>•</span><span>Gerencie pela Kiwify</span>
       </div>
     </div>
-    <div class="input-group" style="margin-top:14px"><label class="input-label">E-mail para receber seu código</label><input type="email" id="pay-email" placeholder="voce@email.com" autocomplete="email" required/></div>
-    <button id="pay-button" class="btn btn-acc btn-full" style="margin-bottom:6px" onclick="startKiwifyCheckout()">Quero meu plano →</button>
-    <p style="text-align:center;font-size:11px;color:var(--sub);margin-bottom:6px">R$ 9,90/mês · preço fundador · pagamento seguro pela Kiwify</p>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-family:var(--ff);font-weight:800;font-size:14px;margin-bottom:9px">Antes de decidir</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px"><b>“Já tenho planilha de corrida.”</b><br>Ótimo. O Base do Corre não substitui sua corrida; ele organiza apenas o fortalecimento ao redor dela.</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px"><b>“Tenho pouco tempo.”</b><br>O número de exercícios e a estrutura da sessão respeitam o tempo que você informou na avaliação.</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55"><b>“E se eu não souber fazer?”</b><br>Os exercícios da biblioteca aparecem dentro do bloco de treino com vídeo e instruções quando cadastrados.</div>
+    </div>
+
+    <p style="text-align:center;font-size:10px;color:var(--sub);line-height:1.45;margin:2px 6px 10px">O fortalecimento pode contribuir para desempenho, economia de corrida e tolerância à carga, mas resultados individuais variam. O app não faz diagnóstico nem substitui atendimento médico.</p>
     <p style="text-align:center;font-size:10px;color:var(--sub);margin-bottom:12px">Ao continuar, aplicam-se os <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--title)">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--title)">Política de Privacidade</a>.</p>
-    <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — Ativar meu acesso</button>
+    <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — ativar meu acesso</button>
   `;
 }
 
@@ -2732,7 +2826,7 @@ function renderProfile() {
   const funcScore = p.funcScore || 5;
   const riskScore = p.riskScore || 5;
   const riskColor = riskScore <= 3 ? 'var(--acc)' : riskScore <= 6 ? 'var(--warn)' : 'var(--red)';
-  const riskLabel = riskScore <= 3 ? 'Baixo risco' : riskScore <= 6 ? 'Risco moderado' : 'Alto risco';
+  const riskLabel = riskScore <= 3 ? 'Poucos alertas' : riskScore <= 6 ? 'Atenção moderada' : 'Mais atenção';
 
   const content = document.getElementById('profile-content');
   content.innerHTML = `
@@ -2740,7 +2834,7 @@ function renderProfile() {
       <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
       <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${escapeHtml(p.nome) || '—'}</div></div>
       <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
-      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--title)">💳 R$ 9,90/mês · preço fundador</div></div>
+      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--title)">💳 R$ 14,90/mês · preço fundador</div></div>
       ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
       <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="requestPasswordReset()">Trocar senha</button>
@@ -2771,7 +2865,7 @@ function renderProfile() {
     </div>
 
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px">Risco de Lesão</div>
+      <div class="card-title" style="margin-bottom:12px">Indicadores de atenção</div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <div style="font-family:var(--ff);font-weight:800;font-size:36px;color:${riskColor}">${riskScore}<span style="font-size:16px;color:var(--muted)">/10</span></div>
         <div><span class="tag" style="background:${riskColor}15;color:${riskColor};border-color:${riskColor}30">${riskLabel}</span></div>
@@ -2973,7 +3067,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-05-exercise-video-migration-1';
+const APP_VERSION = '2026-10-07-paywall-1490-conversion-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
