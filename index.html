@@ -1465,7 +1465,7 @@ async function submitLead() {
 // ══════════════════════════════════════════════════════
 // TELA DE RESULTADO / PAYWALL (pré-pagamento)
 // ══════════════════════════════════════════════════════
-const KIWIFY_CHECKOUT_URL = 'https://pay.kiwify.com.br/HuBZRN0';
+const KIWIFY_CHECKOUT_URL = 'https://pay.kiwify.com.br/5declab';
 
 async function startKiwifyCheckout() {
   const email = String(document.getElementById('pay-email')?.value || '').trim().toLowerCase();
@@ -3099,7 +3099,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-07-brand-refresh-manrope-1';
+const APP_VERSION = '2026-10-07-kiwify-checkout-updated-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
