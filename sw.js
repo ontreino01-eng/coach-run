@@ -3,8 +3,8 @@
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'base-do-corre-v9';
-const APP_SHELL = ['./', './index.html', './manifest-v2.json'];
+const CACHE = 'base-do-corre-v10';
+const APP_SHELL = ['./', './index.html', './manifest-v3.json', './assets/brand-icon.svg', './assets/brand-mark.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
@@ -25,7 +25,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   const isHTML = e.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/');
-  const isManifest = url.includes('manifest-v2.json') || url.endsWith('/manifest.json') || url.endsWith('manifest.json');
+  const isManifest = url.includes('manifest-v3.json') || url.endsWith('/manifest.json') || url.endsWith('manifest.json');
 
   if (isManifest) {
     e.respondWith(
