@@ -581,6 +581,20 @@ textarea{resize:vertical;min-height:70px}
           <div class="radio-card" onclick="selectRadio('av-dias','4',this)"><span class="radio-card-icon">📅</span><div class="radio-card-text"><div class="radio-card-title">4 dias/semana</div><div class="radio-card-sub">Volume alto — só se sobrar recuperação para os treinos de corrida</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
         </div>
       </div>
+
+      <div class="input-group" style="margin-top:16px">
+        <label class="input-label">Em quais dias você pretende fazer o fortalecimento?</label>
+        <div style="font-size:11px;color:var(--muted);line-height:1.45;margin-bottom:8px">Marque exatamente a mesma quantidade de dias escolhida acima. Isso ajuda a distribuir a força sem concentrar carga demais junto da corrida.</div>
+        <div class="check-group" id="strength-days-group">
+          <div class="check-item" onclick="toggleStrengthDay('seg',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Segunda-feira</div></div></div>
+          <div class="check-item" onclick="toggleStrengthDay('ter',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Terça-feira</div></div></div>
+          <div class="check-item" onclick="toggleStrengthDay('qua',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Quarta-feira</div></div></div>
+          <div class="check-item" onclick="toggleStrengthDay('qui',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Quinta-feira</div></div></div>
+          <div class="check-item" onclick="toggleStrengthDay('sex',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Sexta-feira</div></div></div>
+          <div class="check-item" onclick="toggleStrengthDay('sab',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Sábado</div></div></div>
+          <div class="check-item" onclick="toggleStrengthDay('dom',this)"><div class="check-box">✓</div><div style="flex:1"><div style="font-family:var(--ff);font-weight:700;font-size:13px">Domingo</div></div></div>
+        </div>
+      </div>
       <div class="input-group" style="margin-top:16px"><label class="input-label">Tempo disponível por sessão</label>
         <div class="radio-group" style="margin-top:6px">
           <div class="radio-card" onclick="selectRadio('av-tempo-sessao','30',this)"><span class="radio-card-icon">⏱</span><div class="radio-card-text"><div class="radio-card-title">Até 30 minutos</div></div><div class="radio-check"><div class="radio-check-inner"></div></div></div>
@@ -1274,6 +1288,13 @@ function selectRadio(key, val, el) {
   el.classList.add('sel');
 }
 
+function toggleStrengthDay(day, el) {
+  const current = Array.isArray(avData['av-dias-fortalecimento']) ? avData['av-dias-fortalecimento'] : [];
+  const selected = current.includes(day);
+  avData['av-dias-fortalecimento'] = selected ? current.filter(d => d !== day) : [...current, day];
+  el.classList.toggle('sel', !selected);
+}
+
 function toggleCheck(id, el) {
   avChecks[id] = !avChecks[id];
   el.classList.toggle('sel', avChecks[id]);
@@ -1335,6 +1356,11 @@ function prevStep(current) { showStep(current - 1); }
 
 async function finishAssessment() {
   if (!avData['av-dias']) { showToast('⚠️ Selecione a disponibilidade'); return; }
+  const strengthDays = Array.isArray(avData['av-dias-fortalecimento']) ? avData['av-dias-fortalecimento'] : [];
+  if (strengthDays.length !== Number(avData['av-dias'])) {
+    showToast(`⚠️ Marque exatamente ${avData['av-dias']} dias para o fortalecimento`);
+    return;
+  }
   avData['av-prova'] = document.getElementById('av-prova').value || '';
 
   // Calcular score de risco e nível
@@ -1555,7 +1581,7 @@ function saleAnalysisHtml() {
     d.injuries.length
       ? `Você relatou histórico em <b>${escapeHtml(d.injuries.join(', '))}</b>; isso entra como critério para escolha, amplitude, volume e progressão — sem tratar isso como diagnóstico.`
       : 'Você não marcou histórico relevante de dor/lesão nas regiões avaliadas, então o plano pode priorizar progressão sem criar limitações artificiais.',
-    `Sua rotina permite <b>${escapeHtml(String(d.days))} sessões/semana</b>, com cerca de <b>${escapeHtml(String(d.time))} min por sessão</b>.`,
+    `Sua rotina permite <b>${escapeHtml(String(d.days))} sessões/semana</b>, nos dias <b>${escapeHtml(formatStrengthDays(p['av-dias-fortalecimento']))}</b>, com cerca de <b>${escapeHtml(String(d.time))} min por sessão</b>.`,
     d.recoveryText
   ];
   if (d.target) items.push(`Meta informada: <b>${escapeHtml(d.target)}</b>. O fortalecimento será organizado para apoiar esse objetivo sem substituir sua planilha de corrida.`);
@@ -1907,7 +1933,7 @@ function generateCycle(cycleNum, data, lesoes, focusKey) {
       name: isDeload ? 'Semana 4 — Deload + Reteste' : `Semana ${w}`,
       focus: isDeload ? 'Volume reduzido 40% — preparar para o reteste físico' : focus.focus,
       isDeload,
-      sessions: buildWeekSessions(w, focus, dias, obj, nivel, sport, { temJoelho, temAquiles, temIsquio, temLombar, temOmbro, prova, genero }),
+      sessions: buildWeekSessions(w, focus, dias, obj, nivel, sport, { temJoelho, temAquiles, temIsquio, temLombar, temOmbro, prova, genero, strengthDays: data['av-dias-fortalecimento'] || [] }),
     });
   }
   return { cycleNum, focus, weeks };
@@ -1973,7 +1999,12 @@ function buildWeekSessions(week, phase, dias, obj, nivel, sport, flags) {
   ];
 
   const selected = dias <= 2 ? sessions2 : dias === 3 ? sessions3 : sessions4;
-  return selected.map(structureLocalSession);
+  const dayLabels = {seg:'Segunda',ter:'Terça',qua:'Quarta',qui:'Quinta',sex:'Sexta',sab:'Sábado',dom:'Domingo'};
+  const chosenDays = Array.isArray(flags.strengthDays) ? flags.strengthDays : [];
+  return selected.map((session, i) => structureLocalSession({
+    ...session,
+    day: chosenDays[i] ? dayLabels[chosenDays[i]] : session.day
+  }));
 }
 
 function buildLower(phase, nivel, flags, isDeload, sport) {
@@ -2916,6 +2947,7 @@ function renderProfile() {
       <div class="result-row"><div class="result-label">Experiência musculação</div><div class="result-val">${expMLabel(p['av-exp-muscu'])}</div></div>
       <div class="result-row"><div class="result-label">Corridas atuais</div><div class="result-val">${p['av-dias-modalidade'] || '—'}× /sem</div></div>
       <div class="result-row"><div class="result-label">Fortalecimento no plano</div><div class="result-val">${p['av-dias']}× /sem</div></div>
+      <div class="result-row"><div class="result-label">Dias de fortalecimento</div><div class="result-val">${formatStrengthDays(p['av-dias-fortalecimento'])}</div></div>
       <div class="result-row"><div class="result-label">Nível calculado</div><div class="result-val">${p.nivel}</div></div>
     </div>
 
@@ -3091,6 +3123,10 @@ function goalLabel(v) { return {corredor:'Melhorar desempenho na corrida',lesao:
 function provaLabel(v) { return v && v.trim() ? escapeHtml(v) : 'Sem meta definida'; }
 function expLabel(v) { return {'<6m':'<6 meses','6m-2a':'6m – 2 anos','>2a':'>2 anos'}[v] || '—'; }
 function expMLabel(v) { return {nenhuma:'Nenhuma',basica:'Básica (1-2 anos)',avancada:'Avançada (+2 anos)'}[v] || '—'; }
+function formatStrengthDays(days) {
+  const labels = {seg:'Seg',ter:'Ter',qua:'Qua',qui:'Qui',sex:'Sex',sab:'Sáb',dom:'Dom'};
+  return Array.isArray(days) && days.length ? days.map(d => labels[d] || d).join(', ') : '—';
+}
 function lesaoLabel(v) { const m={lesaojoelho:'Joelho',lesaotornozelo:'Tornozelo/Aquiles',lesaoquadril:'Quadril/IT Band',lesaolombar:'Lombar/Core',lesaoisquio:'Isquiotibiais',lesaoombro:'Ombro/Manguito'}; return m[v.replace('-','')] || v; }
 function modLabel(v) { return '🏃 Corrida'; }
 function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[],lead:null}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
@@ -3099,7 +3135,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-07-kiwify-checkout-updated-1';
+const APP_VERSION = '2026-10-09-strength-days-scheduling-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
