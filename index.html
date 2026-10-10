@@ -1420,7 +1420,6 @@ function getTests(sport) {
     { id:'salto', label:'Salto Horizontal (Broad Jump)', unit:'cm', desc:'Pés juntos, sem corrida de aproximação — melhor de 2 tentativas.' },
     { id:'prancha', label:'Prancha Ventral', unit:'segundos', desc:'Tempo máximo mantendo o quadril alinhado, sem deixar cair.' },
     { id:'agacha', label:'Agachamento Livre', unit:'repetições em 60s', desc:'Amplitude completa, ritmo constante, sem pausar.' },
-    { id:'flexao', label:'Flexão de Joelhos', unit:'repetições em 60s', desc:'Joelhos apoiados no chão, peito toca o chão a cada repetição, ritmo constante.' },
     { id:'nordic', label:'Nordic Curl (ou variação assistida)', unit:'repetições controladas', desc:'Descida de 3-5 segundos, sem "cair" no final.' },
   ];
   base.push({ id:'tempo1km', label:'Tempo de 1 km corrido', unit:'minutos (ex: 5.5 = 5min30s)', desc:'Percurso plano, esforço forte e controlado — use a mesma rota nas duas avaliações para comparar.' });
@@ -3038,9 +3037,9 @@ function testEvolutionRows() {
   if (!base || !latest) return '';
   const labels = {
     salto:'Salto horizontal', prancha:'Prancha', agacha:'Agachamento 60s',
-    flexao:'Flexão 60s', nordic:'Nordic Curl', tempo1km:'1 km'
+nordic:'Nordic Curl', tempo1km:'1 km'
   };
-  return Object.keys(base).filter(k=>latest[k] != null).map(k=>{
+  return Object.keys(base).filter(k=>k !== 'flexao' && latest[k] != null).map(k=>{
     const before=Number(base[k]), after=Number(latest[k]);
     let pct=before>0?((after-before)/before)*100:0;
     if (INVERTED_METRICS.includes(k)) pct=-pct;
@@ -3357,7 +3356,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-09-auto-coaching-evolution-1';
+const APP_VERSION = '2026-10-09-remove-knee-pushup-test-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
