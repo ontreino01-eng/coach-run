@@ -290,7 +290,7 @@ textarea{resize:vertical;min-height:70px}
 
   <div class="gate-step" id="gate-licenca" style="display:none;flex-direction:column;padding:0 22px">
     <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Ativar acesso</h1>
-    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o telefone usado na avaliação/compra e o código que você recebeu por e-mail.</p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o telefone usado na avaliação e o código enviado pelo Base do Corre após a confirmação do pagamento.</p>
     <div class="input-group"><label class="input-label">Telefone</label><input type="tel" id="gate-cpf" placeholder="(00) 00000-0000" inputmode="tel"/></div>
     <div class="input-group"><label class="input-label">Código de acesso</label><input type="text" id="gate-code" placeholder="Ex: F3K9-XQ2P" style="text-transform:uppercase"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" id="gate-licenca-btn" onclick="gateValidarLicenca()">Validar código</button>
@@ -875,12 +875,19 @@ async function initAuth() {
       localStorage.setItem('bc_has_account', '1');
       await onAuthenticated(session);
     } else {
+      const paymentConfirmed = new URLSearchParams(window.location.search).get('pagamento') === 'confirmado';
       // Nunca libera um plano autenticado apenas porque sobrou state no localStorage.
       if (state && state.assessed) {
         localStorage.removeItem('cr_state');
         state = { assessed:false, cycleNum:0, currentWeek:1, completedWeeks:[], profile:{}, scores:{}, lesoes:[], plan:null, parqAlert:false, logs:{}, tests:{}, history:[], lead:null, sessionCompletions:{}, weeklySummaries:{}, baselineScores:null };
       }
-      if (localStorage.getItem('bc_has_account') === '1') {
+      if (paymentConfirmed) {
+        hideGate();
+        routeToEntryScreen();
+        showGate('licenca');
+        showToast('✅ Pagamento confirmado. Use o código recebido por e-mail para ativar seu acesso.');
+        try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
+      } else if (localStorage.getItem('bc_has_account') === '1') {
         showGate('login');
       } else {
         hideGate();
@@ -3356,7 +3363,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-09-calf-raise-test-1';
+const APP_VERSION = '2026-10-09-payment-return-activation-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
