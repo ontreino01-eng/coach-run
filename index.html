@@ -1320,7 +1320,7 @@ function buildScales() {
     {id:'eq-forca', label:'Força geral (agachamento, levantamento)', desc:'1 = nunca fiz pesado · 10 = treino com carga alta regularmente'},
     {id:'eq-equilibrio', label:'Equilíbrio unipodal (uma perna)', desc:'1 = caio facilmente · 10 = fico 30+ segundos sem problema'},
     {id:'eq-mobilidade', label:'Mobilidade (agachamento profundo)', desc:'1 = muito rígido · 10 = agacha fundo sem apoio'},
-    {id:'eq-nordic', label:'Controle excêntrico (descida lenta)', desc:'1 = nunca fiz · 10 = faço Nordic Curl completo'},
+    {id:'eq-nordic', label:'Capacidade de panturrilha unilateral', desc:'1 = dificuldade para fazer repetições controladas · 10 = faço muitas repetições com amplitude e controle semelhantes nos dois lados'},
     {id:'eq-dor', label:'Dor durante a corrida (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede a corrida'},
   ];
   const container = document.getElementById('av-scales');
@@ -1420,7 +1420,7 @@ function getTests(sport) {
     { id:'salto', label:'Salto Horizontal (Broad Jump)', unit:'cm', desc:'Pés juntos, sem corrida de aproximação — melhor de 2 tentativas.' },
     { id:'prancha', label:'Prancha Ventral', unit:'segundos', desc:'Tempo máximo mantendo o quadril alinhado, sem deixar cair.' },
     { id:'agacha', label:'Agachamento Livre', unit:'repetições em 60s', desc:'Amplitude completa, ritmo constante, sem pausar.' },
-    { id:'nordic', label:'Nordic Curl (ou variação assistida)', unit:'repetições controladas', desc:'Descida de 3-5 segundos, sem "cair" no final.' },
+    { id:'panturrilha', label:'Elevação de Panturrilha Unilateral', unit:'repetições controladas', desc:'Teste uma perna de cada vez. Apoie levemente a mão na parede só para equilíbrio, suba o calcanhar o mais alto possível e desça de forma controlada. Use cadência aproximada de 2s para subir + 2s para descer e pare quando perder amplitude ou técnica. Registre o menor resultado entre as duas pernas.' },
   ];
   base.push({ id:'tempo1km', label:'Tempo de 1 km corrido', unit:'minutos (ex: 5.5 = 5min30s)', desc:'Percurso plano, esforço forte e controlado — use a mesma rota nas duas avaliações para comparar.' });
   return base;
@@ -1719,7 +1719,7 @@ function buildCloseScales() {
     {id:'cc-forca', label:'Força geral (agachamento, levantamento)', desc:'1 = piorou muito · 10 = muito mais forte que no início'},
     {id:'cc-equilibrio', label:'Equilíbrio unipodal (uma perna)', desc:'1 = caio facilmente · 10 = fico 30+ segundos sem problema'},
     {id:'cc-mobilidade', label:'Mobilidade (agachamento profundo)', desc:'1 = muito rígido · 10 = agacha fundo sem apoio'},
-    {id:'cc-nordic', label:'Controle excêntrico (descida lenta)', desc:'1 = nunca fiz · 10 = faço Nordic Curl completo'},
+    {id:'cc-nordic', label:'Capacidade de panturrilha unilateral', desc:'1 = muita dificuldade · 10 = boa resistência, amplitude e controle nos dois lados'},
     {id:'cc-dor', label:'Dor atual durante a corrida (VAS)', desc:'0 = sem dor · 10 = dor intensa que impede a corrida'},
   ];
   document.getElementById('cc-scales').innerHTML = scales.map(s => `
@@ -3039,7 +3039,7 @@ function testEvolutionRows() {
     salto:'Salto horizontal', prancha:'Prancha', agacha:'Agachamento 60s',
 nordic:'Nordic Curl', tempo1km:'1 km'
   };
-  return Object.keys(base).filter(k=>k !== 'flexao' && latest[k] != null).map(k=>{
+  return Object.keys(base).filter(k=>!['flexao','nordic'].includes(k) && latest[k] != null).map(k=>{
     const before=Number(base[k]), after=Number(latest[k]);
     let pct=before>0?((after-before)/before)*100:0;
     if (INVERTED_METRICS.includes(k)) pct=-pct;
@@ -3053,7 +3053,7 @@ function renderEvolution() {
   if (!host || !state.assessed) return;
   const baseline = state.baselineScores || state.scores || {};
   const current = state.scores || {};
-  const labels = {forca:'Força',equil:'Equilíbrio',mobil:'Mobilidade',nordic:'Controle excêntrico'};
+  const labels = {forca:'Força',equil:'Equilíbrio',mobil:'Mobilidade',nordic:'Panturrilha unilateral'};
   const currentWeekSummary = weeklySummary(state.cycleNum, state.currentWeek);
   const lastDone = state.completedWeeks.length ? weeklySummary(state.cycleNum, Math.max(...state.completedWeeks)) : null;
   const summary = lastDone || currentWeekSummary;
@@ -3356,7 +3356,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-09-remove-knee-pushup-test-1';
+const APP_VERSION = '2026-10-09-calf-raise-test-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
