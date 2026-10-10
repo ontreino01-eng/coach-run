@@ -307,16 +307,9 @@ textarea{resize:vertical;min-height:70px}
     <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('licenca')">← Voltar</button>
   </div>
 
-  <div class="gate-step" id="gate-confirm" style="display:none;flex-direction:column;padding:0 22px;text-align:center;align-items:center;justify-content:center;flex:1">
-    <div style="font-size:44px;margin-bottom:12px">📩</div>
-    <h1 style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:8px">Confirme seu e-mail</h1>
-    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px">Mandamos um link de confirmação para <b id="gate-confirm-email" style="color:var(--txt)"></b>. Abra o e-mail, clique no link, depois volte aqui e toque em Entrar.</p>
-    <button class="btn btn-acc" style="width:100%" onclick="gateEntrarAposConfirmar()">Já confirmei — Entrar</button>
-  </div>
-
   <div class="gate-step" id="gate-login" style="display:none;flex-direction:column;padding:0 22px">
     <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Entrar</h1>
-    <div class="input-group"><label class="input-label">E-mail</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
+    <div class="input-group"><label class="input-label">E-mail da compra</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
     <div class="input-group"><label class="input-label">Senha</label><input type="password" id="gate-login-senha" placeholder="Sua senha"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateLogin()">Entrar</button>
     <p style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="gateForgotPassword()" style="color:var(--title);font-size:12px">Esqueci minha senha</a></p>
@@ -1031,32 +1024,53 @@ async function gateCriarConta() {
   const nome = document.getElementById('gate-nome').value.trim();
   const senha = document.getElementById('gate-senha').value;
   if (!nome || senha.length < 6) { showToast('⚠️ Nome e senha (mín. 6 caracteres)'); return; }
-  const redirectTo = `${window.location.origin}${window.location.pathname}`;
-  const { error } = await sb.auth.signUp({ email: gateData.email, password: senha, options: { emailRedirectTo: redirectTo, data: { nome, telefone: gateData.telefone } } });
-  if (error) { showToast('⚠️ ' + error.message); return; }
-  gateData.nome = nome;
-  document.getElementById('gate-confirm-email').textContent = gateData.email;
-  showGate('confirm');
-}
-
-async function gateEntrarAposConfirmar() {
-  const { data, error } = await sb.auth.signInWithPassword({ email: gateData.email, password: document.getElementById('gate-senha').value });
-  if (error) { showToast('⚠️ Confirme o e-mail antes de entrar'); return; }
+  const btn = document.querySelector('#gate-cadastro .btn-acc');
+  if (btn) { btn.disabled = true; btn.textContent = 'Criando conta...'; }
   try {
+    const createRes = await fetch(`${SUPABASE_URL}/functions/v1/criar-conta`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ telefone: gateData.telefone, code: gateData.code, nome, senha }),
+    });
+    const createData = await createRes.json();
+    if (!createRes.ok || !createData.ok) {
+      showToast('⚠️ ' + (createData.error || 'Não foi possível criar sua conta'));
+      if (createRes.status === 409) {
+        document.getElementById('gate-login-email').value = gateData.email || '';
+        showGate('login');
+      }
+      return;
+    }
+
+    gateData.nome = nome;
+    const { data, error } = await sb.auth.signInWithPassword({ email: gateData.email, password: senha });
+    if (error || !data.session) {
+      document.getElementById('gate-login-email').value = gateData.email || '';
+      showGate('login');
+      showToast('✅ Conta criada. Entre com o e-mail da compra e sua senha.');
+      return;
+    }
+
     const activation = await fetch(`${SUPABASE_URL}/functions/v1/ativar-licenca`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${data.session.access_token}` },
-      body: JSON.stringify({ telefone: gateData.telefone, code: gateData.code, nome: gateData.nome }),
+      body: JSON.stringify({ telefone: gateData.telefone, code: gateData.code, nome }),
     });
     const activationData = await activation.json();
     if (!activation.ok || !activationData.ok || !activationData.state) {
-      showToast('⚠️ ' + (activationData.error || 'Não foi possível gerar seu plano'));
+      showToast('⚠️ ' + (activationData.error || 'Conta criada, mas não foi possível gerar seu plano'));
       return;
     }
+
     state = activationData.state;
     localStorage.setItem('cr_state', JSON.stringify(state));
-  } catch (e) { showToast('⚠️ Falha ao ativar e gerar seu plano. Tente novamente.'); return; }
-  await onAuthenticated(data.session);
+    await onAuthenticated(data.session);
+    showToast('✅ Acesso ativado. Bem-vindo ao Base do Corre!');
+  } catch (e) {
+    showToast('⚠️ Não foi possível concluir o cadastro agora. Tente novamente.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Criar conta ✓'; }
+  }
 }
 
 async function gateLogin() {
@@ -3363,7 +3377,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-09-payment-return-activation-1';
+const APP_VERSION = '2026-10-10-no-email-confirmation-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
