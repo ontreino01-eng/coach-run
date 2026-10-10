@@ -392,6 +392,7 @@ textarea{resize:vertical;min-height:70px}
         <div id="home-next-step" style="font-size:13px;color:var(--txt);line-height:1.5;margin-bottom:10px">Abra sua semana atual e registre carga, dificuldade e como foi cada exercício.</div>
         <button class="btn btn-acc btn-full" id="home-next-btn" onclick="openCurrentWorkout()">Começar treino →</button>
       </div>
+      <div id="home-weekly-summary"></div>
       <div style="margin-top:4px">
         <button class="btn btn-ghost btn-full" onclick="goToScreen('exercicios')">📚 Biblioteca de exercícios</button>
       </div>
@@ -748,6 +749,15 @@ textarea{resize:vertical;min-height:70px}
   <div class="ex-list" id="ex-list" style="padding-top:14px"></div>
 </div>
 
+<!-- EVOLUÇÃO -->
+<div id="screen-evolucao" class="screen">
+  <div class="pad" style="padding-top:22px">
+    <div class="section-title">Como estou evoluindo</div>
+    <div class="section-sub">Leitura automática a partir dos treinos registrados, avaliações e testes. Não substitui avaliação profissional.</div>
+    <div id="evolution-content"></div>
+  </div>
+</div>
+
 <!-- PERFIL -->
 <div id="screen-perfil" class="screen">
   <div class="profile-hero" id="profile-hero">
@@ -778,6 +788,7 @@ textarea{resize:vertical;min-height:70px}
 <nav class="bnav">
   <button class="bnav-btn active" onclick="goToScreen('home',this)" id="bnav-home"><span class="bnav-icon">🏠</span><span class="bnav-lbl">Início</span><div class="bnav-dot"></div></button>
   <button class="bnav-btn" onclick="goToScreen('plano',this)" id="bnav-plano"><span class="bnav-icon">📅</span><span class="bnav-lbl">Plano</span><div class="bnav-dot"></div></button>
+  <button class="bnav-btn" onclick="goToScreen('evolucao',this)" id="bnav-evolucao"><span class="bnav-icon">📈</span><span class="bnav-lbl">Evolução</span><div class="bnav-dot"></div></button>
   <button class="bnav-btn" onclick="goToScreen('exercicios',this)" id="bnav-exercicios"><span class="bnav-icon">💪</span><span class="bnav-lbl">Exercícios</span><div class="bnav-dot"></div></button>
   <button class="bnav-btn" onclick="goToScreen('perfil',this)" id="bnav-perfil"><span class="bnav-icon">👤</span><span class="bnav-lbl">Perfil</span><div class="bnav-dot"></div></button>
 </nav>
@@ -867,7 +878,7 @@ async function initAuth() {
       // Nunca libera um plano autenticado apenas porque sobrou state no localStorage.
       if (state && state.assessed) {
         localStorage.removeItem('cr_state');
-        state = { assessed:false, cycleNum:0, currentWeek:1, completedWeeks:[], profile:{}, scores:{}, lesoes:[], plan:null, parqAlert:false, logs:{}, tests:{}, history:[], lead:null };
+        state = { assessed:false, cycleNum:0, currentWeek:1, completedWeeks:[], profile:{}, scores:{}, lesoes:[], plan:null, parqAlert:false, logs:{}, tests:{}, history:[], lead:null, sessionCompletions:{}, weeklySummaries:{}, baselineScores:null };
       }
       if (localStorage.getItem('bc_has_account') === '1') {
         showGate('login');
@@ -960,7 +971,7 @@ async function onAuthenticated(session) {
   }
 
   renderHome(); renderExercises();
-  if (state.assessed) { renderProfile(); renderPlan(); }
+  if (state.assessed) { renderProfile(); renderPlan(); renderEvolution(); }
   updateHdrSub();
   goToScreen(state.assessed ? 'plano' : 'home', document.getElementById(state.assessed ? 'bnav-plano' : 'bnav-home'));
 }
@@ -1158,8 +1169,11 @@ async function installBaseDoCorre() {
 let state = JSON.parse(localStorage.getItem('cr_state') || 'null') || {
   assessed: false, cycleNum: 0, currentWeek: 1, completedWeeks: [],
   profile: {}, scores: {}, lesoes: [], plan: null, parqAlert: false,
-  logs: {}, tests: {}, history: [], lead: null
+  logs: {}, tests: {}, history: [], lead: null, sessionCompletions: {}, weeklySummaries: {}, baselineScores: null
 };
+state.sessionCompletions = state.sessionCompletions || {};
+state.weeklySummaries = state.weeklySummaries || {};
+state.baselineScores = state.baselineScores || (state.scores && Object.keys(state.scores).length ? {...state.scores} : null);
 let avData = {};
 let avChecks = {};
 let avScales = {};
@@ -1236,6 +1250,7 @@ function goToScreen(name, btn) {
   if (name === 'plano' && state.assessed) renderPlan();
   if (name === 'exercicios') renderExercises();
   if (name === 'perfil') renderProfile();
+  if (name === 'evolucao') renderEvolution();
   updateHdrSub();
   window.scrollTo(0, 0);
 }
@@ -1380,6 +1395,7 @@ async function finishAssessment() {
 
   state.profile = { ...avData, nome: state.lead ? state.lead.nome : avData.nome, nivel: nivelFinal, funcScore, riskScore };
   state.scores = { forca, equil, mobil, nordic, dor };
+  if (!state.baselineScores) state.baselineScores = { ...state.scores };
   state.parqAlert = !!(avChecks['parq-risco'] || avChecks['parq-sintoma'] || avChecks['parq-lesao']);
   state.lesoes = Object.keys(avChecks).filter(k => avChecks[k] && !k.startsWith('parq-') && k !== 'lesao-nenhum');
   saveState();
@@ -1803,6 +1819,7 @@ async function closeTheCycle() {
   });
 
   // Atualiza perfil com a reavaliação (novo "estado atual" do aluno)
+  if (!state.baselineScores) state.baselineScores = { ...state.scores };
   state.scores = closeData.reassess;
   state.parqAlert = closeData.parqAlert || state.parqAlert || aiAlerta;
   const rf = closeData.reassess;
@@ -2097,6 +2114,11 @@ function renderHome() {
     document.getElementById('hs-score').textContent = '—';
   }
   if (state.assessed && state.plan) {
+    const summaryHost = document.getElementById('home-weekly-summary');
+    if (summaryHost) {
+      const summaryWeek = state.completedWeeks.length ? Math.max(...state.completedWeeks) : state.currentWeek;
+      summaryHost.innerHTML = renderWeeklySummaryCard(state.cycleNum, summaryWeek);
+    }
     const next = document.getElementById('home-next-step');
     const btn = document.getElementById('home-next-btn');
     if (state.completedWeeks.length === 4) {
@@ -2411,11 +2433,13 @@ function openWorkoutExercise(cycleNum, weekNum, sessionIdx, exerciseIdx) {
       <div style="font-family:var(--ff);font-weight:700;font-size:13px;margin-bottom:10px">Seu registro</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div><label class="input-label">Carga (kg)</label><input type="number" step="0.5" value="${log.carga||''}" ${editable?'':'disabled'} placeholder="Ex: 20" onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'carga',this.value)" style="width:100%"/></div>
-        <div><label class="input-label">Dificuldade</label><select ${editable?'':'disabled'} onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'dificuldade',this.value)" style="width:100%"><option value="">0–10</option>${[...Array(11).keys()].map(n=>`<option value="${n}" ${String(log.dificuldade)===String(n)?'selected':''}>${n}/10</option>`).join('')}</select></div>
+        <div><label class="input-label">Esforço (RPE 0–10)</label><select ${editable?'':'disabled'} onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'dificuldade',this.value)" style="width:100%"><option value="">0–10</option>${[...Array(11).keys()].map(n=>`<option value="${n}" ${String(log.dificuldade)===String(n)?'selected':''}>${n}/10</option>`).join('')}</select></div>
       </div>
       <div style="margin-top:9px"><label class="input-label">Nível realizado</label><select ${editable?'':'disabled'} onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'status',this.value)" style="width:100%"><option value="">Selecione</option><option value="completo" ${log.status==='completo'?'selected':''}>Completei como prescrito</option><option value="parcial" ${log.status==='parcial'?'selected':''}>Completei parcialmente</option><option value="adaptado" ${log.status==='adaptado'?'selected':''}>Completei com adaptação</option><option value="nao" ${log.status==='nao'?'selected':''}>Não consegui concluir</option></select></div>
       <div style="margin-top:9px"><label class="input-label">Feedback</label><textarea ${editable?'':'disabled'} placeholder="Ex: fiz 8 repetições, senti a perna esquerda mais cansada..." onchange="updateLog(${cycleNum},${weekNum},${sessionIdx},${exerciseIdx},'obs',this.value)" style="width:100%;min-height:72px;padding:10px;border-radius:10px;border:1px solid var(--b1);background:var(--s2);color:var(--txt);font-family:var(--fb)">${escapeHtml(log.obs||'')}</textarea></div>
     </div>
+
+    ${editable ? `<button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="completeSession(${cycleNum},${weekNum},${sessionIdx})">✓ Concluir esta sessão</button>` : ''}
 
     <div style="display:flex;gap:8px">
       ${prev!==null ? `<button class="btn btn-ghost" style="flex:1" onclick="openWorkoutExercise(${cycleNum},${weekNum},${sessionIdx},${prev})">← Anterior</button>` : ''}
@@ -2442,17 +2466,136 @@ function updateLog(c, w, s, e, field, val) {
   saveState();
 }
 
+function sessionKey(c,w,s) { return `${c}:${w}:${s}`; }
+
+function sessionStats(c,w,s) {
+  const vp = c === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === c) || {}).plan;
+  const session = vp?.weeks?.[w-1]?.sessions?.[s];
+  if (!session) return { complete:false, total:0, logged:0, avgRpe:null, statuses:[] };
+  const indices = loggableExerciseIndices(session);
+  const logs = indices.map(i => ({ i, line:session.exercises[i], log:getLog(c,w,s,i) }));
+  const rpes = logs.map(x => Number(x.log.dificuldade)).filter(x => Number.isFinite(x) && String(x) !== '');
+  const statuses = logs.map(x => x.log.status).filter(Boolean);
+  return {
+    complete: indices.length > 0 && logs.every(x => !!x.log.status && x.log.dificuldade !== '' && x.log.dificuldade != null),
+    total: indices.length,
+    logged: statuses.length,
+    avgRpe: rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null,
+    statuses,
+    logs
+  };
+}
+
+function buildPostWorkoutMessage(c,w,s) {
+  const stats = sessionStats(c,w,s);
+  const runDays = Number(state.profile?.['av-dias-modalidade'] || 0);
+  const partial = stats.statuses.some(x => x === 'parcial' || x === 'adaptado' || x === 'nao');
+  if (stats.avgRpe == null) return 'Sessão registrada. Continue preenchendo esforço e execução para melhorar suas recomendações.';
+  if (stats.avgRpe >= 8.5 || partial) {
+    return `Sessão concluída. Esforço médio ${stats.avgRpe}/10. Como a carga percebida ficou alta ou houve adaptação, evite aumentar carga automaticamente na próxima sessão e priorize recuperação.`;
+  }
+  if (stats.avgRpe <= 7) {
+    return `Sessão concluída. Esforço médio ${stats.avgRpe}/10, dentro de uma faixa controlada. ${runDays >= 5 ? 'Como sua frequência de corrida é alta, preserve a recuperação entre os estímulos.' : 'Se houver corrida importante nas próximas 24h, priorize recuperação.'}`;
+  }
+  return `Sessão concluída. Esforço médio ${stats.avgRpe}/10. Mantenha a carga se a técnica estiver estável e observe sua recuperação antes da próxima sessão.`;
+}
+
+function completeSession(c,w,s) {
+  const stats = sessionStats(c,w,s);
+  if (!stats.complete) {
+    showToast('⚠️ Registre RPE e nível realizado em todos os exercícios antes de concluir a sessão.');
+    return;
+  }
+  state.sessionCompletions = state.sessionCompletions || {};
+  const key = sessionKey(c,w,s);
+  const firstTime = !state.sessionCompletions[key];
+  state.sessionCompletions[key] = {
+    completedAt: new Date().toISOString(),
+    avgRpe: stats.avgRpe,
+    message: buildPostWorkoutMessage(c,w,s)
+  };
+  saveState();
+  renderHome();
+  renderEvolution();
+  if (firstTime) showToast('✅ ' + state.sessionCompletions[key].message);
+  else showToast('✅ Sessão já registrada.');
+}
+
+function exerciseNameFromLine(line) {
+  return canonicalExerciseName(prescribedExerciseName(line)) || prescribedExerciseName(line);
+}
+
+function weeklySummary(c,w) {
+  const vp = c === state.cycleNum ? state.plan : (state.history.find(h => h.cycleNum === c) || {}).plan;
+  const week = vp?.weeks?.[w-1];
+  if (!week) return null;
+  const planned = week.sessions.length;
+  const completed = week.sessions.reduce((n,_,i)=>n + (state.sessionCompletions?.[sessionKey(c,w,i)] ? 1 : 0),0);
+  const sessionRpes = week.sessions.map((_,i)=>state.sessionCompletions?.[sessionKey(c,w,i)]?.avgRpe).filter(v=>Number.isFinite(Number(v))).map(Number);
+  const avgRpe = sessionRpes.length ? Math.round((sessionRpes.reduce((a,b)=>a+b,0)/sessionRpes.length)*10)/10 : null;
+
+  const candidates = [];
+  week.sessions.forEach((session,si) => {
+    loggableExerciseIndices(session).forEach(ei => {
+      const log = getLog(c,w,si,ei);
+      const rpe = Number(log.dificuldade);
+      if (log.status === 'completo' && Number.isFinite(rpe) && rpe <= 7 && Number(log.carga) > 0) {
+        const name = exerciseNameFromLine(session.exercises[ei]);
+        if (name && !candidates.includes(name)) candidates.push(name);
+      }
+    });
+  });
+
+  let guidance = 'Continue registrando as sessões para o app ajustar a leitura da semana.';
+  if (completed === planned && planned > 0 && avgRpe != null) {
+    if (avgRpe <= 7 && candidates.length) {
+      guidance = `Volume concluído com esforço controlado. Na próxima exposição, ${candidates.slice(0,2).join(' e ')} podem ser candidatos a uma pequena progressão, somente se a técnica continuar estável.`;
+    } else if (avgRpe >= 8.5) {
+      guidance = 'Semana exigente. A prioridade para a próxima semana é manter ou reduzir a progressão até a recuperação acompanhar.';
+    } else {
+      guidance = 'Semana concluída. Mantenha o volume e progrida apenas onde execução e esforço estiverem consistentes.';
+    }
+  } else if (completed < planned) {
+    guidance = 'Nem todas as sessões foram concluídas. Antes de aumentar carga, priorize aderência e recuperação.';
+  }
+
+  return { cycle:c, week:w, planned, completed, adherence:planned?Math.round(completed/planned*100):0, avgRpe, candidates:candidates.slice(0,2), guidance };
+}
+
+function renderWeeklySummaryCard(c,w) {
+  const sum = weeklySummary(c,w);
+  if (!sum) return '';
+  return `<div class="card" style="margin-top:12px;border-color:var(--b2)">
+    <div style="font-size:10px;font-weight:800;color:var(--title);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-family:var(--ff)">Resumo automático · Semana ${w}</div>
+    <div style="font-family:var(--ff);font-weight:800;font-size:16px;margin-bottom:8px">Você completou ${sum.completed}/${sum.planned} sessões</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px">
+      <span class="tag tag-green">Aderência ${sum.adherence}%</span>
+      <span class="tag tag-blue">RPE médio ${sum.avgRpe == null ? '—' : sum.avgRpe}</span>
+      <span class="tag tag-muted">Sono ${escapeHtml(state.profile?.['av-sono'] || '—')}</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.55">${escapeHtml(sum.guidance)}</div>
+  </div>`;
+}
+
 function markWeekDone(weekNum) {
+  const sum = weeklySummary(state.cycleNum, weekNum);
+  if (sum && sum.completed < sum.planned) {
+    showToast(`⚠️ Conclua as ${sum.planned} sessões da semana antes de fechá-la.`);
+    return;
+  }
+  state.weeklySummaries = state.weeklySummaries || {};
+  if (sum) state.weeklySummaries[`${state.cycleNum}:${weekNum}`] = {...sum, generatedAt:new Date().toISOString()};
   if (!state.completedWeeks.includes(weekNum)) state.completedWeeks.push(weekNum);
   if (state.currentWeek === weekNum && weekNum < 4) state.currentWeek = weekNum + 1;
   saveState();
   closeModal('modal-treino');
   renderPlan();
   renderHome();
+  renderEvolution();
   if (state.completedWeeks.length === 4) {
     showToast('🎉 Ciclo completo! Hora de reavaliar e fechar o mês.');
   } else {
-    showToast(`✅ Semana ${weekNum} concluída!`);
+    showToast(`✅ Semana ${weekNum} concluída. Seu resumo automático está pronto.`);
   }
 }
 
@@ -2878,6 +3021,79 @@ function openExModal(id) {
 }
 
 // ══════════════════════════════════════════════════════
+// EVOLUÇÃO AUTOMÁTICA
+// ══════════════════════════════════════════════════════
+function latestTestData() {
+  const keys = Object.keys(state.tests || {}).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+  return keys.length ? state.tests[keys[keys.length-1]] : null;
+}
+
+function testEvolutionRows() {
+  const base = state.tests?.[0] || null;
+  const latest = latestTestData();
+  if (!base || !latest) return '';
+  const labels = {
+    salto:'Salto horizontal', prancha:'Prancha', agacha:'Agachamento 60s',
+    flexao:'Flexão 60s', nordic:'Nordic Curl', tempo1km:'1 km'
+  };
+  return Object.keys(base).filter(k=>latest[k] != null).map(k=>{
+    const before=Number(base[k]), after=Number(latest[k]);
+    let pct=before>0?((after-before)/before)*100:0;
+    if (INVERTED_METRICS.includes(k)) pct=-pct;
+    const sign=pct>0?'+':'';
+    return `<div class="result-row"><div class="result-label">${labels[k]||k}</div><div class="result-val">${escapeHtml(String(after))} <span style="font-size:10px;color:${pct>2?'var(--acc2)':pct<-2?'var(--red)':'var(--muted)'}">(${sign}${Math.round(pct*10)/10}%)</span></div></div>`;
+  }).join('');
+}
+
+function renderEvolution() {
+  const host = document.getElementById('evolution-content');
+  if (!host || !state.assessed) return;
+  const baseline = state.baselineScores || state.scores || {};
+  const current = state.scores || {};
+  const labels = {forca:'Força',equil:'Equilíbrio',mobil:'Mobilidade',nordic:'Controle excêntrico'};
+  const currentWeekSummary = weeklySummary(state.cycleNum, state.currentWeek);
+  const lastDone = state.completedWeeks.length ? weeklySummary(state.cycleNum, Math.max(...state.completedWeeks)) : null;
+  const summary = lastDone || currentWeekSummary;
+  const scoreRows = Object.keys(labels).map(k=>{
+    const b=Number(baseline[k] ?? current[k] ?? 0), now=Number(current[k] ?? 0), delta=now-b;
+    const sign=delta>0?'+':'';
+    return `<div style="margin-bottom:11px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--muted)">${labels[k]}</span><span style="font-size:12px;font-weight:800">${now}/10 <span style="font-size:10px;color:${delta>0?'var(--acc2)':delta<0?'var(--red)':'var(--muted)'}">(${sign}${delta})</span></span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.max(0,Math.min(100,now*10))}%"></div></div>
+    </div>`;
+  }).join('');
+
+  host.innerHTML = `
+    <div class="card" style="margin-top:14px;border-color:var(--b2)">
+      <div class="card-title">Leitura desta semana</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-top:8px">
+        ${summary ? `Aderência <b style="color:var(--txt)">${summary.adherence}%</b> · RPE médio <b style="color:var(--txt)">${summary.avgRpe == null?'—':summary.avgRpe}</b> · Sono <b style="color:var(--txt)">${escapeHtml(state.profile?.['av-sono']||'—')}</b>.` : 'Complete suas sessões e registre o esforço para gerar sua leitura automática.'}
+      </div>
+      ${summary ? `<div style="font-size:12px;color:var(--txt);line-height:1.55;margin-top:9px">${escapeHtml(summary.guidance)}</div>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Capacidade atual</div>
+      <div class="card-sub" style="margin-bottom:12px">Comparação com a primeira avaliação registrada no app.</div>
+      ${scoreRows}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Testes físicos</div>
+      ${testEvolutionRows() || '<div class="card-sub">A comparação aparecerá após o primeiro reteste.</div>'}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px">Aderência e esforço</div>
+      <div class="result-row"><div class="result-label">Sessões concluídas nesta semana</div><div class="result-val">${summary ? summary.completed+'/'+summary.planned : '0'}</div></div>
+      <div class="result-row"><div class="result-label">Aderência</div><div class="result-val">${summary ? summary.adherence+'%' : '—'}</div></div>
+      <div class="result-row"><div class="result-label">RPE médio</div><div class="result-val">${summary?.avgRpe ?? '—'}</div></div>
+      <div class="result-row"><div class="result-label">Sono informado</div><div class="result-val">${escapeHtml(state.profile?.['av-sono']||'—')}</div></div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
 // PROFILE
 // ══════════════════════════════════════════════════════
 function renderProfile() {
@@ -2937,6 +3153,8 @@ function renderProfile() {
       ${state.lesoes.length ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:6px">Regiões com prioridade:</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">${state.lesoes.map(l => `<span class="tag tag-orange">${lesaoLabel(l)}</span>`).join('')}</div></div>` : ''}
     </div>
+
+    <button class="btn btn-acc btn-full" style="margin-bottom:12px" onclick="goToScreen('evolucao')">📈 Ver minha evolução</button>
 
     <div class="card">
       <div class="card-title" style="margin-bottom:12px">Seu Perfil</div>
@@ -3135,7 +3353,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-09-strength-days-scheduling-1';
+const APP_VERSION = '2026-10-09-auto-coaching-evolution-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
