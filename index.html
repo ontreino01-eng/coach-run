@@ -2474,7 +2474,7 @@ function sessionStats(c,w,s) {
   if (!session) return { complete:false, total:0, logged:0, avgRpe:null, statuses:[] };
   const indices = loggableExerciseIndices(session);
   const logs = indices.map(i => ({ i, line:session.exercises[i], log:getLog(c,w,s,i) }));
-  const rpes = logs.map(x => Number(x.log.dificuldade)).filter(x => Number.isFinite(x) && String(x) !== '');
+  const rpes = logs.map(x => x.log.dificuldade).filter(v => v !== '' && v != null && Number.isFinite(Number(v))).map(Number);
   const statuses = logs.map(x => x.log.status).filter(Boolean);
   return {
     complete: indices.length > 0 && logs.every(x => !!x.log.status && x.log.dificuldade !== '' && x.log.dificuldade != null),
@@ -2530,7 +2530,11 @@ function weeklySummary(c,w) {
   const week = vp?.weeks?.[w-1];
   if (!week) return null;
   const planned = week.sessions.length;
-  const completed = week.sessions.reduce((n,_,i)=>n + (state.sessionCompletions?.[sessionKey(c,w,i)] ? 1 : 0),0);
+  const completed = week.sessions.reduce((n,_,i)=>{
+    const marked = state.sessionCompletions?.[sessionKey(c,w,i)];
+    const inferred = sessionStats(c,w,i).complete;
+    return n + (marked || inferred ? 1 : 0);
+  },0);
   const sessionRpes = week.sessions.map((_,i)=>state.sessionCompletions?.[sessionKey(c,w,i)]?.avgRpe).filter(v=>Number.isFinite(Number(v))).map(Number);
   const avgRpe = sessionRpes.length ? Math.round((sessionRpes.reduce((a,b)=>a+b,0)/sessionRpes.length)*10)/10 : null;
 
@@ -3025,7 +3029,7 @@ function openExModal(id) {
 // ══════════════════════════════════════════════════════
 function latestTestData() {
   const keys = Object.keys(state.tests || {}).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
-  return keys.length ? state.tests[keys[keys.length-1]] : null;
+  return keys.length > 1 ? state.tests[keys[keys.length-1]] : null;
 }
 
 function testEvolutionRows() {
