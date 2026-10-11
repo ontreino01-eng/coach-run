@@ -1027,8 +1027,8 @@ function renderRenewScreen(info) {
 
 async function syncStateToCloud() {
   if (!sb || !currentUserId) return;
-  try { await sb.from('profiles').update({ state, updated_at: new Date().toISOString() }).eq('id', currentUserId); }
-  catch (e) { console.warn('Sync com a nuvem falhou (sem internet?)', e); }
+  const {error}=await sb.from('profiles').update({ state, updated_at: new Date().toISOString() }).eq('id', currentUserId);
+  if(error)throw error;
 }
 
 async function gateValidarLicenca() {
@@ -1222,7 +1222,7 @@ let testMode = 'inicial'; // 'inicial' | 'reteste'
 let viewedCycle = null; // null = ciclo atual; N = revisando histórico do ciclo N
 let closeData = {}; // dados temporários do fechamento de ciclo em andamento
 
-function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); syncStateToCloud(); }
+function saveState() { localStorage.setItem('cr_state', JSON.stringify(state)); syncStateToCloud().catch(e=>console.warn('Não foi possível sincronizar o progresso',e)); }
 
 async function ensureLeadId() {
   if (!sb || !state.lead || !state.lead.nome || !state.lead.telefone) return false;
@@ -1263,7 +1263,7 @@ async function syncAssessmentToCloud(email = '') {
       }),
     });
     const data = await res.json();
-    if (!res.ok || !data.ok) return false;
+    if (!res.ok || !data.ok) {showToast(data.error || 'Não foi possível salvar sua avaliação.');return false;}
     if (data.leadId) state.lead.id = data.leadId;
     if (cleanEmail) state.lead.email = cleanEmail;
     localStorage.setItem('cr_state', JSON.stringify(state));
@@ -1280,6 +1280,7 @@ async function syncAssessmentToCloud(email = '') {
 // NAV
 // ══════════════════════════════════════════════════════
 function goToScreen(name, btn) {
+  if(name==='avaliacao' && guardInitialAssessment())return;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
@@ -1314,7 +1315,17 @@ function updateHdrSub() {
 // ══════════════════════════════════════════════════════
 // ASSESSMENT
 // ══════════════════════════════════════════════════════
+function initialAssessmentLocked() {
+ return !!state.assessed || !!(state.tests?.[0] && Object.keys(state.tests[0]).length);
+}
+function guardInitialAssessment() {
+ if(!initialAssessmentLocked())return false;
+ showToast('Sua avaliação inicial já foi concluída. A próxima será a reavaliação após concluir o ciclo e renovar.');
+ if(state.assessed)goToScreen('home');else {renderPaywall();goToScreen('paywall');}
+ return true;
+}
 function startAssessment() {
+  if(guardInitialAssessment())return;
   if (!state.lead || !state.lead.nome) { goToScreen('lead'); return; }
   avData = {'av-modalidade':'corrida'}; avChecks = {}; avScales = {};
   goToScreen('avaliacao', document.getElementById('bnav-avaliacao'));
@@ -1409,6 +1420,7 @@ function nextStep(current) {
 function prevStep(current) { showStep(current - 1); }
 
 async function finishAssessment() {
+  if(guardInitialAssessment())return;
   if (!avData['av-dias']) { showToast('⚠️ Selecione a disponibilidade'); return; }
   const strengthDays = Array.isArray(avData['av-dias-fortalecimento']) ? avData['av-dias-fortalecimento'] : [];
   if (strengthDays.length !== Number(avData['av-dias'])) {
@@ -1477,6 +1489,7 @@ function renderTesteInputs(containerId, idPrefix, prefill) {
 }
 
 async function submitTeste() {
+  if(testMode==='inicial' && guardInitialAssessment())return;
   const prefix = testMode === 'inicial' ? 'teste-' : 'cc-teste-';
   const sport = 'corrida';
   const tests = getTests('corrida');
@@ -1488,8 +1501,9 @@ async function submitTeste() {
   }
   if (testMode === 'inicial') {
     state.tests[0] = result;
+    const saved=await syncAssessmentToCloud();
+    if(!saved) {delete state.tests[0];showToast('Não foi possível concluir sua avaliação. Verifique a conexão e tente novamente.');return;}
     saveState();
-    await syncAssessmentToCloud();
     renderPaywall();
     goToScreen('paywall');
   } else {
@@ -1507,6 +1521,7 @@ function cancelTeste() {
 // CAPTURA DE LEAD (antes de qualquer cadastro/pagamento)
 // ══════════════════════════════════════════════════════
 async function submitLead() {
+  if(guardInitialAssessment())return;
   const nome = document.getElementById('lead-nome').value.trim();
   const telefoneRaw = document.getElementById('lead-telefone').value.trim();
   const telefone = telefoneRaw.replace(/\D/g, '');
@@ -1531,7 +1546,7 @@ async function submitLead() {
       localStorage.setItem('cr_state', JSON.stringify(state));
     } catch (e) {
       console.warn('Não consegui registrar o lead na nuvem', e);
-      showToast('⚠️ Não consegui conectar sua avaliação. Verifique a internet e tente novamente.');
+      showToast(e.message || 'Não consegui conectar sua avaliação. Verifique a internet e tente novamente.');
       return;
     }
   }
@@ -1727,7 +1742,17 @@ function renderPaywall() {
 // ══════════════════════════════════════════════════════
 // FECHAMENTO DE CICLO — reavaliação + reteste + feedback
 // ══════════════════════════════════════════════════════
-function startCloseCycle() {
+async function startCloseCycle() {
+  if(!state.assessed || ![1,2,3,4].every(n=>(state.completedWeeks||[]).includes(n))) {showToast('Conclua as quatro semanas antes de reavaliar.');return;}
+  try {
+   await syncStateToCloud();
+   const {data:{session}}=await sb.auth.getSession();
+   if(!session)throw new Error('Entre na sua conta para reavaliar.');
+   const res=await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({action:'reassessment_status'})});
+   const access=await res.json();
+   if(!res.ok||!access.allowed)throw new Error(access.error||'Não foi possível confirmar a renovação.');
+  }catch(e){showToast(e.message||'Não foi possível liberar a reavaliação.');return;}
+
   closeData = {};
   ['cc-forca','cc-equilibrio','cc-mobilidade','cc-nordic','cc-dor','cc-rpe'].forEach(k => delete avScales[k]);
   ['cc-parq-risco','cc-dornova'].forEach(k => delete avChecks[k]);
@@ -1793,126 +1818,41 @@ function submitFeedback() {
   closeTheCycle();
 }
 
+let closingCycle = false;
 async function closeTheCycle() {
-  const c = state.cycleNum;
-  const testBefore = state.tests[c - 1] || state.tests[0];
-  const testAfter = closeData.testeFinal;
-  state.tests[c] = testAfter;
-
-  // Comparação do teste: % de variação por teste + mediana geral
-  // (mediana em vez de média — evita que 1 teste com base baixa, ex.: Nordic Curl
-  // saindo de 2 reps, distorça sozinho a leitura geral de evolução)
-  const deltas = {};
-  const pcts = [];
-  Object.keys(testAfter).forEach(k => {
-    const before = testBefore[k] || 0;
-    const after = testAfter[k];
-    let pct = before > 0 ? ((after - before) / before) * 100 : 0;
-    if (INVERTED_METRICS.includes(k)) pct = -pct; // ex: tempo de 1km — menor tempo = melhora, então inverte o sinal
-    deltas[k] = { before, after, pct: Math.round(pct * 10) / 10 };
-    pcts.push(pct);
-  });
-  const sorted = [...pcts].sort((a,b) => a-b);
-  const mid = Math.floor(sorted.length / 2);
-  const median = sorted.length ? (sorted.length % 2 ? sorted[mid] : (sorted[mid-1]+sorted[mid])/2) : 0;
-  const overallPct = Math.round(median * 10) / 10;
-
-  // Aderência aos exercícios prescritos no ciclo que está fechando
-  const logsSummary = summarizeLogs(c);
-  const prevFocus = state.plan.focus.key;
-
-  // Tenta a decisão via IA (Groq, através do proxy protegido). Se falhar
-  // (offline, backend não configurado, erro da API), cai na regra local.
-  let nextFocusKey, aiReasoning = null, aiAlerta = false;
-  const btn = document.querySelector('#cc-step-3 .btn-acc');
-  if (btn) btn.textContent = 'Consultando IA...';
-  try {
-    if (!sb) throw new Error('Backend não configurado');
-    const { data: { session: aiSession } } = await sb.auth.getSession();
-    if (!aiSession) throw new Error('Sessão não autenticada');
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${aiSession.access_token}` },
-      body: JSON.stringify({
-        prevFocus, sport: 'corrida', nivel: state.profile.nivel,
-        profile: state.profile, lesoes: state.lesoes, parqAlert: state.parqAlert,
-        testDeltas: deltas, overallPct, reassess: closeData.reassess, feedback: closeData.feedback, logsSummary,
-      }),
-    });
-    const decision = await res.json();
-    if (!decision.nextFocus) throw new Error('Resposta da IA inválida');
-    nextFocusKey = decision.nextFocus;
-    aiReasoning = decision.reasoning || null;
-    aiAlerta = !!decision.alertaSaude;
-  } catch (e) {
-    console.warn('IA indisponível, usando regra local:', e);
-    nextFocusKey = decideNextFocus(prevFocus, { overallPct }, closeData.feedback, logsSummary);
-  }
-  if (btn) btn.textContent = 'Gerar próximo ciclo ✓';
-
-  // Arquiva o ciclo que está fechando (plano + testes + reavaliação + feedback + logs)
-  state.history.push({
-    cycleNum: c, plan: state.plan, testBefore, testAfter, deltas, overallPct,
-    reassess: closeData.reassess, feedback: closeData.feedback, logsSummary, aiReasoning,
-    closedAt: new Date().toISOString(),
-  });
-
-  // Atualiza perfil com a reavaliação (novo "estado atual" do aluno)
-  if (!state.baselineScores) state.baselineScores = { ...state.scores };
-  state.scores = closeData.reassess;
-  state.parqAlert = closeData.parqAlert || state.parqAlert || aiAlerta;
-  const rf = closeData.reassess;
-  state.profile.funcScore = Math.round((rf.forca + rf.equil + rf.mobil + rf.nordic) / 4);
-  state.profile.riskScore = Math.round((10 - state.profile.funcScore) * 0.6 + rf.dor * 0.4);
-  const muscuExp = state.profile['av-exp-muscu'];
-  state.profile.nivel = rf.forca < 4 && muscuExp === 'nenhuma' ? 'Iniciante' : rf.forca > 6 && muscuExp === 'avancada' ? 'Avançado' : 'Intermediário';
-
-  // Gera o próximo ciclo completo pela IA usando avaliação + evolução + registros.
-  // A função backend limita a IA à biblioteca validada e à base científica oficial.
-  const nextCycleNum = c + 1;
-  let nextPlan = null;
-  try {
-    if (!sb) throw new Error('Backend não configurado');
-    const { data: { session: planSession } } = await sb.auth.getSession();
-    if (!planSession) throw new Error('Sessão não autenticada');
-    if (btn) btn.textContent = 'Montando prescrição individual…';
-    const planRes = await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${planSession.access_token}` },
-      body: JSON.stringify({
-        action:'generate_plan',
-        cycleNum: nextCycleNum,
-        requestedFocus: nextFocusKey,
-        profile: state.profile,
-        scores: state.scores,
-        lesoes: state.lesoes,
-        parqAlert: state.parqAlert,
-        tests: { before:testBefore, after:testAfter, deltas, overallPct },
-        feedback: closeData.feedback,
-        reassess: closeData.reassess,
-        logsSummary,
-        previousPlan: state.history[state.history.length - 1]?.plan || null,
-        previousLogs: state.logs[c] || {}
-      })
-    });
-    const planData = await planRes.json();
-    if (!planRes.ok || !planData.plan || !Array.isArray(planData.plan.weeks)) throw new Error(planData.error || 'Plano inválido');
-    nextPlan = planData.plan;
-    nextPlan.cycleNum = nextCycleNum;
-    nextPlan.weeks.forEach((w, i) => { w.num = i + 1; w.cycleNum = nextCycleNum; });
-  } catch (e) {
-    console.warn('Prescrição completa por IA indisponível; usando motor local seguro:', e);
-    nextPlan = generateCycle(nextCycleNum, state.profile, state.lesoes, nextFocusKey);
-  }
-  state.cycleNum = nextCycleNum;
-  state.plan = nextPlan;
-  state.currentWeek = 1;
-  state.completedWeeks = [];
-  viewedCycle = null;
-  saveState();
-
-  renderHome(); renderPlan(); renderProfile();
-  goToScreen('plano', document.getElementById('bnav-plano'));
-  showToast(aiReasoning ? `✅ Ciclo ${nextCycleNum} gerado pela IA: ${aiReasoning}` : `✅ Ciclo ${c} fechado — Ciclo ${nextCycleNum} gerado (${FOCUS_DEFS[nextFocusKey].name})`);
+ if(closingCycle)return;
+ closingCycle=true;
+ const btn=document.querySelector('#cc-step-3 .btn-acc');
+ if(btn){btn.disabled=true;btn.textContent='Preparando reavaliação…';}
+ try {
+  await syncStateToCloud();
+  const c=state.cycleNum;
+  const before=state.tests[c-1]||state.tests[0];
+  const after=closeData.testeFinal;
+  const deltas={},pcts=[];
+  Object.keys(after).forEach(k=>{let pct=before[k]>0?(after[k]-before[k])/before[k]*100:0;if(INVERTED_METRICS.includes(k))pct=-pct;deltas[k]={before:before[k]||0,after:after[k],pct:Math.round(pct*10)/10};pcts.push(pct);});
+  const sorted=pcts.sort((a,b)=>a-b),mid=Math.floor(sorted.length/2);
+  const overallPct=Math.round((sorted.length?(sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2):0)*10)/10;
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)throw new Error('Entre novamente para continuar.');
+  const payload={cycleNum:c+1,prevFocus:state.plan.focus.key,profile:state.profile,scores:closeData.reassess,lesoes:state.lesoes,parqAlert:closeData.parqAlert||state.parqAlert,reassess:closeData.reassess,feedback:closeData.feedback,tests:{before,after,deltas,overallPct},logsSummary:summarizeLogs(c),previousLogs:state.logs[c]||{}};
+  const call=async body=>{
+   const res=await fetch(`${SUPABASE_URL}/functions/v1/groq-proxy`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${session.access_token}`},body:JSON.stringify(body)});
+   const data=await res.json();if(!res.ok)throw new Error(data.error||'Não foi possível gerar o próximo ciclo.');return data;
+  };
+  const decision=await call(payload);
+  if(!decision.nextFocus)throw new Error('Não foi possível confirmar a reavaliação.');
+  if(btn)btn.textContent='Montando próximo ciclo…';
+  const result=await call({...payload,action:'generate_plan'});
+  if(!result.state?.plan)throw new Error('Plano não confirmado. Tente novamente.');
+  state=result.state;
+  localStorage.setItem('cr_state',JSON.stringify(state));
+  viewedCycle=null;
+  renderHome();renderPlan();renderProfile();renderEvolution();
+  goToScreen('plano',document.getElementById('bnav-plano'));
+  showToast(`Ciclo ${state.cycleNum} liberado. Sua reavaliação foi salva.`);
+ }catch(e){showToast(e.message||'Falha ao gerar o ciclo. Seu treino atual foi preservado.');}
+ finally{closingCycle=false;if(btn){btn.disabled=false;btn.textContent='Gerar próximo ciclo ✓';}}
 }
 
 // Placeholder de decisão — quando a IA real for integrada, ela substitui esta
@@ -3389,13 +3329,13 @@ function formatStrengthDays(days) {
 }
 function lesaoLabel(v) { const m={lesaojoelho:'Joelho',lesaotornozelo:'Tornozelo/Aquiles',lesaoquadril:'Quadril/IT Band',lesaolombar:'Lombar/Core',lesaoisquio:'Isquiotibiais',lesaoombro:'Ombro/Manguito'}; return m[v.replace('-','')] || v; }
 function modLabel(v) { return '🏃 Corrida'; }
-function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[],lead:null}; renderHome(); renderProfile(); goToScreen('home',document.getElementById('bnav-home')); showToast('Dados apagados'); }
+function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o rascunho da avaliação?'))return; localStorage.removeItem('cr_state'); state={assessed:false,cycleNum:0,currentWeek:1,completedWeeks:[],profile:{},scores:{},lesoes:[],plan:null,parqAlert:false,logs:{},tests:{},history:[],lead:null};renderHome();goToScreen('home'); }
 
 // INIT
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-11-resume-activation-1';
+const APP_VERSION = '2026-10-11-assessment-lock-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
@@ -3418,3 +3358,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
