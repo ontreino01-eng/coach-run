@@ -255,9 +255,9 @@ Deno.serve(async (req) => {
       return new Response(json({ ok: true, planReady: true, state: saved.state }), { status: 200, headers: cors });
     }
 
-    const { data: lead, error: leadError } = await admin.from('leads').select('id,nome,telefone,assessment').eq('telefone', telefone).eq('email', email).not('assessment', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    const { data: lead, error: leadError } = await admin.from('leads').select('id,nome,telefone,assessment').eq('telefone', telefone).eq('email', email).not('assessment', 'is', null).not('assessment->>tests', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (leadError) throw leadError;
-    if (!lead?.assessment) return new Response(json({ error: 'Não encontrei uma avaliação para este telefone' }), { status: 404, headers: cors });
+    if (!lead?.assessment?.tests || !Object.keys(lead.assessment.tests).length) return new Response(json({ error: 'Não encontrei uma avaliação para este telefone' }), { status: 404, headers: cors });
 
     if(saved?.state?.assessed) return new Response(json({error:'Sua avaliação inicial já foi ativada. Não é permitido gerar outra inicial.',code:'INITIAL_LOCKED'}),{status:409,headers:cors});
     const {data: existingCycle,error: cycleError}=await admin.from('assessment_cycles').select('plan,status,inputs').eq('user_id',user.id).eq('cycle_num',1).maybeSingle();
