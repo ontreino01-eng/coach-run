@@ -928,7 +928,9 @@ async function onAuthenticated(session) {
   currentUserId = session.user.id;
   localStorage.setItem('bc_has_account', '1');
   try {
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+    const { data: profile, error: profileError } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+    if (profileError) throw profileError;
+    state = profile?.state || { assessed:false, cycleNum:0, currentWeek:1, completedWeeks:[], profile:{}, scores:{}, lesoes:[], plan:null, parqAlert:false, logs:{}, tests:{}, history:[], lead:null };
     if (profile && profile.state && Object.keys(profile.state).length) {
       state = profile.state;
       const migratedLegacyExercises = migrateLegacyStateExercises(state);
@@ -940,14 +942,43 @@ async function onAuthenticated(session) {
         if (migrationError) console.warn('Não consegui persistir a migração dos nomes antigos.', migrationError);
       }
     }
-  } catch (e) { console.warn('Não consegui carregar da nuvem, usando dado local.', e); }
+  } catch (e) {
+    console.error('Não consegui carregar o plano da conta.', e);
+    showGate('login');
+    showToast('⚠️ Não foi possível carregar sua conta. Tente entrar novamente.');
+    return;
+  }
 
-  // Primeiro login depois do pagamento: a avaliação + teste já foram feitos
-  // ANTES da compra (fluxo gratuito) — gera o Ciclo 1 agora, sem pedir de novo.
-  // A ativação já deve entregar o primeiro plano gerado no backend.
-  // Não gere um plano local aqui: isso poderia liberar uma prescrição diferente da IA.
-  if (!state.assessed && state.profile && state.profile['av-modalidade'] && state.tests && state.tests[0]) {
-    console.warn('Avaliação encontrada sem plano gerado pelo backend; aguardando ativação correta.');
+  // O estado da conta deve vir do backend, inclusive em outra instalação do app.
+  if (!state.assessed || !state.plan || !Array.isArray(state.plan.weeks) || state.plan.weeks.length !== 4) {
+    showGate('login');
+    const loginBtn = document.querySelector('#gate-login .btn-acc');
+    if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = 'Preparando seu treinamento…'; }
+    showToast('Preparando seu ciclo de fortalecimento…');
+    try {
+      const activation = await fetch(`${SUPABASE_URL}/functions/v1/ativar-licenca`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          telefone: gateData.telefone || '',
+          code: gateData.code || '',
+          nome: gateData.nome || session.user.user_metadata?.nome || ''
+        })
+      });
+      const result = await activation.json();
+      if (!activation.ok || !result.ok || !result.state?.assessed || !result.state?.plan) {
+        throw new Error(result.error || 'Não foi possível preparar seu plano. Tente entrar novamente.');
+      }
+      state = result.state;
+      localStorage.setItem('cr_state', JSON.stringify(state));
+      gateData = {};
+    } catch (error) {
+      showGate('login');
+      showToast('⚠️ ' + error.message);
+      return;
+    } finally {
+      if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Entrar →'; }
+    }
   }
 
   // Confere se a assinatura mensal está em dia antes de liberar o app.
@@ -1051,19 +1082,6 @@ async function gateCriarConta() {
       return;
     }
 
-    const activation = await fetch(`${SUPABASE_URL}/functions/v1/ativar-licenca`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${data.session.access_token}` },
-      body: JSON.stringify({ telefone: gateData.telefone, code: gateData.code, nome }),
-    });
-    const activationData = await activation.json();
-    if (!activation.ok || !activationData.ok || !activationData.state) {
-      showToast('⚠️ ' + (activationData.error || 'Conta criada, mas não foi possível gerar seu plano'));
-      return;
-    }
-
-    state = activationData.state;
-    localStorage.setItem('cr_state', JSON.stringify(state));
     await onAuthenticated(data.session);
     showToast('✅ Acesso ativado. Bem-vindo ao Base do Corre!');
   } catch (e) {
@@ -3377,7 +3395,7 @@ function resetData() { if (!confirm('Apagar todos os dados e recomeçar?')) retu
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-10-no-email-confirmation-1';
+const APP_VERSION = '2026-10-11-resume-activation-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
