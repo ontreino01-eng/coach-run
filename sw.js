@@ -3,8 +3,8 @@
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'base-do-corre-video-20261012';
-const APP_SHELL = ['./', './index.html', './manifest-v3.json', './assets/brand-icon.svg', './assets/brand-mark.svg'];
+const CACHE = 'base-do-corre-clear-icon-v4';
+const APP_SHELL = ['./', './index.html', './manifest-v3.json', './assets/brand-icon.svg', './assets/brand-icon-v4-192.png', './assets/brand-icon-v4-512.png', './assets/brand-mark.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
