@@ -2267,7 +2267,7 @@ const EXERCISE_ALIASES = {
 };
 
 function normalizeExerciseName(value) {
-  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  return String(value || '').normalize('NFKC').replace(/[\u2010-\u2015\u2212]/g,'-').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 }
 
 function prescribedExerciseName(line) {
@@ -3335,7 +3335,7 @@ function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-11-assessment-lock-1';
+const APP_VERSION = '2026-10-12-video-catalog-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
@@ -3358,4 +3358,5 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
