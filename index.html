@@ -843,12 +843,14 @@ textarea{resize:vertical;min-height:70px}
 const SUPPORT_WHATSAPP = 'https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.';
 const SUPABASE_URL = 'https://ywfiartxnsviosqjfhkp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZmlhcnR4bnN2aW9zcWpmaGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NTYwNDAsImV4cCI6MjEwMjMzMjA0MH0.LKmLBr5HlK8Do6bdP_snup7cXCr-FMgsDt-tm-Vrq68';
+let passwordRecoveryActive = new URLSearchParams(window.location.search).get('recovery') === '1' || new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type') === 'recovery';
+const PASSWORD_RECOVERY_REDIRECT = 'https://basedocorre.com.br/?recovery=1';
 const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null;
 
 if (sb) {
   sb.auth.onAuthStateChange((event) => {
-    if (event === 'PASSWORD_RECOVERY') showGate('newpassword');
+    if (event === 'PASSWORD_RECOVERY') { passwordRecoveryActive = true; showGate('newpassword'); }
   });
 }
 
@@ -864,6 +866,11 @@ async function initAuth() {
   }
   try {
     const { data: { session } } = await sb.auth.getSession();
+    if (passwordRecoveryActive) {
+      if(session) showGate('newpassword');
+      else {passwordRecoveryActive=false;showGate('login');showToast('O link de recuperação expirou ou é inválido. Peça um novo link.');}
+      return;
+    }
     if (session) {
       localStorage.setItem('bc_has_account', '1');
       await onAuthenticated(session);
@@ -925,6 +932,7 @@ function showGate(name) {
 function hideGate() { document.getElementById('gate-overlay').style.display = 'none'; }
 
 async function onAuthenticated(session) {
+  if(passwordRecoveryActive){showGate('newpassword');return;}
   currentUserId = session.user.id;
   localStorage.setItem('bc_has_account', '1');
   try {
@@ -1101,11 +1109,11 @@ async function gateLogin() {
 
 async function gateForgotPassword() {
   const email = document.getElementById('gate-login-email').value.trim();
-  if (!email) { showToast('⚠️ Digite seu e-mail no campo acima primeiro'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Digite um e-mail válido no campo acima primeiro.'); return; }
   try {
-    const { error } = await sb.auth.resetPasswordForEmail(email);
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: PASSWORD_RECOVERY_REDIRECT });
     if (error) throw error;
-    showToast('📩 Mandamos um link pra trocar sua senha em ' + email);
+    showToast('Se esse e-mail estiver cadastrado, você receberá um link para trocar a senha. Confira também o spam.');
   } catch (e) {
     showToast('⚠️ Não consegui enviar — confira o e-mail digitado');
   }
@@ -1117,6 +1125,8 @@ async function gateSetNewPassword() {
   try {
     const { error } = await sb.auth.updateUser({ password: senha });
     if (error) throw error;
+    passwordRecoveryActive=false;
+    try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
     showToast('✅ Senha atualizada! Você já está logado.');
     const { data: { session } } = await sb.auth.getSession();
     if (session) await onAuthenticated(session);
@@ -3199,9 +3209,9 @@ async function requestPasswordReset() {
     const { data } = await sb.auth.getUser();
     const email = data && data.user ? data.user.email : null;
     if (!email) { showToast('⚠️ Não encontrei seu e-mail'); return; }
-    const { error } = await sb.auth.resetPasswordForEmail(email);
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: PASSWORD_RECOVERY_REDIRECT });
     if (error) throw error;
-    showToast('📩 Mandamos um link pra trocar sua senha em ' + email);
+    showToast('Se esse e-mail estiver cadastrado, você receberá um link para trocar a senha. Confira também o spam.');
   } catch (e) {
     showToast('⚠️ Não consegui enviar o e-mail — tente de novo');
   }
@@ -3335,7 +3345,7 @@ function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-12-clear-icon-4';
+const APP_VERSION = '2026-10-13-password-recovery-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
@@ -3358,5 +3368,6 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
