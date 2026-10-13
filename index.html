@@ -843,7 +843,9 @@ textarea{resize:vertical;min-height:70px}
 const SUPPORT_WHATSAPP = 'https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.';
 const SUPABASE_URL = 'https://ywfiartxnsviosqjfhkp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZmlhcnR4bnN2aW9zcWpmaGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NTYwNDAsImV4cCI6MjEwMjMzMjA0MH0.LKmLBr5HlK8Do6bdP_snup7cXCr-FMgsDt-tm-Vrq68';
-let passwordRecoveryActive = new URLSearchParams(window.location.search).get('recovery') === '1' || new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type') === 'recovery';
+const recoveryHash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+const passwordRecoveryLinkError = recoveryHash.get('error_code') === 'otp_expired' || (new URLSearchParams(window.location.search).get('recovery') === '1' && recoveryHash.has('error'));
+let passwordRecoveryActive = new URLSearchParams(window.location.search).get('recovery') === '1' || recoveryHash.get('type') === 'recovery';
 const PASSWORD_RECOVERY_REDIRECT = 'https://basedocorre.com.br/?recovery=1';
 const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('SEU-PROJETO') === -1)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null;
@@ -858,6 +860,7 @@ let currentUserId = null;
 let gateData = {};
 
 async function initAuth() {
+  if(passwordRecoveryLinkError){passwordRecoveryActive=false;showGate('login');showToast('O link de recuperação expirou ou é inválido. Peça um novo link.');return;}
   if (!sb) {
     console.warn('Supabase não configurado — rodando sem funil de venda.');
     hideGate();
@@ -896,6 +899,7 @@ async function initAuth() {
     }
   } catch (e) {
     console.error(e);
+    if(passwordRecoveryActive){passwordRecoveryActive=false;showGate('login');showToast('Não foi possível validar o link de recuperação. Peça um novo link.');return;}
     hideGate();
     routeToEntryScreen();
   }
