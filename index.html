@@ -2203,6 +2203,7 @@ function openWeek(cycleNum, weekNum) {
   const content = document.getElementById('modal-treino-content');
 
   let html = `
+    <button type="button" class="btn btn-ghost" aria-label="Voltar ao plano de treino" onclick="closeModal('modal-treino')" style="min-height:44px;margin-bottom:16px">← Voltar</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <div style="font-size:36px">${focus.icon}</div>
       <div>
@@ -3349,7 +3350,7 @@ function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-13-password-recovery-1';
+const APP_VERSION = '2026-10-13-workout-back-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
