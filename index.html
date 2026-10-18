@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Base do Corre — Fortalecimento para Corrida</title>
+<meta name="description" content="Você começou a correr. E o fortalecimento? Conheça o Base do Corre e comece pela avaliação gratuita. Treinos organizados para corredores por assinatura."/>
+<link rel="stylesheet" href="/assets/landing-entry.css?v=20261018"/>
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="/manifest-v3.json?v=4"/>
@@ -426,28 +428,93 @@ textarea{resize:vertical;min-height:70px}
 
 <!-- CAPTURA DE LEAD (primeira tela — antes de qualquer login/pagamento) -->
 <div id="screen-lead" class="screen">
-  <div class="pad" style="padding-top:28px">
-    <div style="text-align:center;margin-bottom:24px">
-      <div style="font-size:40px;margin-bottom:10px">🏃</div>
-      <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Seu fortalecimento começa pela avaliação</h1>
-      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px">Em poucos minutos, vamos entender seu perfil de corredor para montar um ciclo de fortalecimento compatível com seu nível, rotina e recuperação.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;margin-top:12px">
-        <div class="card" style="padding:10px;margin:0"><div style="font-size:12px;font-weight:700">✓ Avaliação individual</div></div>
-        <div class="card" style="padding:10px;margin:0"><div style="font-size:12px;font-weight:700">✓ Teste físico</div></div>
-        <div class="card" style="padding:10px;margin:0"><div style="font-size:12px;font-weight:700">✓ Plano de 4 semanas</div></div>
-        <div class="card" style="padding:10px;margin:0"><div style="font-size:12px;font-weight:700">✓ Reavaliação mensal</div></div>
-      </div>
+  <main class="lead-page">
+    <div class="lead-topline">
+      <span class="lead-kicker">Fortalecimento para quem corre</span>
+      <button type="button" class="lead-text-link" onclick="showGate('licenca')">Já tenho acesso ↗</button>
     </div>
-    <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="lead-nome" placeholder="Nome"/></div>
-    <div class="input-group"><label class="input-label">Seu WhatsApp</label><input type="tel" id="lead-telefone" placeholder="(00) 00000-0000"/></div>
-    <label style="display:flex;gap:9px;align-items:flex-start;font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 12px">
-      <input type="checkbox" id="privacy-consent" style="margin-top:2px;accent-color:var(--acc)"/>
-      <span>Li a <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--title)">Política de Privacidade</a> e os <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--title)">Termos de Uso</a> e autorizo o tratamento dos dados fornecidos para avaliação e personalização do fortalecimento.</span>
-    </label>
-    <button class="btn btn-acc btn-full" style="margin-top:8px" onclick="submitLead()">Começar avaliação gratuita →</button>
-    <p style="font-size:11px;color:var(--sub);margin-top:16px;text-align:center;line-height:1.5">Já comprou? <a href="javascript:void(0)" onclick="showGate('licenca')" style="color:var(--title)">Ativar meu acesso</a></p>
-  </div>
+
+    <section class="lead-hero" aria-labelledby="lead-title">
+      <div class="lead-hero-copy">
+        <p class="lead-eyebrow">Sua corrida já começou.</p>
+        <h1 id="lead-title">E o fortalecimento,<br><span>por onde começa?</span></h1>
+        <p class="lead-intro">Quais exercícios fazer? Quantos dias treinar? Como encaixar na rotina?</p>
+        <p class="lead-body">O Base do Corre ajuda a transformar essas dúvidas em um treino organizado. O primeiro passo é conhecer sua experiência, sua rotina e o que você tem disponível para treinar.</p>
+        <button type="button" class="lead-cta" onclick="openLeadForm()">Começar minha avaliação gratuita <span aria-hidden="true">→</span></button>
+        <p class="lead-offer-note"><strong>Avaliação e análise inicial gratuitas.</strong><br>Treinos por assinatura de R$ 14,90/mês, se você decidir continuar.</p>
+      </div>
+      <figure class="lead-portrait">
+        <img src="/assets/jonadabe-maratona-rio.webp" width="643" height="1536" alt="Jonadabe correndo na Maratona do Rio, com regata cinza, diante de uma igreja." fetchpriority="high" decoding="async"/>
+        <figcaption><span>Quem está por trás do Base</span><strong>Jonadabe</strong><span>Personal trainer · Corredor · Maratonista</span></figcaption>
+      </figure>
+    </section>
+
+    <section class="lead-reason" aria-labelledby="lead-reason-title">
+      <p class="lead-kicker">Um começo com direção</p>
+      <h2 id="lead-reason-title">O treino começa a fazer sentido quando considera quem vai fazê-lo.</h2>
+      <p class="lead-body">A experiência de quem já faz musculação é diferente da de quem está começando. E a semana de quem tem dois dias disponíveis também pede escolhas próprias.</p>
+      <p class="lead-body">A avaliação reúne essas informações antes de apresentar a proposta de fortalecimento. Assim, você conhece o caminho e decide se quer continuar.</p>
+      <div class="lead-context" aria-label="Informações consideradas"><span>Seu nível</span><span>Sua rotina</span><span>Seus equipamentos</span></div>
+    </section>
+
+    <section class="lead-product" aria-labelledby="lead-product-title">
+      <div class="lead-demo">
+        <div class="lead-phone"><img src="/assets/base-treino-exemplo.webp" width="520" height="890" loading="lazy" decoding="async" alt="Tela real do Base do Corre com uma sessão de força, orientações, séries, repetições e exercícios."/></div>
+        <p>Uma tela real do aplicativo.<br>O plano considera os dados da sua avaliação.</p>
+      </div>
+      <div class="lead-product-copy">
+        <p class="lead-kicker">Da dúvida para a prática</p>
+        <h2 id="lead-product-title">Abra o treino.<br>Saiba o que fazer.</h2>
+        <p>Depois da assinatura e da ativação, seu fortalecimento ganha uma estrutura para acompanhar.</p>
+        <ul class="lead-features">
+          <li><strong>Sessões organizadas</strong><span>Exercícios, séries, repetições e descansos reunidos no treino.</span></li>
+          <li><strong>Orientação no exercício</strong><span>Consulte os vídeos e as instruções disponíveis dentro do app.</span></li>
+          <li><strong>Registro do que você fez</strong><span>Anote carga, esforço e como foi a sessão.</span></li>
+        </ul>
+        <p class="lead-product-scope">Fortalecimento complementar à sua corrida. Você segue seu planejamento de corrida com seu treinador.</p>
+      </div>
+    </section>
+
+    <section class="lead-process" aria-labelledby="lead-process-title">
+      <p class="lead-kicker">Antes de decidir, conheça</p>
+      <h2 id="lead-process-title">O que acontece na avaliação?</h2>
+      <ol class="lead-steps">
+        <li><span aria-hidden="true">01</span><div><h3>Você conta como treina</h3><p>Experiência, objetivos, disponibilidade e equipamentos ajudam a compor seu perfil.</p></div></li>
+        <li><span aria-hidden="true">02</span><div><h3>Você informa seus testes</h3><p>A avaliação inclui perguntas e registro de testes físicos. As orientações aparecem durante o processo.</p></div></li>
+        <li><span aria-hidden="true">03</span><div><h3>Você vê a análise e decide</h3><p>Conheça sua análise inicial gratuitamente. O acesso ao ciclo de quatro semanas depende da assinatura.</p></div></li>
+      </ol>
+      <button type="button" class="lead-cta" onclick="openLeadForm()">Quero começar pela avaliação <span aria-hidden="true">→</span></button>
+    </section>
+
+    <section class="lead-author" aria-label="Sobre o criador do Base do Corre">
+      <span class="lead-author-rule" aria-hidden="true"></span>
+      <div><p class="lead-kicker">De um personal que também corre</p><p>Sou Jonadabe, personal trainer, e concluí a Maratona do Rio. Criei o Base do Corre para ajudar quem corre a organizar também o fortalecimento.</p><strong>Jonadabe · Criador do Base do Corre</strong></div>
+    </section>
+
+    <section class="lead-faq" aria-labelledby="lead-faq-title">
+      <h2 id="lead-faq-title">Antes de começar</h2>
+      <details><summary>Ainda não faço musculação. Serve para mim?</summary><p>Sua experiência com musculação é uma das informações da avaliação. O ciclo de fortalecimento é montado considerando seu nível, sua disponibilidade e os equipamentos informados.</p></details>
+      <details><summary>O que é gratuito e o que é pago?</summary><p>O questionário, o registro dos testes e a análise inicial são gratuitos. Para liberar o ciclo de fortalecimento e usar os treinos, você pode assinar o Base do Corre por R$ 14,90/mês. A assinatura é opcional.</p></details>
+      <details><summary>Como são os testes da avaliação?</summary><p>Você informa resultados de salto horizontal, prancha, agachamento, panturrilha unilateral e um teste de 1 km de corrida. Leia as orientações apresentadas na avaliação antes de realizar os testes.</p></details>
+      <details><summary>O app também monta meus treinos de corrida?</summary><p>O Base do Corre organiza o fortalecimento complementar. A planilha de corrida continua com você e seu treinador.</p></details>
+    </section>
+
+    <section class="lead-form-section" aria-labelledby="lead-form-title">
+      <form id="lead-form" class="lead-form" onsubmit="event.preventDefault(); submitLead();">
+        <p class="lead-kicker">Seu próximo passo</p>
+        <h2 id="lead-form-title">Vamos conhecer seu ponto de partida?</h2>
+        <p class="lead-body">Preencha seus dados para iniciar a avaliação gratuita.</p>
+        <div class="input-group"><label class="input-label" for="lead-nome">Seu nome</label><input type="text" id="lead-nome" name="nome" placeholder="Como podemos chamar você?" autocomplete="given-name" required/></div>
+        <div class="input-group"><label class="input-label" for="lead-telefone">Seu WhatsApp com DDD</label><input type="tel" id="lead-telefone" name="telefone" placeholder="(00) 00000-0000" autocomplete="tel" inputmode="tel" aria-describedby="lead-phone-note" required/><p id="lead-phone-note" class="lead-field-note">Use este mesmo número na avaliação e na ativação do seu acesso.</p></div>
+        <label class="lead-consent" for="privacy-consent"><input type="checkbox" id="privacy-consent" required/><span>Li a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a> e os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e autorizo o tratamento dos dados fornecidos para avaliação e personalização do fortalecimento.</span></label>
+        <button type="submit" class="lead-cta">Começar avaliação gratuita <span aria-hidden="true">→</span></button>
+        <p class="lead-form-note">A avaliação é gratuita. Para acessar os treinos, a assinatura é de R$ 14,90/mês.</p>
+      </form>
+      <p class="lead-return">Já comprou? <button type="button" class="lead-text-link" onclick="showGate('licenca')">Ativar meu acesso →</button></p>
+    </section>
+  </main>
 </div>
+
 
 <!-- AVALIAÇÃO -->
 <div id="screen-avaliacao" class="screen">
@@ -1295,6 +1362,7 @@ async function syncAssessmentToCloud(email = '') {
 // ══════════════════════════════════════════════════════
 function goToScreen(name, btn) {
   if(name==='avaliacao' && guardInitialAssessment())return;
+  document.getElementById('app').classList.toggle('landing-entry', name === 'lead');
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
@@ -1534,6 +1602,14 @@ function cancelTeste() {
 // ══════════════════════════════════════════════════════
 // CAPTURA DE LEAD (antes de qualquer cadastro/pagamento)
 // ══════════════════════════════════════════════════════
+function openLeadForm() {
+  const form = document.getElementById('lead-form');
+  const nameInput = document.getElementById('lead-nome');
+  if (!form || !nameInput) return;
+  nameInput.focus({ preventScroll: true });
+  form.scrollIntoView({ behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+}
+
 async function submitLead() {
   if(guardInitialAssessment())return;
   const nome = document.getElementById('lead-nome').value.trim();
@@ -3350,7 +3426,7 @@ function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-13-workout-back-1';
+const APP_VERSION = '2026-10-18-landing-entry-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
