@@ -295,17 +295,17 @@ textarea{resize:vertical;min-height:70px}
 
   <div class="gate-step" id="gate-licenca" style="display:none;flex-direction:column;padding:0 22px">
     <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Ativar acesso</h1>
-    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o telefone usado na avaliação e o código enviado pelo Base do Corre após a confirmação do pagamento.</p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Digite o telefone usado na avaliação e seu código de acesso ao Base do Corre. Depois, crie sua conta.</p>
     <div class="input-group"><label class="input-label">Telefone</label><input type="tel" id="gate-cpf" placeholder="(00) 00000-0000" inputmode="tel"/></div>
     <div class="input-group"><label class="input-label">Código de acesso</label><input type="text" id="gate-code" placeholder="Ex: F3K9-XQ2P" style="text-transform:uppercase"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" id="gate-licenca-btn" onclick="gateValidarLicenca()">Validar código</button>
     <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="showGate('login')">Já tenho conta — Entrar</button>
-    <p style="font-size:11px;color:var(--sub);margin-top:20px;line-height:1.5">Ainda não comprou? O acesso é liberado após o pagamento — o código chega no seu e-mail.</p>
+    <p style="font-size:11px;color:var(--sub);margin-top:20px;line-height:1.5">Ainda não tem um código? Conclua a avaliação para conhecer o plano de acesso.</p>
   </div>
 
   <div class="gate-step" id="gate-cadastro" style="display:none;flex-direction:column;padding:0 22px">
     <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Criar sua conta</h1>
-    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Código validado! E-mail da compra: <b id="gate-cadastro-email" style="color:var(--txt)"></b></p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px">Código validado! E-mail de acesso: <b id="gate-cadastro-email" style="color:var(--txt)"></b></p>
     <div class="input-group"><label class="input-label">Seu nome</label><input type="text" id="gate-nome" placeholder="Ex: Jonadabe"/></div>
     <div class="input-group"><label class="input-label">Crie uma senha</label><input type="password" id="gate-senha" placeholder="Mínimo 6 caracteres"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateCriarConta()">Criar conta ✓</button>
@@ -314,7 +314,7 @@ textarea{resize:vertical;min-height:70px}
 
   <div class="gate-step" id="gate-login" style="display:none;flex-direction:column;padding:0 22px">
     <h1 style="font-family:var(--ff);font-weight:800;font-size:22px;margin-bottom:8px">Entrar</h1>
-    <div class="input-group"><label class="input-label">E-mail da compra</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
+    <div class="input-group"><label class="input-label">E-mail de acesso</label><input type="email" id="gate-login-email" placeholder="seu@email.com"/></div>
     <div class="input-group"><label class="input-label">Senha</label><input type="password" id="gate-login-senha" placeholder="Sua senha"/></div>
     <button class="btn btn-acc" style="width:100%;margin-top:8px" onclick="gateLogin()">Entrar</button>
     <p style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="gateForgotPassword()" style="color:var(--title);font-size:12px">Esqueci minha senha</a></p>
@@ -1102,8 +1102,11 @@ async function onAuthenticated(session) {
 }
 
 function renderRenewScreen(info) {
+  const courtesy = info && info.accessType === 'courtesy';
   const status = info && info.status;
-  const msg = status === 'atrasada'
+  const msg = courtesy
+    ? 'O prazo do seu acesso de cortesia terminou. Fale com o responsável pela parceria para verificar a continuidade.'
+    : status === 'atrasada'
     ? 'Identificamos um atraso no pagamento da sua assinatura. Regularize pra continuar treinando.'
     : status === 'cancelada'
     ? 'Sua assinatura foi cancelada. Reative pra voltar a ter acesso ao seu plano.'
@@ -1111,9 +1114,9 @@ function renderRenewScreen(info) {
   document.getElementById('renew-content').innerHTML = `
     <div style="text-align:center;padding-top:12px">
       <div style="font-size:40px;margin-bottom:12px">⏸</div>
-      <h1 style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:10px">Assinatura pausada</h1>
+      <h1 style="font-family:var(--ff);font-weight:800;font-size:20px;margin-bottom:10px">${courtesy ? 'Cortesia encerrada' : 'Assinatura pausada'}</h1>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px">${msg} Seu histórico e progresso continuam salvos — assim que regularizar, tudo volta ao normal.</p>
-      <button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
+      ${courtesy ? '' : `<button class="btn btn-acc btn-full" style="margin-bottom:10px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>`}
       <button class="btn btn-ghost btn-full" style="margin-bottom:10px" onclick="window.open('https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.','_blank','noopener')">💬 Falar com o suporte</button>
       <button class="btn btn-ghost btn-full" onclick="gateLogout()">Sair da conta</button>
     </div>`;
@@ -1136,7 +1139,18 @@ async function gateValidarLicenca() {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone, code }),
     });
     const data = await res.json();
-    if (!data.valid) { showToast('⚠️ ' + (data.reason || 'Código inválido')); btn.textContent = 'Validar código'; return; }
+    if (!res.ok || !data.valid) { showToast('⚠️ ' + (data.reason || 'Código inválido')); btn.textContent = 'Validar código'; return; }
+    // Quem já tem um código pode vincular a avaliação sem abrir o checkout.
+    // Só usa o rascunho deste telefone e mantém a validação do token no servidor.
+    const assessmentPhone = String(state.lead?.telefone || '').replace(/\D/g, '');
+    const completedAssessment = !state.assessed && state.profile?.['av-modalidade'] &&
+      state.tests?.[0] && Object.keys(state.tests[0]).length > 0;
+    if (completedAssessment && assessmentPhone === telefone) {
+      if (!(await syncAssessmentToCloud(data.email))) {
+        showToast('⚠️ Não foi possível vincular a avaliação ao seu acesso. Tente novamente.');
+        return;
+      }
+    }
     gateData = { telefone, code, email: data.email };
     document.getElementById('gate-cadastro-email').textContent = data.email;
     showGate('cadastro');
@@ -1172,7 +1186,7 @@ async function gateCriarConta() {
     if (error || !data.session) {
       document.getElementById('gate-login-email').value = gateData.email || '';
       showGate('login');
-      showToast('✅ Conta criada. Entre com o e-mail da compra e sua senha.');
+      showToast('✅ Conta criada. Entre com seu e-mail de acesso e sua senha.');
       return;
     }
 
@@ -1842,7 +1856,7 @@ function renderPaywall() {
 
     <p style="text-align:center;font-size:10px;color:var(--sub);line-height:1.45;margin:2px 6px 10px">O fortalecimento pode contribuir para desempenho, economia de corrida e tolerância à carga, mas resultados individuais variam. O app não faz diagnóstico nem substitui atendimento médico.</p>
     <p style="text-align:center;font-size:10px;color:var(--sub);margin-bottom:12px">Ao continuar, aplicam-se os <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--title)">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener" style="color:var(--title)">Política de Privacidade</a>.</p>
-    <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já comprei — ativar meu acesso</button>
+    <button class="btn btn-ghost btn-full" onclick="showGate('licenca')">Já tenho um código — ativar acesso</button>
   `;
 }
 
@@ -3189,6 +3203,7 @@ function renderEvolution() {
 function renderProfile() {
   if (!state.assessed) return;
   const p = state.profile;
+  const courtesy = state.subscriptionInfo?.accessType === 'courtesy';
   document.getElementById('profile-name').textContent = p.nome || 'Atleta';
   document.getElementById('profile-role').textContent = `${modLabel(p['av-modalidade'])} · ${p.nivel} · ${goalLabel(p['av-objetivo'])}`;
 
@@ -3203,9 +3218,9 @@ function renderProfile() {
       <div class="card-title" style="margin-bottom:12px">Minha Conta</div>
       <div class="result-row"><div class="result-label">Nome</div><div class="result-val">${escapeHtml(p.nome) || '—'}</div></div>
       <div class="result-row"><div class="result-label">E-mail</div><div class="result-val" id="profile-email">—</div></div>
-      <div class="result-row"><div class="result-label">Assinatura</div><div class="result-val" style="color:var(--title)">💳 R$ 14,90/mês · preço fundador</div></div>
-      ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">Próxima cobrança</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
-      <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>
+      <div class="result-row"><div class="result-label">${courtesy ? 'Acesso' : 'Assinatura'}</div><div class="result-val" style="color:var(--title)">${courtesy ? 'Cortesia de parceiro · sem cobrança' : '💳 R$ 14,90/mês · preço fundador'}</div></div>
+      ${state.subscriptionInfo && state.subscriptionInfo.periodEnd ? `<div class="result-row"><div class="result-label">${courtesy ? 'Validade do acesso' : 'Próxima cobrança'}</div><div class="result-val">${new Date(state.subscriptionInfo.periodEnd).toLocaleDateString('pt-BR')}</div></div>` : ''}
+      ${courtesy ? '' : `<button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="window.open('https://dashboard.kiwify.com.br/minhas-compras','_blank')">Gerenciar assinatura</button>`}
       <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="requestPasswordReset()">Trocar senha</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="window.open('https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre.','_blank','noopener')">💬 Falar com o suporte</button>
     </div>
@@ -3443,7 +3458,7 @@ function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-19-meta-pixel-1';
+const APP_VERSION = '2026-10-20-partner-access-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([

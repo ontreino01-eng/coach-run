@@ -123,11 +123,16 @@ async function ask(system:string,payload:any,max_tokens=1200){
  const d=await r.json();if(d.choices?.[0]?.finish_reason==='length')throw new Error('Resposta incompleta da IA');
  return normalizePlanNames(JSON.parse(d.choices?.[0]?.message?.content||'{}'));
 }
+function nextCyclePeriodEnd(license: any, now = Date.now()) {
+ return license.payment_provider === 'cortesia_parceiro'
+  ? new Date(Math.min(Date.parse(license.current_period_end), now + 28*24*60*60*1000)).toISOString()
+  : license.current_period_end;
+}
 async function getCycleAccess(user: any) {
  const {data: profile,error: pe}=await admin.from('profiles').select('id,cpf,state').eq('id',user.id).maybeSingle();
  if(pe)throw pe;
  if(!profile?.state?.assessed || !profile.state.plan) return {allowed:false,error:'Ative sua avaliação inicial primeiro.',code:'INITIAL_REQUIRED'};
- const {data: licenses,error: le}=await admin.from('licenses').select('id,current_period_end,subscription_status,status').eq('email',String(user.email||'').toLowerCase()).order('created_at',{ascending:false}).limit(1);
+ const {data: licenses,error: le}=await admin.from('licenses').select('id,current_period_end,subscription_status,status,payment_provider').eq('email',String(user.email||'').toLowerCase()).order('created_at',{ascending:false}).limit(1);
  if(le)throw le;
  const license=licenses?.[0];
  if(!license || license.subscription_status!=='ativa' || !['ativo','pendente'].includes(license.status) || !license.current_period_end || Date.parse(license.current_period_end)<=Date.now()) return {allowed:false,error:'Renove sua assinatura para liberar a reavaliação.',code:'RENEWAL_REQUIRED'};
@@ -137,8 +142,11 @@ async function getCycleAccess(user: any) {
  if(!cycle || Number(profile.state.cycleNum)!==cycle.cycle_num) return {allowed:false,error:'Não foi possível confirmar seu ciclo. Entre novamente.',code:'CYCLE_MISMATCH'};
  const completed=new Set(profile.state.completedWeeks||[]);
  if(![1,2,3,4].every(n=>completed.has(n))) return {allowed:false,error:'Conclua as quatro semanas antes da reavaliação.',code:'CYCLE_INCOMPLETE'};
- if(!cycle.period_end || Date.parse(license.current_period_end)<=Date.parse(cycle.period_end)) return {allowed:false,error:'Seu ciclo terminou. A reavaliação será liberada após a confirmação da renovação mensal.',code:'RENEWAL_REQUIRED'};
- return {allowed:true,profile,license,cycle,nextCycle:cycle.cycle_num+1};
+ if(license.payment_provider==='cortesia_parceiro') {
+  if(!Number.isFinite(Date.parse(cycle.period_end))) return {allowed:false,error:'Não foi possível confirmar a validade do ciclo. Fale com o suporte.',code:'CYCLE_MISMATCH'};
+  if(Date.parse(cycle.period_end)>Date.now()) return {allowed:false,error:'A próxima reavaliação será liberada ao final dos 28 dias deste ciclo.',code:'CYCLE_NOT_DUE'};
+ } else if(!cycle.period_end || Date.parse(license.current_period_end)<=Date.parse(cycle.period_end)) return {allowed:false,error:'Seu ciclo terminou. A reavaliação será liberada após a confirmação da renovação mensal.',code:'RENEWAL_REQUIRED'};
+ return {allowed:true,profile,license,cycle,nextCycle:cycle.cycle_num+1,nextPeriodEnd:nextCyclePeriodEnd(license)};
 }
 async function releaseCycle(userId: string,cycle: number,token: string,status='pending') {
  const {error}=await admin.from('assessment_cycles').update({lease_until:null,lease_token:null,status}).eq('user_id',userId).eq('cycle_num',cycle).eq('lease_token',token);
@@ -203,7 +211,7 @@ Deno.serve(async(req)=>{
   if(!validReassessment(payload))return reply({error:'Complete a reavaliação, o reteste e o feedback antes de continuar.'},400);
   if(payload.action!=='generate_plan'&&existing?.decision)return reply(existing.decision);
   if(payload.action==='generate_plan'&&!existing?.decision)return reply({error:'Faça a reavaliação antes de gerar o próximo ciclo.'},409);
-  const {data: token,error: ce}=await admin.rpc('claim_assessment_cycle',{p_user:user.id,p_cycle:target,p_period:access.license.current_period_end,p_inputs:payload});
+  const {data: token,error: ce}=await admin.rpc('claim_assessment_cycle',{p_user:user.id,p_cycle:target,p_period:access.nextPeriodEnd,p_inputs:payload});
   if(ce)throw ce;
   if(!token)return reply({error:'A reavaliação já está sendo processada. Aguarde.',code:'GENERATION_BUSY'},409);
   claim={userId:user.id,cycle:target,token};

@@ -14,7 +14,7 @@ const supabaseAdmin = createClient(
 );
 
 Deno.serve(async (req) => {
-  const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' };
+  const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
   try {
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ active: false, reason: 'Perfil sem CPF vinculado' }), { status: 200, headers: cors });
     }
 
-    const { data: lic } = await supabaseAdmin.from('licenses').select('subscription_status, current_period_end, status').eq('email',String(user.email||'').toLowerCase()).in('status',['ativo','pendente']).order('created_at',{ascending:false}).limit(1).maybeSingle();
+    const { data: lic } = await supabaseAdmin.from('licenses').select('subscription_status, current_period_end, status, payment_provider').eq('email',String(user.email||'').toLowerCase()).in('status',['ativo','pendente']).order('created_at',{ascending:false}).limit(1).maybeSingle();
     if (!lic) return new Response(JSON.stringify({ active: false, reason: 'Licença não encontrada' }), { status: 200, headers: cors });
 
     const periodOk = !lic.current_period_end || new Date(lic.current_period_end) > new Date();
@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       active, status: lic.subscription_status, periodEnd: lic.current_period_end,
+      accessType: lic.payment_provider === 'cortesia_parceiro' ? 'courtesy' : 'subscription',
     }), { status: 200, headers: cors });
   } catch (e) {
     // Em caso de erro técnico, NÃO bloqueia o aluno — melhor deixar passar

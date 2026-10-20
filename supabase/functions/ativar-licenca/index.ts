@@ -210,11 +210,16 @@ async function generatePlan(assessment: any) {
   return plan;
 }
 
+function nextCyclePeriodEnd(license: any, now = Date.now()) {
+ return license.payment_provider === 'cortesia_parceiro'
+  ? new Date(Math.min(Date.parse(license.current_period_end), now + 28*24*60*60*1000)).toISOString()
+  : license.current_period_end;
+}
 async function getCycleAccess(user: any) {
  const {data: profile,error: pe}=await admin.from('profiles').select('id,cpf,state').eq('id',user.id).maybeSingle();
  if(pe)throw pe;
  if(!profile?.state?.assessed || !profile.state.plan) return {allowed:false,error:'Ative sua avaliação inicial primeiro.',code:'INITIAL_REQUIRED'};
- const {data: licenses,error: le}=await admin.from('licenses').select('id,current_period_end,subscription_status,status').eq('email',String(user.email||'').toLowerCase()).order('created_at',{ascending:false}).limit(1);
+ const {data: licenses,error: le}=await admin.from('licenses').select('id,current_period_end,subscription_status,status,payment_provider').eq('email',String(user.email||'').toLowerCase()).order('created_at',{ascending:false}).limit(1);
  if(le)throw le;
  const license=licenses?.[0];
  if(!license || license.subscription_status!=='ativa' || !['ativo','pendente'].includes(license.status) || !license.current_period_end || Date.parse(license.current_period_end)<=Date.now()) return {allowed:false,error:'Renove sua assinatura para liberar a reavaliação.',code:'RENEWAL_REQUIRED'};
@@ -224,8 +229,11 @@ async function getCycleAccess(user: any) {
  if(!cycle || Number(profile.state.cycleNum)!==cycle.cycle_num) return {allowed:false,error:'Não foi possível confirmar seu ciclo. Entre novamente.',code:'CYCLE_MISMATCH'};
  const completed=new Set(profile.state.completedWeeks||[]);
  if(![1,2,3,4].every(n=>completed.has(n))) return {allowed:false,error:'Conclua as quatro semanas antes da reavaliação.',code:'CYCLE_INCOMPLETE'};
- if(!cycle.period_end || Date.parse(license.current_period_end)<=Date.parse(cycle.period_end)) return {allowed:false,error:'Seu ciclo terminou. A reavaliação será liberada após a confirmação da renovação mensal.',code:'RENEWAL_REQUIRED'};
- return {allowed:true,profile,license,cycle,nextCycle:cycle.cycle_num+1};
+ if(license.payment_provider==='cortesia_parceiro') {
+  if(!Number.isFinite(Date.parse(cycle.period_end))) return {allowed:false,error:'Não foi possível confirmar a validade do ciclo. Fale com o suporte.',code:'CYCLE_MISMATCH'};
+  if(Date.parse(cycle.period_end)>Date.now()) return {allowed:false,error:'A próxima reavaliação será liberada ao final dos 28 dias deste ciclo.',code:'CYCLE_NOT_DUE'};
+ } else if(!cycle.period_end || Date.parse(license.current_period_end)<=Date.parse(cycle.period_end)) return {allowed:false,error:'Seu ciclo terminou. A reavaliação será liberada após a confirmação da renovação mensal.',code:'RENEWAL_REQUIRED'};
+ return {allowed:true,profile,license,cycle,nextCycle:cycle.cycle_num+1,nextPeriodEnd:nextCyclePeriodEnd(license)};
 }
 async function releaseCycle(userId: string,cycle: number,token: string,status='pending') {
  const {error}=await admin.from('assessment_cycles').update({lease_until:null,lease_token:null,status}).eq('user_id',userId).eq('cycle_num',cycle).eq('lease_token',token);
@@ -250,7 +258,7 @@ Deno.serve(async (req) => {
     // A licença pertence ao e-mail autenticado. Telefone/código são filtros extras,
     // nunca substituem a verificação de quem está logado.
     let query = admin.from('licenses')
-      .select('id,cpf,email,code,status,subscription_status,current_period_end,telefone')
+      .select('id,cpf,email,code,status,subscription_status,current_period_end,telefone,payment_provider')
       .eq('email', email).eq('subscription_status', 'ativa')
       .in('status', ['pendente', 'ativo']);
     if (code) query = query.eq('code', code);
@@ -285,7 +293,7 @@ Deno.serve(async (req) => {
     let plan=existingCycle?.status==='ready' ? existingCycle.plan : null;
     if(plan&&!validPlan(plan))return new Response(json({error:'O plano salvo precisa ser atualizado para a biblioteca com vídeos.',code:'VIDEO_CATALOG_REQUIRED'}),{status:409,headers:cors});
     if(!plan) {
-      const {data: token,error: claimError}=await admin.rpc('claim_assessment_cycle',{p_user:user.id,p_cycle:1,p_period:license.current_period_end,p_inputs:assessment});
+      const {data: token,error: claimError}=await admin.rpc('claim_assessment_cycle',{p_user:user.id,p_cycle:1,p_period:nextCyclePeriodEnd(license),p_inputs:assessment});
       if(claimError)throw claimError;
       if(!token)return new Response(json({error:'Seu treinamento já está sendo preparado. Aguarde e entre novamente.',code:'GENERATION_BUSY'}),{status:409,headers:cors});
       claim={userId:user.id,cycle:1,token};
