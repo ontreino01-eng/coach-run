@@ -3,7 +3,7 @@
 // só usa o cache salvo se estiver sem internet. Isso evita o app "travar" numa
 // versão antiga depois de uma atualização. Ícones/manifest usam cache-first
 // (mudam raramente, não precisam buscar toda vez).
-const CACHE = 'base-do-corre-landing-20261018-v2';
+const CACHE = 'base-do-corre-meta-20261019-v1';
 const APP_SHELL = ['./', './index.html', './manifest-v3.json', './assets/brand-icon.svg', './assets/brand-icon-v4-192.png', './assets/brand-icon-v4-512.png', './assets/brand-mark.svg'];
 
 self.addEventListener('install', (e) => {
@@ -20,6 +20,11 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
+  // Never cache advertising SDKs or tracking requests, including a cached
+  // beacon that could otherwise prevent a later event from reaching Meta.
+  const hostname = new URL(url).hostname;
+  if (hostname === 'facebook.com' || hostname.endsWith('.facebook.com') ||
+      hostname === 'facebook.net' || hostname.endsWith('.facebook.net')) return;
   if (url.includes('/functions/') || url.includes('supabase.co') || url.includes('groq.com')) {
     return;
   }

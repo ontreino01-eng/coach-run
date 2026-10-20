@@ -6,6 +6,9 @@
 <title>Base do Corre — Fortalecimento para Corrida</title>
 <meta name="description" content="Fortalecimento para corredores, do iniciante ao experiente, em casa ou na academia. Conheça o Base do Corre e comece pela avaliação do seu perfil."/>
 <link rel="stylesheet" href="/assets/landing-entry.css?v=20261018"/>
+<link rel="stylesheet" href="/assets/meta-pixel.css?v=20261019"/>
+<!-- Meta Pixel 1669204944775144: consent and public-entry events only. -->
+<script defer src="/assets/meta-pixel.js?v=20261019"></script>
 
 <!-- PWA: instalação real no celular (ícone + tela cheia, sem barra do navegador) -->
 <link rel="manifest" href="/manifest-v3.json?v=4"/>
@@ -841,6 +844,8 @@ textarea{resize:vertical;min-height:70px}
   <span> · </span>
   <a href="/termos.html" target="_blank" rel="noopener" style="color:var(--sub)">Termos de Uso</a>
   <span> · </span>
+  <button type="button" class="marketing-preferences" id="marketing-preferences">Preferências de cookies</button>
+  <span> · </span>
   <a href="https://wa.me/5521971046859?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20no%20Base%20do%20Corre." target="_blank" rel="noopener" style="color:var(--sub)">Suporte</a>
 </div>
 
@@ -899,6 +904,15 @@ textarea{resize:vertical;min-height:70px}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<aside class="marketing-consent" id="marketing-consent" aria-labelledby="marketing-title" hidden>
+  <h2 id="marketing-title">Cookies de publicidade</h2>
+  <p>Com sua autorização, usamos o Pixel da Meta para medir visitas e cadastros e melhorar nossos anúncios. Você pode continuar sem aceitar. <a href="/privacidade.html#publicidade" target="_blank" rel="noopener">Política de Privacidade</a></p>
+  <div class="marketing-actions">
+    <button type="button" id="marketing-reject">Recusar</button>
+    <button type="button" id="marketing-accept">Aceitar</button>
+  </div>
+</aside>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -994,6 +1008,7 @@ function routeToEntryScreen() {
 }
 
 function showGate(name) {
+  window.BaseMetaPixel?.setScreen(null);
   document.getElementById('gate-overlay').style.display = 'flex';
   document.querySelectorAll('.gate-step').forEach(s => s.style.display = 'none');
   const el = document.getElementById('gate-' + name);
@@ -1362,6 +1377,7 @@ async function syncAssessmentToCloud(email = '') {
 // ══════════════════════════════════════════════════════
 function goToScreen(name, btn) {
   if(name==='avaliacao' && guardInitialAssessment())return;
+  window.BaseMetaPixel?.setScreen(name);
   document.getElementById('app').classList.toggle('landing-entry', name === 'lead');
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
@@ -1641,6 +1657,7 @@ async function submitLead() {
     }
   }
 
+  if (state.lead.id) window.BaseMetaPixel?.trackLead();
   goToScreen('avaliacao');
   showStep(1);
   const nomeInput = document.getElementById('av-nome');
@@ -3426,7 +3443,7 @@ function resetData() { if(guardInitialAssessment())return; if(!confirm('Apagar o
 // Autocorreção de versão: se o app mudou desde a última visita, força a
 // limpeza do cache antigo e recarrega — evita ficar travado numa versão
 // velha por causa do service worker.
-const APP_VERSION = '2026-10-18-landing-entry-2';
+const APP_VERSION = '2026-10-19-meta-pixel-1';
 if (localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
   Promise.all([
